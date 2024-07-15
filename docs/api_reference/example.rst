@@ -1,5 +1,5 @@
-pypkg.example
+raking.example
 =============
 
-.. automodule:: pypkg.example
+.. automodule:: raking.example
    :members:
