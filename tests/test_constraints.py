@@ -13,7 +13,10 @@ def test_constraints_1D():
     (A, s) = constraints_1D(s, I)
     # Verify that the constraint A beta = s is respected
     assert np.allclose(np.matmul(A, beta), s), \
-        "For the constraints_1D function, the constraint A beta = s is not respected."
+        'For the constraints_1D function, the constraint A beta = s is not respected.'
+    # Verify that the matrix A has rank 1
+    assert np.linalg.matrix_rank(A) == 1, \
+        'The constraint matrix should have rank 1.'
 
 @pytest.fixture
 def test_constraints_2D():
@@ -29,4 +32,8 @@ def test_constraints_2D():
     (A, s) = constraints_2D(s1, s2, I, J)
     # Verify that the constraint A beta = s is respected
     assert np.allclose(np.matmul(A, beta), s), \
-        "For the constraints_2D function, the constraint A beta = s is not respected."
+        'For the constraints_2D function, the constraint A beta = s is not respected.'
+    # Verify that the matrix A has rank I + J - 1
+    assert np.linalg.matrix_rank(A) == I + J - 1, \
+        'The constraint matrix should have rank {}.'.format(I + J - 1)
+
