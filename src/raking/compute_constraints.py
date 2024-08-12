@@ -104,8 +104,10 @@ def constraints_2D(
 def constraints_3D(
     s1: np.ndarray,
     s2: np.ndarray,
+    s3: np.ndarray,
     I: int,
-    J: int
+    J: int,
+    K: int
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 3D.
         
@@ -187,12 +189,22 @@ def constraints_3D(
     assert np.allclose(np.sum(s1), np.sum(s2)), \
         'The sum of the row margins must be equal to the sum of the column margins.'
     
-    A = np.zeros((J + I - 1, I * J))
+    A = np.zeros((J * K + I * K + I * J, I * J * K))
+    s = np.zeros((1, J * K + I * K + I * J))
     for j in range(0, J):
-        for i in range(0, I - 1):
-            A[J + i, j * I + i] = 1
-            A[j, j * I + i] = 1
-        A[j, j * I + I - 1] = 1
-    s = np.concatenate([s1, s2[0:(I - 1)]]).reshape((1, J + I - 1))
+        for k in range(0, K):
+            for i in range(0, I):
+                A[J * k + j, I * J * k + I * j + i] = 1
+            s[J * k + j] = s1[j, k]
+    for i in range(0, I):
+        for k in range(0, K):
+            for j in range(0, J):
+                A[J * K + I * k + i, I * J * k + I * j + i] = 1
+            s[J * K + I * k + i] = s2[i, k]
+    for i in range(0, I):
+        for j in range(0, J):
+            for k in range(0, K):
+                A[J * K + I * K + I * j + i, I * J * k + I * j + i] = 1
+            s[J * K + I * K + I * j + i] = s3[i, j]
     return (A, s)
 
