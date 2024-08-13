@@ -161,7 +161,7 @@ There are $I + J + K$ constraints for the margins:
 
 $$\sum_{j = 1}^J s^1_{jk} = \sum_{i = 1}^I s^2_{ik} \quad \forall k = 1 , \cdots , K$$
 
-$$\sum_{k = 1}^K s^2_{ik} = \sum_{j = 1}^J s^3_{ik} \quad \forall i = 1 , \cdots , I$$
+$$\sum_{k = 1}^K s^2_{ik} = \sum_{j = 1}^J s^3_{ij} \quad \forall i = 1 , \cdots , I$$
 
 $$\sum_{i = 1}^I s^3_{ij} = \sum_{k = 1}^K s^1_{jk} \quad \forall j = 1 , \cdots , J$$
 
@@ -173,7 +173,7 @@ $$ \sum_{i = 1}^I \beta{ijk} = s^1_{jk} \quad \forall j = 1 , \cdots , J - 1 \te
 
 $$\sum_{j = 1}^J \beta{ijk} = s^2_{ik} \quad \forall k = 1 , \cdots , K - 1 \text{ and } \forall i = 1 , \cdots , I$$
 
-$$\sum_{i = 1}^I \beta{ijk} = s^3_{ij} \quad \forall i = 1 , \cdots , I - 1 \text{ and } \forall j = 1 , \cdots , J$$
+$$\sum_{k = 1}^K \beta{ijk} = s^3_{ij} \quad \forall i = 1 , \cdots , I - 1 \text{ and } \forall j = 1 , \cdots , J$$
 
 $$\sum_{i = 1}^I \beta_{iJK} = s^1_{JK}$$
 
@@ -205,3 +205,44 @@ It leads to a $\left( I J + I K + J K - I - J - K + 1 \right) \times \left( I J 
 &= \sum_{j = 1}^J s^3_{ij} - \sum_{k = 1}^{K - 1} s^2_{ik} \\
 &= s^2_{iK}
 \end{align}
+
+## USHD problem
+
+There is one constraint for the margins:
+
+$$\sum_{i = 1}^I s_i = s_0$$
+
+otherwise the raking problem cannot have a solution.  
+
+The chosen constraints are:
+
+$$\sum_{k = 1}^K \beta_{i0k} = s_i \quad \forall i = 1 , \cdots , I$$
+
+$$\sum_{i = 1}^I \beta_{i0k} - \beta_{00k} = 0 \quad \forall k = 1 , \cdots , K$$
+
+$$\sum_{j = 1}^J \beta_{0jk} - \beta_{00k} = 0 \quad \forall k = 1 , \cdots , K$$
+
+$$\sum_{i = 1}^I \beta_{ijk} - \beta_{0jk} = 0 \quad \forall j = 1 , \cdots , J \text{ and } \forall k = 1 , \cdots , K$$
+
+$$\sum_{j = 1}^J \beta_{ijk} - \beta_{i0k} = 0 \quad \forall i = 1 , \cdots , I - 1  \text{ and } \forall k = 1 , \cdots , K$$
+
+It leads to a $\left( I + \left( I + J + 1 \right) K \right) \times \left( (I + 1) (J + 1) K \right)$ constraint matrix $A$, which has rank $I + \left( I + J + 1 \right) K$.  
+
+1. We need to show that $\sum_{k = 1}^K \beta_{00k} = s_0$.
+
+\begin{align}
+\sum_{k = 1}^K \beta_{00k} &= \sum_{k = 1}^K \sum_{i = 1}^I \beta_{i0k} \\
+&= \sum_{i = 1}^I \sum_{k = 1}^K \beta_{i0k} \\
+&= \sum_{i = 1}^I s_i \\
+&= s_0
+\end{align}
+
+2. We need to show that $\sum_{j = 1}^J \beta_{I,j,k} - \beta_{I,0,k} = 0 \quad \forall k = 1 , \cdots , K$.
+
+\begin{align}
+\sum_{j = 1}^J \beta_{Ijk} &= \sum_{j = 1}^J \left( \beta_{0jk} - \sum_{i = 1}^{I - 1} \beta_{ijk} \right) \\
+&= \sum_{j = 1}^J \beta_{0jk} - \sum_{i = 1}^{I - 1} \sum_{j = 1}^J \beta_{ijk} \\
+&= \beta_{00k} - \sum_{i = 1}^{I - 1} \beta_{i0k} \\
+& = \beta_{I0k}
+\end{align}
+

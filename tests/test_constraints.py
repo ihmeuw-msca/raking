@@ -37,3 +37,24 @@ def test_constraints_2D():
     assert np.linalg.matrix_rank(A) == I + J - 1, \
         'The constraint matrix should have rank {}.'.format(I + J - 1)
 
+@pytest.fixture
+def test_constraints_3D():
+    # Generate balanced matrix
+    I = 3
+    J = 4
+    K = 5
+    rng = np.random.default_rng(0)
+    beta = rng.uniform(low=2.0, high=3.0, size=(I, J, K))
+    s1 = np.sum(beta, axis=0)
+    s2 = np.sum(beta, axis=1)
+    s3 = np.sum(beta, axis=2)
+    beta = beta.flatten(order='F')
+    # Generate the constraints
+    (A, s) = constraints_3D(s1, s2, s3, I, J, K)
+    # Verify that the constraint A beta = s is respected
+    assert np.allclose(np.matmul(A, beta), s), \
+        'For the constraints_2D function, the constraint A beta = s is not respected.'
+    # Verify that the matrix A has rank I * J + I * K + J * K - I - J - K + 1
+    assert np.linalg.matrix_rank(A) == I * J + I * K + J * K - I - J - K + 1, \
+        'The constraint matrix should have rank {}.'.format(I * J + I * K + J * K - I - J - K + 1)
+
