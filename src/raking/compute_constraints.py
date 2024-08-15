@@ -172,7 +172,7 @@ def constraints_3D(
         'The target sums over dimension 1 of the observation array must be a 2D Numpy array.'
     assert s1.shape[0] == J, \
         'The target sums over dimension 1 must have {} rows.'.format(J)
-    assert s1.shape[0] == K, \
+    assert s1.shape[1] == K, \
         'The target sums over dimension 1 must have {} columns.'.format(K)
 
     assert isinstance(s2, np.ndarray), \
@@ -181,7 +181,7 @@ def constraints_3D(
         'The target sums over dimension 2 of the observation array must be a 2D Numpy array.'
     assert s2.shape[0] == I, \
         'The target sums over dimension 2 must have {} rows.'.format(I)
-    assert s2.shape[0] == K, \
+    assert s2.shape[1] == K, \
         'The target sums over dimension 2 must have {} columns.'.format(K)
 
     assert isinstance(s3, np.ndarray), \
@@ -190,7 +190,7 @@ def constraints_3D(
         'The target sums over dimension 3 of the observation array must be a 2D Numpy array.'
     assert s3.shape[0] == I, \
         'The target sums over dimension 3 must have {} rows.'.format(I)
-    assert s3.shape[0] == J, \
+    assert s3.shape[1] == J, \
         'The target sums over dimension 3 must have {} columns.'.format(J)
 
     assert np.all(s1 >= 0.0), \
@@ -204,7 +204,7 @@ def constraints_3D(
         'The sums of the targets for dimension 1 and 2 must be equal.'
     assert np.allclose(np.sum(s2, axis=1), np.sum(s3, axis=1), rtol, atol), \
         'The sums of the targets for dimension 2 and 3 must be equal.'
-    assert np.allclose(np.sum(s1, axis=0), np.sum(s3, axis=1), rtol, atol), \
+    assert np.allclose(np.sum(s1, axis=1), np.sum(s3, axis=0), rtol, atol), \
         'The sums of the targets for dimension 1 and 3 must be equal.'
     
     A = np.zeros((I * J + I * K + J * K - I - J - K + 1, I * J * K))

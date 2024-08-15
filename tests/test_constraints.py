@@ -7,7 +7,7 @@ def test_constraints_1D():
     # Generate balanced vector
     I = 3
     rng = np.random.default_rng(0)
-    beta = rng.uniform(low=2.0, high=3.0, size=(I, 1))
+    beta = rng.uniform(low=2.0, high=3.0, size=I)
     s = np.sum(beta)
     # Generate the constraints
     (A, s) = constraints_1D(s, I)
@@ -57,7 +57,6 @@ def test_constraints_3D():
     # Verify that the matrix A has rank I * J + I * K + J * K - I - J - K + 1
     assert np.linalg.matrix_rank(A) == I * J + I * K + J * K - I - J - K + 1, \
         'The constraint matrix should have rank {}.'.format(I * J + I * K + J * K - I - J - K + 1)
-
 
 @pytest.fixture
 def test_constraints_USHD():
