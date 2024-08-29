@@ -169,7 +169,7 @@ otherwise the raking problem cannot have a solution.
 
 The chosen constraints are:
 
-$$ \sum_{i = 1}^I \beta{ijk} = s^1_{jk} \quad \forall j = 1 , \cdots , J - 1 \text{ and } \forall k = 1 , \cdots , K$$
+$$\sum_{i = 1}^I \beta{ijk} = s^1_{jk} \quad \forall j = 1 , \cdots , J - 1 \text{ and } \forall k = 1 , \cdots , K$$
 
 $$\sum_{j = 1}^J \beta{ijk} = s^2_{ik} \quad \forall k = 1 , \cdots , K - 1 \text{ and } \forall i = 1 , \cdots , I$$
 
