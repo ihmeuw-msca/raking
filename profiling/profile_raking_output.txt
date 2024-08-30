@@ -1,0 +1,79 @@
+MAE of constraints for chi2 linalg: 2.2536217831447477e-15
+MAE of constraints for chi2 svd: 4.062184305740765e-15
+MAE of constraints for chi2 cg1: 7.8178344898387e-07
+MAE of constraints for chi2 cg2: 0.0010940064664661403
+MAE of constraints for chi2 cg3: 7.8178344898387e-07
+MAE of constraints for chi2 cg4: 0.0010940064664661403
+MAE of constraints for chi2 minres1: 0.0005658772959318385
+MAE of constraints for chi2 minres2: 0.052340283887780316
+MAE of constraints for chi2 minres3: 0.0005658772959318385
+MAE of constraints for chi2 minres4: 0.052340283887780316
+
+
+MAE of constraints for entropic linalg: 4.0412312106495435e-15
+MAE of constraints for entropic svd: 3.832282290156525e-15
+MAE of constraints for entropic cg1: 1.457889971068211e-12
+MAE of constraints for entropic cg2: 7.192285115129287e-12
+MAE of constraints for entropic cg3: 1.457889971068211e-12
+MAE of constraints for entropic cg4: 7.192285115129287e-12
+MAE of constraints for entropic minres1: 5.396010806763712e-12
+MAE of constraints for entropic minres2: 9.544098049130062e-11
+MAE of constraints for entropic minres3: 5.396010806763712e-12
+MAE of constraints for entropic minres4: 9.544098049130062e-11
+
+
+Iterations for entropic linalg: 3
+Iterations for entropic svd: 3
+Iterations for entropic cg1: 3
+Iterations for entropic cg2: 5
+Iterations for entropic cg3: 3
+Iterations for entropic cg4: 5
+Iterations for entropic minres1: 6
+Iterations for entropic minres2: 63
+Iterations for entropic minres3: 6
+Iterations for entropic minres4: 63
+
+
+MAPE between beta chi2 - linalg and svd: 2.0650514349663505e-16
+MAPE between beta chi2 - linalg and cg1: 6.019184261653686e-08
+MAPE between beta chi2 linalg and cg2: 9.036330852360063e-05
+MAPE between beta chi2 linalg and cg3: 6.019184261653686e-08
+MAPE between beta chi2 linalg and cg4: 9.036330852360063e-05
+MAPE between beta chi2 - linalg and minres1: 6.0373928563694326e-05
+MAPE between beta chi2 linalg and minres2: 0.004497986233934829
+MAPE between beta chi2 linalg and minres3: 6.0373928563694326e-05
+MAPE between beta chi2 linalg and minres4: 0.004497986233934829
+
+
+MAPE between beta entropic - linalg and svd: 5.868674250136155e-17
+MAPE between beta entropic - linalg and cg1: 8.787902119675719e-14
+MAPE between beta entropic - linalg and cg2: 4.639094054577304e-13
+MAPE between beta entropic - linalg and cg3: 8.787902119675719e-14
+MAPE between beta entropic - linalg and cg4: 4.639094054577304e-13
+MAPE between beta entropic - linalg and minres1: 8.450111062202007e-13
+MAPE between beta entropic - linalg and minres2: 1.9126851804617782e-11
+MAPE between beta entropic - linalg and minres3: 8.450111062202007e-13
+MAPE between beta entropic - linalg and minres4: 1.9126851804617782e-11
+
+
+Difference between beta linalg - chi2 and entropic: 9.553176587096726e-05
+Timer unit: 1e-09 s
+
+  0.01 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:68 - constraints_USHD
+  2.03 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:210 - solve_system_cg
+  2.09 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:250 - solve_system_cg_maxiter
+  2.80 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:163 - solve_system_linalg
+  4.11 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:229 - solve_system_cg_rtol
+  4.37 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:271 - solve_system_cg_rtol_maxiter
+  5.00 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:374 - raking_chi2
+  5.28 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:332 - solve_system_minres_maxiter
+  5.89 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:292 - solve_system_minres
+ 17.73 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:182 - solve_system_svd
+ 64.19 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:353 - solve_system_minres_rtol_maxiter
+ 65.69 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:311 - solve_system_minres_rtol
+180.17 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:488 - raking_entropic
+Wrote profile results to profile_output.txt
+Wrote profile results to profile_output_2024-08-29T204720.txt
+Wrote profile results to profile_output.lprof
+To view details run:
+python -m line_profiler -rtmz profile_output.lprof

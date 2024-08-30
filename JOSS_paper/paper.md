@@ -111,6 +111,41 @@ and referenced from text using \autoref{fig:example}.
 Figure sizes can be customized by adding an optional second parameter:
 ![Caption for example figure.](figure.png){ width=20% }
 
+# Profiling
+
+## Raking part
+
+We test several Python functions to solve the linear system $A x = b$:
+
+- numpy.linalg.solve,
+- numpy.linalg.svd,
+- scipy.sparse.linalg.cg, and
+- scipy.sparse.linalg.minres.
+  
+For scipy.sparse.linalg.cg and scipy.sparse.linalg.minres, we test several values of the parameters:
+
+- $\text{rtol} = 1.0 10^{-5}$ and $\text{maxiter} = None$ (the default values),
+- $\text{rtol} = 1.0 10^{-2}$ and $\text{maxiter} = None$
+- $\text{rtol} = 1.0 10^{-5}$ and $\text{maxiter} = 100$
+- $\text{rtol} = 1.0 10^{-2}$ and $\text{maxiter} = 100$
+
+The linear system is solved once for the raking with the $\chi^2$ distance, but as may times as iterations for the raking wit the entropic distance. As the number of iterations may vary depending on the function used to solve the linear system, we compare the total computing time and the average time per iteration:
+	
+| Method | Parameters                                      | Iterations | Total time | Mean time |
+| :----- | :---------------------------------------------- | :--------: | :--------: | :-------: |
+| solve  |                                                 |  3         |  2.799     | 0.700     |
+| SVD    |                                                 |  3         | 17.733     | 4.433     |
+| CG     | Default                                         |  3         |  2.028     | 0.507     |
+|        | $\text{rtol} = 0.01$                            |  5         |  4.111     | 0.685     |
+|        | $\text{maxiter} = 100$                          |  3         |  2.089     | 0.522     |
+|        | $\text{rtol} = 0.01$ and $\text{maxiter} = 100$ |  5         |  4.375     | 0.729     |
+| MinRes | Default                                         |  6         |  5.887     | 0.841     |
+|        | $\text{rtol} = 0.01$                            |  6         |  5.282     | 0.755     |
+|        | $\text{maxiter} = 100$                          | 63         | 65.694     | 1.026     |
+|        | $\text{rtol} = 0.01$ and $\text{maxiter} = 100$ | 63         | 64.188     | 1.003     |
+
+The conjugate gradient method has a smaller computation time and a smaller number of iterations than the other methods tested to solve the linear system. The default values of the parameters lead to the smallest computation time. We chhose this method for the raking functions implemented in the package.
+
 # Acknowledgements
 
 We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong

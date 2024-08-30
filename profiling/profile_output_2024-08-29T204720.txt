@@ -1,0 +1,854 @@
+Timer unit: 1e-09 s
+
+Total time: 0.007935 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: constraints_USHD at line 68
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    68                                           @profile
+    69                                           def constraints_USHD(
+    70                                               s_cause: np.ndarray,
+    71                                               I: int,
+    72                                               J: int,
+    73                                               K: int,
+    74                                               rtol: float = 1e-05, 
+    75                                               atol:float = 1e-08
+    76                                           ) -> tuple[np.ndarray, np.ndarray]:
+    77                                               """Compute the constraints matrix A and the margins vector s for the USHD use case.
+    78                                                   
+    79                                               This will define the raking optimization problem:
+    80                                                   min_beta f(beta,y) s.t. A beta = s
+    81                                               The input margins are the 1 + I values:
+    82                                                   - beta_000 = Total number of deaths (all causes, all races, at the state level)
+    83                                                   - beta_i00 = Number of deaths for cause i (all races, at the state level)
+    84                                           
+    85                                               Parameters
+    86                                               ----------
+    87                                               s_cause : np.ndarray
+    88                                                   Total number of deaths (all causes, and each cause)
+    89                                               I : int
+    90                                                   Number of causes of deaths
+    91                                               J : int
+    92                                                   Number of races and ethnicities
+    93                                               K : int
+    94                                                   Number of counties
+    95                                               rtol : float
+    96                                                   Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    97                                               atol : float
+    98                                                   Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    99                                           
+   100                                               Returns
+   101                                               -------
+   102                                               A : np.ndarray
+   103                                                   (I + 2 * K + J * K + (I - 1) * K) * ((I + 1) * (J + 1) * K) constraints matrix
+   104                                               s : np.ndarray
+   105                                                   length (I + 2 * K + J * K + (I - 1) * K) margins vector
+   106                                               """
+   107         1       1000.0   1000.0      0.0      assert isinstance(I, int), \
+   108                                                   'The number of causes of deaths must be an integer.'
+   109         1       1000.0   1000.0      0.0      assert I > 1, \
+   110                                                   'The number of causes of deaths must be higher than 1.'
+   111         1          0.0      0.0      0.0      assert isinstance(J, int), \
+   112                                                   'The number of races and ethnicities must be an integer.'
+   113         1          0.0      0.0      0.0      assert J > 1, \
+   114                                                   'The number of races and ethnicities must be higher than 1.'
+   115         1       1000.0   1000.0      0.0      assert isinstance(K, int), \
+   116                                                   'The number of counties must be an integer.'
+   117         1          0.0      0.0      0.0      assert K > 1, \
+   118                                                   'The number of counties must be higher than 1.'
+   119                                           
+   120         1          0.0      0.0      0.0      assert isinstance(s_cause, np.ndarray), \
+   121                                                   'The margins vector for the causes of death must be a Numpy array.'
+   122         1          0.0      0.0      0.0      assert len(s_cause.shape) == 1, \
+   123                                                   'The margins vector for the causes of death must be a 1D Numpy array.'
+   124         1      24000.0  24000.0      0.3      assert np.all(s_cause >= 0.0), \
+   125                                                   'The number of deaths for each cause must be positive or null.'
+   126         1          0.0      0.0      0.0      assert len(s_cause) == I + 1, \
+   127                                                   'The length of the margins vector for the causes of death must be equal to 1 + number of causes.'
+   128                                               
+   129         1     120000.0 120000.0      1.5      assert np.allclose(s_cause[0], np.sum(s_cause[1:]), rtol, atol), \
+   130                                                   'The all-causes number of deaths must be equal to the sum of the numbers of deaths per cause.'
+   131                                           
+   132         1      10000.0  10000.0      0.1      A = np.zeros((I + 2 * K + J * K + (I - 1) * K, (I + 1) * (J + 1) * K))
+   133         1       1000.0   1000.0      0.0      s = np.zeros(I + 2 * K + J * K + (I - 1) * K)
+   134                                               # Constraint sum_k=0,...,K-1 beta_i,0,k = s_i for i=1,...,I
+   135         4       1000.0    250.0      0.0      for i in range(0, I):
+   136       765      86000.0    112.4      1.1          for k in range(0, K):
+   137       762     179000.0    234.9      2.3              A[i, k * (I + 1) * (J + 1) + i + 1] = 1
+   138         3       1000.0    333.3      0.0          s[i] = s_cause[i + 1]
+   139                                               # Constraint sum_i=1,...,I beta_i,0,k - beta_0,0,k = 0 for k=0,...,K-1
+   140       255      27000.0    105.9      0.3      for k in range(0, K):
+   141      1016     156000.0    153.5      2.0          for i in range(1, I + 1):
+   142       762     449000.0    589.2      5.7              A[I + k, k * (I + 1) * (J + 1) + i] = 1
+   143       254      53000.0    208.7      0.7          A[I + k, k * (I + 1) * (J + 1)] = -1
+   144                                               # Constraint sum_j=1,...,J beta_0,j,k - beta_0,0,k = 0 for k=0,...,K-1
+   145       255      17000.0     66.7      0.2      for k in range(0, K):
+   146      1524     211000.0    138.5      2.7          for j in range(1, J + 1):
+   147      1270     589000.0    463.8      7.4              A[I + K + k, k * (I + 1) * (J + 1) + j * (I + 1)] = 1
+   148       254      44000.0    173.2      0.6          A[I + K + k, k * (I + 1) * (J + 1)] = -1
+   149                                               # Constraint sum_i=1,...,I beta_i,j,k - beta_0,j,k = 0 for j=1,...,J and k=0,...,K-1
+   150       255      25000.0     98.0      0.3      for k in range(0, K):
+   151      1524     196000.0    128.6      2.5          for j in range(1, J + 1):
+   152      5080     686000.0    135.0      8.6              for i in range(1, I + 1):
+   153      3810    2592000.0    680.3     32.7                  A[I + 2 * K + k * J + j - 1, k * (I + 1) * (J + 1) + j * (I + 1) + i] = 1
+   154      1270     390000.0    307.1      4.9              A[I + 2 * K + k * J + j - 1, k * (I + 1) * (J + 1) + j * (I + 1)] = -1
+   155                                               # Constraint sum_j=1,...,J beta_i,j,k - beta_i,0,k = 0 for i=1,...,I and k=0,...,K-1
+   156       255      36000.0    141.2      0.5      for k in range(0, K):
+   157       762     111000.0    145.7      1.4          for i in range(1, I):
+   158      3048     350000.0    114.8      4.4              for j in range(1, J + 1):
+   159      2540    1435000.0    565.0     18.1                  A[I + 2 * K + J * K + k * (I - 1) + i - 1, k * (I + 1) * (J + 1) + j * (I + 1) + i] = 1
+   160       508     143000.0    281.5      1.8              A[I + 2 * K + J * K + k * (I - 1) + i - 1, k * (I + 1) * (J + 1) + i] = -1
+   161                                               return (A, s)
+
+Total time: 2.02777 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_cg at line 210
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   210                                           @profile
+   211                                           def solve_system_cg(
+   212                                               A: np.ndarray,
+   213                                               b: np.ndarray
+   214                                           ) -> np.ndarray:
+   215                                               """Solve A x = b using conjugate gradient.
+   216                                           
+   217                                               Parameters
+   218                                               ----------
+   219                                               A : np.ndarray
+   220                                               b : np.ndarray
+   221                                           
+   222                                               Returns
+   223                                               -------
+   224                                               x : np.ndarray
+   225                                               """    
+   226         4   84210000.0    2e+07      4.2      x = cg(A, b)[0]
+   227         2 1943564000.0    1e+09     95.8      return x
+
+Total time: 2.0889 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_cg_maxiter at line 250
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   250                                           @profile
+   251                                           def solve_system_cg_maxiter(
+   252                                               A: np.ndarray,
+   253                                               b: np.ndarray
+   254                                           ) -> np.ndarray:
+   255                                               """Solve A x = b using conjugate gradient.
+   256                                           
+   257                                               Set the number of iteration to 100.
+   258                                           
+   259                                               Parameters
+   260                                               ----------
+   261                                               A : np.ndarray
+   262                                               b : np.ndarray
+   263                                           
+   264                                               Returns
+   265                                               -------
+   266                                               x : np.ndarray
+   267                                               """
+   268         4   84817000.0    2e+07      4.1      x = cg(A, b, maxiter=100)[0]
+   269         2 2004084000.0    1e+09     95.9      return x
+
+Total time: 2.79881 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_linalg at line 163
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   163                                           @profile
+   164                                           def solve_system_linalg(
+   165                                               A: np.ndarray,
+   166                                               b: np.ndarray
+   167                                           ) -> np.ndarray:
+   168                                               """Solve A x = b using Numpy linalg.solve.
+   169                                           
+   170                                               Parameters
+   171                                               ----------
+   172                                               A : np.ndarray
+   173                                               b : np.ndarray
+   174                                           
+   175                                               Returns
+   176                                               -------
+   177                                               x : np.ndarray
+   178                                               """
+   179         4  752169000.0    2e+08     26.9      x = solve(A, b)
+   180         2 2046641000.0    1e+09     73.1      return x
+
+Total time: 4.11051 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_cg_rtol at line 229
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   229                                           @profile
+   230                                           def solve_system_cg_rtol(
+   231                                               A: np.ndarray,
+   232                                               b: np.ndarray
+   233                                           ) -> np.ndarray:
+   234                                               """Solve A x = b using conjugate gradient.
+   235                                           
+   236                                               Set the tolerance to 1e-2.
+   237                                           
+   238                                               Parameters
+   239                                               ----------
+   240                                               A : np.ndarray
+   241                                               b : np.ndarray
+   242                                           
+   243                                               Returns
+   244                                               -------
+   245                                               x : np.ndarray
+   246                                               """    
+   247         6   59288000.0    1e+07      1.4      x = cg(A, b, rtol=1e-2)[0]
+   248         4 4051221000.0    1e+09     98.6      return x
+
+Total time: 4.37468 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_cg_rtol_maxiter at line 271
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   271                                           @profile
+   272                                           def solve_system_cg_rtol_maxiter(
+   273                                               A: np.ndarray,
+   274                                               b: np.ndarray
+   275                                           ) -> np.ndarray:
+   276                                               """Solve A x = b using conjugate gradient.
+   277                                           
+   278                                               Set the tolerance to 1e-2 and the number of iteration to 100.
+   279                                           
+   280                                               Parameters
+   281                                               ----------
+   282                                               A : np.ndarray
+   283                                               b : np.ndarray
+   284                                           
+   285                                               Returns
+   286                                               -------
+   287                                               x : np.ndarray
+   288                                               """    
+   289         6   62660000.0    1e+07      1.4      x = cg(A, b, rtol=1e-2, maxiter=100)[0]
+   290         4 4312018000.0    1e+09     98.6      return x
+
+Total time: 4.99721 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: raking_chi2 at line 374
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   374                                           @profile
+   375                                           def raking_chi2(
+   376                                               y: np.ndarray,
+   377                                               A: np.ndarray,
+   378                                               s: np.ndarray,
+   379                                               q: np.ndarray = None,
+   380                                           ) -> tuple[np.ndarray, np.ndarray]:
+   381                                               """Raking using the chi2 distance f(beta, y) = (beta - y)^2 / 2y.
+   382                                           
+   383                                               This will solve the problem:
+   384                                                   min_beta 1/q f(beta, y) s.t. A beta = s
+   385                                           
+   386                                               Parameters
+   387                                               ----------
+   388                                               y : np.ndarray
+   389                                                   Vector of observations
+   390                                               A: np.ndarray
+   391                                                   Constraints matrix (output of a function from the compute_constraints module)
+   392                                               s: np.ndarray
+   393                                                   Margin vector (output of a function from the compute_constraints module)
+   394                                               q: np.ndarray
+   395                                                   Vector of weights (default to all 1)
+   396                                           
+   397                                               Returns
+   398                                               -------
+   399                                               betas: list
+   400                                                   List of vectors of reaked values (np.ndarray)
+   401                                               lambdas: list
+   402                                                   List of duals (needed for the uncertainty computation, np.ndarray)
+   403                                               """
+   404         1          0.0      0.0      0.0      assert isinstance(y, np.ndarray), \
+   405                                                   'The vector of observations should be a Numpy array.'
+   406         1       1000.0   1000.0      0.0      assert len(y.shape) == 1, \
+   407                                                   'The vector of observations should be a 1D Numpy array.'
+   408         1          0.0      0.0      0.0      if q is not None:
+   409                                                   assert isinstance(q, np.ndarray), \
+   410                                                       'The vector of weights should be a Numpy array.'
+   411                                                   assert len(y.shape) == 1, \
+   412                                                       'The vector of weights should be a 1D Numpy array.'
+   413                                                   assert len(y) == len(q), \
+   414                                                       'Observations and weights vectors should have the same length.'
+   415         1          0.0      0.0      0.0      assert isinstance(A, np.ndarray), \
+   416                                                   'The constraint matrix should be a Numpy array.'
+   417         1          0.0      0.0      0.0      assert len(A.shape) == 2, \
+   418                                                   'The constraints matrix should be a 2D Numpy array.'
+   419         1       1000.0   1000.0      0.0      assert isinstance(s, np.ndarray), \
+   420                                                   'The margins vector should be a Numpy array.'
+   421         1          0.0      0.0      0.0      assert len(s.shape) == 1, \
+   422                                                   'The margins vector should be a 1D Numpy array.'
+   423         1       5000.0   5000.0      0.0      assert np.shape(A)[0] == len(s), \
+   424                                                   'The number of linear constraints should be equal to the number of margins.'
+   425         1       1000.0   1000.0      0.0      assert np.shape(A)[1] == len(y), \
+   426                                                   'The number of coefficients for the linear constraints should be equal to the number of observations.'
+   427                                           
+   428         1          0.0      0.0      0.0      if q is None:
+   429         1       9000.0   9000.0      0.0          q = np.ones(len(y))
+   430         1   11711000.0    1e+07      0.2      s_hat = np.matmul(A, y)
+   431         1  338762000.0    3e+08      6.8      Phi = np.matmul(A, np.transpose(A * y * q))
+   432         1       1000.0   1000.0      0.0      lambdas = []
+   433         1          0.0      0.0      0.0      betas = []
+   434                                           
+   435                                               # linalg.solve
+   436         1  188209000.0    2e+08      3.8      lambda_k = solve_system_linalg(Phi, s_hat - s)
+   437         1    2671000.0    3e+06      0.1      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   438         1       5000.0   5000.0      0.0      lambdas.append(lambda_k)
+   439         1       1000.0   1000.0      0.0      betas.append(beta)
+   440                                               # SVD
+   441         1 4342535000.0    4e+09     86.9      lambda_k = solve_system_svd(Phi, s_hat - s)
+   442         1    2289000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   443         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   444         1          0.0      0.0      0.0      betas.append(beta)
+   445                                               # CG 1
+   446         1   22074000.0    2e+07      0.4      lambda_k = solve_system_cg(Phi, s_hat - s)
+   447         1    2133000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   448         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   449         1          0.0      0.0      0.0      betas.append(beta)
+   450                                               # CG 2
+   451         1    7667000.0    8e+06      0.2      lambda_k = solve_system_cg_rtol(Phi, s_hat - s)
+   452         1    2584000.0    3e+06      0.1      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   453         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   454         1       1000.0   1000.0      0.0      betas.append(beta)
+   455                                               # CG 3
+   456         1   21765000.0    2e+07      0.4      lambda_k = solve_system_cg_maxiter(Phi, s_hat - s)
+   457         1    2697000.0    3e+06      0.1      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   458         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   459         1          0.0      0.0      0.0      betas.append(beta)
+   460                                               # CG 4
+   461         1    7634000.0    8e+06      0.2      lambda_k = solve_system_cg_rtol_maxiter(Phi, s_hat - s)
+   462         1    2428000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   463         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   464         1          0.0      0.0      0.0      betas.append(beta)
+   465                                               # MinRes 1
+   466         1   13541000.0    1e+07      0.3      lambda_k = solve_system_minres(Phi, s_hat - s)
+   467         1    2098000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   468         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   469         1          0.0      0.0      0.0      betas.append(beta)
+   470                                               # MinRes 2
+   471         1    3143000.0    3e+06      0.1      lambda_k = solve_system_minres_rtol(Phi, s_hat - s)
+   472         1    2271000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   473         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   474         1          0.0      0.0      0.0      betas.append(beta)
+   475                                               # MinRes 3
+   476         1   12731000.0    1e+07      0.3      lambda_k = solve_system_minres_maxiter(Phi, s_hat - s)
+   477         1    2230000.0    2e+06      0.0      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   478         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   479         1          0.0      0.0      0.0      betas.append(beta)
+   480                                               # MinRes 4
+   481         1    3248000.0    3e+06      0.1      lambda_k = solve_system_minres_rtol_maxiter(Phi, s_hat - s)
+   482         1    2747000.0    3e+06      0.1      beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+   483         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   484         1          0.0      0.0      0.0      betas.append(beta)
+   485                                           
+   486                                               return (betas, lambdas)
+
+Total time: 5.28235 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_minres_maxiter at line 332
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   332                                           @profile
+   333                                           def solve_system_minres_maxiter(
+   334                                               A: np.ndarray,
+   335                                               b: np.ndarray
+   336                                           ) -> np.ndarray:
+   337                                               """Solve A x = b using minimum residual iteration.
+   338                                           
+   339                                               Set the number of iteration to 100.
+   340                                           
+   341                                               Parameters
+   342                                               ----------
+   343                                               A : np.ndarray
+   344                                               b : np.ndarray
+   345                                           
+   346                                               Returns
+   347                                               -------
+   348                                               x : np.ndarray
+   349                                               """    
+   350         7  112093000.0    2e+07      2.1      x = minres(A, b, maxiter=100)[0]
+   351         5 5170253000.0    1e+09     97.9      return x
+
+Total time: 5.88723 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_minres at line 292
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   292                                           @profile
+   293                                           def solve_system_minres(
+   294                                               A: np.ndarray,
+   295                                               b: np.ndarray
+   296                                           ) -> np.ndarray:
+   297                                               """Solve A x = b using minimum residual iteration.
+   298                                           
+   299                                               Parameters
+   300                                               ----------
+   301                                               A : np.ndarray
+   302                                               b : np.ndarray
+   303                                           
+   304                                               Returns
+   305                                               -------
+   306                                               x : np.ndarray
+   307                                               """    
+   308         7  117775000.0    2e+07      2.0      x = minres(A, b)[0]
+   309         5 5769457000.0    1e+09     98.0      return x
+
+Total time: 17.7327 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_svd at line 182
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   182                                           @profile
+   183                                           def solve_system_svd(
+   184                                               A: np.ndarray,
+   185                                               b: np.ndarray
+   186                                           ) -> np.ndarray:
+   187                                               """Solve A x = b by computing the SVD decomposition of A.
+   188                                           
+   189                                               Parameters
+   190                                               ----------
+   191                                               A : np.ndarray
+   192                                               b : np.ndarray
+   193                                           
+   194                                               Returns
+   195                                               -------
+   196                                               x : np.ndarray
+   197                                               """
+   198                                               # Compute the Moore-Penrose pseudoinverse of A
+   199         4        1e+10    4e+09     82.2      U, S, Vh = np.linalg.svd(A, full_matrices=True)
+   200         4      40000.0  10000.0      0.0      V = np.transpose(Vh)
+   201                                               # Invert diagonal matrix while dealing with 0 and near 0 values
+   202         4   12774000.0    3e+06      0.1      Sdiag = np.diag(S)
+   203         4   51049000.0    1e+07      0.3      Sdiag[np.abs(Sdiag) <= 1.0e-12] = 1.0e-12
+   204         4   16397000.0    4e+06      0.1      Sinv = 1.0 / Sdiag
+   205         4   42179000.0    1e+07      0.2      Sinv[np.abs(Sdiag) <= 1.0e-12] = 0.0
+   206         4  998482000.0    2e+08      5.6      A_plus = np.matmul(V, np.matmul(Sinv, np.transpose(U)))
+   207         4    1937000.0 484250.0      0.0      x = np.matmul(A_plus, b)
+   208         2 2037880000.0    1e+09     11.5      return x
+
+Total time: 64.1878 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_minres_rtol_maxiter at line 353
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   353                                           @profile
+   354                                           def solve_system_minres_rtol_maxiter(
+   355                                               A: np.ndarray,
+   356                                               b: np.ndarray
+   357                                           ) -> np.ndarray:
+   358                                               """Solve A x = b using minimum residual iteration.
+   359                                           
+   360                                               Set the tolerance to 1e-2 and the number of iteration to 100.
+   361                                           
+   362                                               Parameters
+   363                                               ----------
+   364                                               A : np.ndarray
+   365                                               b : np.ndarray
+   366                                           
+   367                                               Returns
+   368                                               -------
+   369                                               x : np.ndarray
+   370                                               """    
+   371        64  180478000.0    3e+06      0.3      x = minres(A, b, rtol=1e-2, maxiter=100)[0]
+   372        62        6e+10    1e+09     99.7      return x
+
+Total time: 65.6941 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: solve_system_minres_rtol at line 311
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   311                                           @profile
+   312                                           def solve_system_minres_rtol(
+   313                                               A: np.ndarray,
+   314                                               b: np.ndarray
+   315                                           ) -> np.ndarray:
+   316                                               """Solve A x = b using minimum residual iteration.
+   317                                           
+   318                                               Set the tolerance to 1e-2.
+   319                                           
+   320                                               Parameters
+   321                                               ----------
+   322                                               A : np.ndarray
+   323                                               b : np.ndarray
+   324                                           
+   325                                               Returns
+   326                                               -------
+   327                                               x : np.ndarray
+   328                                               """    
+   329        64  180128000.0    3e+06      0.3      x = minres(A, b, rtol=1e-2)[0]
+   330        62        7e+10    1e+09     99.7      return x
+
+Total time: 180.165 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py
+Function: raking_entropic at line 488
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   488                                           @profile
+   489                                           def raking_entropic(
+   490                                               y: np.ndarray,
+   491                                               A: np.ndarray,
+   492                                               s: np.ndarray,
+   493                                               q: np.ndarray = None,
+   494                                               gamma0: float = 1.0,
+   495                                               max_iter: int = 500
+   496                                           ) -> tuple[np.ndarray, np.ndarray, int]:
+   497                                               """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
+   498                                           
+   499                                               This will solve the problem:
+   500                                                   min_beta 1/q f(beta, y) s.t. A beta = s
+   501                                           
+   502                                               Parameters
+   503                                               ----------
+   504                                               y : np.ndarray
+   505                                                   Vector of observations
+   506                                               A: np.ndarray
+   507                                                   Constraints matrix (output of a function from the compute_constraints module)
+   508                                               s: np.ndarray
+   509                                                   Margin vector (output of a function from the compute_constraints module)
+   510                                               q: np.ndarray
+   511                                                   Vector of weights (default to all 1)
+   512                                               gamma0: float
+   513                                                   Initial value for line search
+   514                                               max_iter: int
+   515                                                   Number of iterations for Newton's root finding method
+   516                                           
+   517                                               Returns
+   518                                               -------
+   519                                               beta: np.ndarray
+   520                                                   Vector of reaked values
+   521                                               lambda_k: np.ndarray
+   522                                                   Dual (needed for th uncertainty computation)
+   523                                               iters_eps: int
+   524                                                   Number of iterations until convergence
+   525                                               """
+   526         1       3000.0   3000.0      0.0      assert isinstance(y, np.ndarray), \
+   527                                                   'The vector of observations should be a Numpy array.'
+   528         1       2000.0   2000.0      0.0      assert len(y.shape) == 1, \
+   529                                                   'The vector of observations should be a 1D Numpy array.'
+   530         1       1000.0   1000.0      0.0      if q is not None:
+   531                                                   assert isinstance(q, np.ndarray), \
+   532                                                       'The vector of weights should be a Numpy array.'
+   533                                                   assert len(y.shape) == 1, \
+   534                                                       'The vector of weights should be a 1D Numpy array.'
+   535                                                   assert len(y) == len(q), \
+   536                                                       'Observations and weights vectors should have the same length.'
+   537         1          0.0      0.0      0.0      assert isinstance(A, np.ndarray), \
+   538                                                   'The constraint matrix should be a Numpy array.'
+   539         1          0.0      0.0      0.0      assert len(A.shape) == 2, \
+   540                                                   'The constraints matrix should be a 2D Numpy array.'
+   541         1          0.0      0.0      0.0      assert isinstance(s, np.ndarray), \
+   542                                                   'The margins vector should be a Numpy array.'
+   543         1          0.0      0.0      0.0      assert len(s.shape) == 1, \
+   544                                                   'The margins vector should be a 1D Numpy array.'
+   545         1       5000.0   5000.0      0.0      assert np.shape(A)[0] == len(s), \
+   546                                                   'The number of linear constraints should be equal to the number of margins.'
+   547         1       1000.0   1000.0      0.0      assert np.shape(A)[1] == len(y), \
+   548                                                   'The number of coefficients for the linear constraints should be equal to the number of observations.'
+   549                                           
+   550         1          0.0      0.0      0.0      if q is None:
+   551         1      14000.0  14000.0      0.0          q = np.ones(len(y))
+   552         1    1270000.0    1e+06      0.0      s_hat = np.matmul(A, y)
+   553         1          0.0      0.0      0.0      lambdas = []
+   554         1       1000.0   1000.0      0.0      betas = []
+   555         1          0.0      0.0      0.0      iters_eps = []
+   556                                           
+   557                                               # linalg.solve
+   558         1       8000.0   8000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   559         1      26000.0  26000.0      0.0      beta = np.copy(y)
+   560         1          0.0      0.0      0.0      epsilon = 1.0
+   561         1          0.0      0.0      0.0      iter_eps = 0
+   562         4      15000.0   3750.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   563         3   11876000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   564         3   50152000.0    2e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   565         3 3137307000.0    1e+09      1.7          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   566         3  564144000.0    2e+08      0.3          delta_lambda = solve_system_linalg(J, Phi - s_hat + s)
+   567         3       1000.0    333.3      0.0          gamma = gamma0
+   568         3          0.0      0.0      0.0          iter_gam = 0
+   569         3      59000.0  19666.7      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   570         3    7085000.0    2e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   571         3       5000.0   1666.7      0.0          if iter_eps > 0:
+   572         4    2358000.0 589500.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   573         2          0.0      0.0      0.0                    (iter_gam < max_iter):
+   574                                                           gamma = gamma / 2.0
+   575                                                           iter_gam = iter_gam + 1
+   576                                                           lambda_k = lambda_k - gamma * delta_lambda
+   577                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   578         3    3567000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   579         3       2000.0    666.7      0.0          iter_eps = iter_eps + 1
+   580         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   581         1          0.0      0.0      0.0      betas.append(beta)
+   582         1          0.0      0.0      0.0      iters_eps.append(iter_eps)
+   583                                           
+   584                                               # SVD
+   585         1       6000.0   6000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   586         1       7000.0   7000.0      0.0      beta = np.copy(y)
+   587         1          0.0      0.0      0.0      epsilon = 1.0
+   588         1          0.0      0.0      0.0      iter_eps = 0
+   589         4      17000.0   4250.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   590         3   11002000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   591         3   46750000.0    2e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   592         3 3064279000.0    1e+09      1.7          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   593         3        1e+10    4e+09      6.3          delta_lambda = solve_system_svd(J, Phi - s_hat + s)
+   594         3          0.0      0.0      0.0          gamma = gamma0
+   595         3       1000.0    333.3      0.0          iter_gam = 0
+   596         3      61000.0  20333.3      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   597         3    8268000.0    3e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   598         3       5000.0   1666.7      0.0          if iter_eps > 0:
+   599         4    2487000.0 621750.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   600         2          0.0      0.0      0.0                    (iter_gam < max_iter):
+   601                                                           gamma = gamma / 2.0
+   602                                                           iter_gam = iter_gam + 1
+   603                                                           lambda_k = lambda_k - gamma * delta_lambda
+   604                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   605         3    3574000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   606         3       2000.0    666.7      0.0          iter_eps = iter_eps + 1
+   607         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   608         1          0.0      0.0      0.0      betas.append(beta)
+   609         1          0.0      0.0      0.0      iters_eps.append(iter_eps)
+   610                                           
+   611                                               # CG 1
+   612         1       3000.0   3000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   613         1       8000.0   8000.0      0.0      beta = np.copy(y)
+   614         1          0.0      0.0      0.0      epsilon = 1.0
+   615         1          0.0      0.0      0.0      iter_eps = 0
+   616         4      12000.0   3000.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   617         3   10079000.0    3e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   618         3   44296000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   619         3 2830560000.0    9e+08      1.6          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   620         3   62270000.0    2e+07      0.0          delta_lambda = solve_system_cg(J, Phi - s_hat + s)
+   621         3          0.0      0.0      0.0          gamma = gamma0
+   622         3          0.0      0.0      0.0          iter_gam = 0
+   623         3      16000.0   5333.3      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   624         3    7253000.0    2e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   625         3       4000.0   1333.3      0.0          if iter_eps > 0:
+   626         4    2140000.0 535000.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   627         2          0.0      0.0      0.0                    (iter_gam < max_iter):
+   628                                                           gamma = gamma / 2.0
+   629                                                           iter_gam = iter_gam + 1
+   630                                                           lambda_k = lambda_k - gamma * delta_lambda
+   631                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   632         3    3256000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   633         3       1000.0    333.3      0.0          iter_eps = iter_eps + 1
+   634         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   635         1          0.0      0.0      0.0      betas.append(beta)
+   636         1       1000.0   1000.0      0.0      iters_eps.append(iter_eps)
+   637                                           
+   638                                               # CG 2
+   639         1       3000.0   3000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   640         1       7000.0   7000.0      0.0      beta = np.copy(y)
+   641         1          0.0      0.0      0.0      epsilon = 1.0
+   642         1          0.0      0.0      0.0      iter_eps = 0
+   643         6      22000.0   3666.7      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   644         5   16002000.0    3e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   645         5   65354000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   646         5 4930210000.0    1e+09      2.7          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   647         5   51817000.0    1e+07      0.0          delta_lambda = solve_system_cg_rtol(J, Phi - s_hat + s)
+   648         5       1000.0    200.0      0.0          gamma = gamma0
+   649         5       1000.0    200.0      0.0          iter_gam = 0
+   650         5      36000.0   7200.0      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   651         5   11850000.0    2e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   652         5       5000.0   1000.0      0.0          if iter_eps > 0:
+   653         8    4621000.0 577625.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   654         4       1000.0    250.0      0.0                    (iter_gam < max_iter):
+   655                                                           gamma = gamma / 2.0
+   656                                                           iter_gam = iter_gam + 1
+   657                                                           lambda_k = lambda_k - gamma * delta_lambda
+   658                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   659         5    5445000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   660         5       3000.0    600.0      0.0          iter_eps = iter_eps + 1
+   661         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   662         1          0.0      0.0      0.0      betas.append(beta)
+   663         1          0.0      0.0      0.0      iters_eps.append(iter_eps)
+   664                                           
+   665                                               # CG 3
+   666         1       3000.0   3000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   667         1       7000.0   7000.0      0.0      beta = np.copy(y)
+   668         1          0.0      0.0      0.0      epsilon = 1.0
+   669         1       1000.0   1000.0      0.0      iter_eps = 0
+   670         4      14000.0   3500.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   671         3   11022000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   672         3   38521000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   673         3 3029746000.0    1e+09      1.7          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   674         3   63183000.0    2e+07      0.0          delta_lambda = solve_system_cg_maxiter(J, Phi - s_hat + s)
+   675         3          0.0      0.0      0.0          gamma = gamma0
+   676         3          0.0      0.0      0.0          iter_gam = 0
+   677         3      21000.0   7000.0      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   678         3    8062000.0    3e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   679         3       6000.0   2000.0      0.0          if iter_eps > 0:
+   680         4    2272000.0 568000.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   681         2       1000.0    500.0      0.0                    (iter_gam < max_iter):
+   682                                                           gamma = gamma / 2.0
+   683                                                           iter_gam = iter_gam + 1
+   684                                                           lambda_k = lambda_k - gamma * delta_lambda
+   685                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   686         3    3602000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   687         3          0.0      0.0      0.0          iter_eps = iter_eps + 1
+   688         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   689         1          0.0      0.0      0.0      betas.append(beta)
+   690         1       1000.0   1000.0      0.0      iters_eps.append(iter_eps)
+   691                                           
+   692                                               # CG 4
+   693         1       3000.0   3000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   694         1       7000.0   7000.0      0.0      beta = np.copy(y)
+   695         1          0.0      0.0      0.0      epsilon = 1.0
+   696         1          0.0      0.0      0.0      iter_eps = 0
+   697         6      18000.0   3000.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   698         5   19104000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   699         5   63613000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   700         5 5272080000.0    1e+09      2.9          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   701         5   55237000.0    1e+07      0.0          delta_lambda = solve_system_cg_rtol_maxiter(J, Phi - s_hat + s)
+   702         5          0.0      0.0      0.0          gamma = gamma0
+   703         5       3000.0    600.0      0.0          iter_gam = 0
+   704         5      33000.0   6600.0      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   705         5   12191000.0    2e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   706         5       6000.0   1200.0      0.0          if iter_eps > 0:
+   707         8    4520000.0 565000.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   708         4          0.0      0.0      0.0                    (iter_gam < max_iter):
+   709                                                           gamma = gamma / 2.0
+   710                                                           iter_gam = iter_gam + 1
+   711                                                           lambda_k = lambda_k - gamma * delta_lambda
+   712                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   713         5    6106000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   714         5       2000.0    400.0      0.0          iter_eps = iter_eps + 1
+   715         1       2000.0   2000.0      0.0      lambdas.append(lambda_k)
+   716         1          0.0      0.0      0.0      betas.append(beta)
+   717         1       1000.0   1000.0      0.0      iters_eps.append(iter_eps)
+   718                                           
+   719                                               # MinRes 1
+   720         1       2000.0   2000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   721         1       8000.0   8000.0      0.0      beta = np.copy(y)
+   722         1          0.0      0.0      0.0      epsilon = 1.0
+   723         1          0.0      0.0      0.0      iter_eps = 0
+   724         7      70000.0  10000.0      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   725         6   22729000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   726         6   89108000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   727         6 6700644000.0    1e+09      3.7          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   728         6  104515000.0    2e+07      0.1          delta_lambda = solve_system_minres(J, Phi - s_hat + s)
+   729         6       2000.0    333.3      0.0          gamma = gamma0
+   730         6       1000.0    166.7      0.0          iter_gam = 0
+   731         6      30000.0   5000.0      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   732         6   17487000.0    3e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   733         6       8000.0   1333.3      0.0          if iter_eps > 0:
+   734        10    6251000.0 625100.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   735         5       1000.0    200.0      0.0                    (iter_gam < max_iter):
+   736                                                           gamma = gamma / 2.0
+   737                                                           iter_gam = iter_gam + 1
+   738                                                           lambda_k = lambda_k - gamma * delta_lambda
+   739                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   740         6    8052000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   741         6       1000.0    166.7      0.0          iter_eps = iter_eps + 1
+   742         1       1000.0   1000.0      0.0      lambdas.append(lambda_k)
+   743         1       1000.0   1000.0      0.0      betas.append(beta)
+   744         1          0.0      0.0      0.0      iters_eps.append(iter_eps)
+   745                                           
+   746                                               # MinRes 2
+   747         1       3000.0   3000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   748         1       7000.0   7000.0      0.0      beta = np.copy(y)
+   749         1          0.0      0.0      0.0      epsilon = 1.0
+   750         1          0.0      0.0      0.0      iter_eps = 0
+   751        64     821000.0  12828.1      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   752        63  248768000.0    4e+06      0.1          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   753        63  910705000.0    1e+07      0.5          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   754        63        7e+10    1e+09     36.2          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   755        63  179466000.0    3e+06      0.1          delta_lambda = solve_system_minres_rtol(J, Phi - s_hat + s)
+   756        63      13000.0    206.3      0.0          gamma = gamma0
+   757        63      12000.0    190.5      0.0          iter_gam = 0
+   758        63     269000.0   4269.8      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   759        63  184288000.0    3e+06      0.1          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   760        63     101000.0   1603.2      0.0          if iter_eps > 0:
+   761       124   81550000.0 657661.3      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   762        62      22000.0    354.8      0.0                    (iter_gam < max_iter):
+   763                                                           gamma = gamma / 2.0
+   764                                                           iter_gam = iter_gam + 1
+   765                                                           lambda_k = lambda_k - gamma * delta_lambda
+   766                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   767        63   81500000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   768        63     983000.0  15603.2      0.0          iter_eps = iter_eps + 1
+   769         1      15000.0  15000.0      0.0      lambdas.append(lambda_k)
+   770         1      14000.0  14000.0      0.0      betas.append(beta)
+   771         1      14000.0  14000.0      0.0      iters_eps.append(iter_eps)
+   772                                           
+   773                                               # MinRes 3
+   774         1      17000.0  17000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   775         1      21000.0  21000.0      0.0      beta = np.copy(y)
+   776         1      14000.0  14000.0      0.0      epsilon = 1.0
+   777         1      15000.0  15000.0      0.0      iter_eps = 0
+   778         7     143000.0  20428.6      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   779         6   22569000.0    4e+06      0.0          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   780         6   76681000.0    1e+07      0.0          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   781         6 6036286000.0    1e+09      3.4          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   782         6   99711000.0    2e+07      0.1          delta_lambda = solve_system_minres_maxiter(J, Phi - s_hat + s)
+   783         6      97000.0  16166.7      0.0          gamma = gamma0
+   784         6      92000.0  15333.3      0.0          iter_gam = 0
+   785         6     111000.0  18500.0      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   786         6   15055000.0    3e+06      0.0          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   787         6      98000.0  16333.3      0.0          if iter_eps > 0:
+   788        10    6292000.0 629200.0      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   789         5      76000.0  15200.0      0.0                    (iter_gam < max_iter):
+   790                                                           gamma = gamma / 2.0
+   791                                                           iter_gam = iter_gam + 1
+   792                                                           lambda_k = lambda_k - gamma * delta_lambda
+   793                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   794         6    7347000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   795         6      94000.0  15666.7      0.0          iter_eps = iter_eps + 1
+   796         1      17000.0  17000.0      0.0      lambdas.append(lambda_k)
+   797         1      15000.0  15000.0      0.0      betas.append(beta)
+   798         1      15000.0  15000.0      0.0      iters_eps.append(iter_eps)
+   799                                           
+   800                                               # MinRes 4
+   801         1      19000.0  19000.0      0.0      lambda_k = np.zeros(A.shape[0])
+   802         1      22000.0  22000.0      0.0      beta = np.copy(y)
+   803         1      16000.0  16000.0      0.0      epsilon = 1.0
+   804         1      16000.0  16000.0      0.0      iter_eps = 0
+   805        64    1478000.0  23093.8      0.0      while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+   806        63  247255000.0    4e+06      0.1          Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
+   807        63  861536000.0    1e+07      0.5          D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+   808        63        6e+10    1e+09     35.3          J = np.matmul(np.matmul(A, D), np.transpose(A))
+   809        63  180964000.0    3e+06      0.1          delta_lambda = solve_system_minres_rtol_maxiter(J, Phi - s_hat + s)
+   810        63    1073000.0  17031.7      0.0          gamma = gamma0
+   811        63    1106000.0  17555.6      0.0          iter_gam = 0
+   812        63    1366000.0  21682.5      0.0          lambda_k = lambda_k - gamma * delta_lambda
+   813        63  179561000.0    3e+06      0.1          beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   814        63    1206000.0  19142.9      0.0          if iter_eps > 0:
+   815       124   81165000.0 654556.5      0.0              while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
+   816        62    1278000.0  20612.9      0.0                    (iter_gam < max_iter):
+   817                                                           gamma = gamma / 2.0
+   818                                                           iter_gam = iter_gam + 1
+   819                                                           lambda_k = lambda_k - gamma * delta_lambda
+   820                                                           beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+   821        63   80749000.0    1e+06      0.0          epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+   822        63    1171000.0  18587.3      0.0          iter_eps = iter_eps + 1
+   823         1      21000.0  21000.0      0.0      lambdas.append(lambda_k)
+   824         1      19000.0  19000.0      0.0      betas.append(beta)
+   825         1      19000.0  19000.0      0.0      iters_eps.append(iter_eps)
+   826                                           
+   827                                               return (betas, lambdas, iters_eps)
+
+  0.01 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:68 - constraints_USHD
+  2.03 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:210 - solve_system_cg
+  2.09 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:250 - solve_system_cg_maxiter
+  2.80 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:163 - solve_system_linalg
+  4.11 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:229 - solve_system_cg_rtol
+  4.37 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:271 - solve_system_cg_rtol_maxiter
+  5.00 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:374 - raking_chi2
+  5.28 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:332 - solve_system_minres_maxiter
+  5.89 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:292 - solve_system_minres
+ 17.73 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:182 - solve_system_svd
+ 64.19 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:353 - solve_system_minres_rtol_maxiter
+ 65.69 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:311 - solve_system_minres_rtol
+180.17 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_raking.py:488 - raking_entropic
