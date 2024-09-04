@@ -18,19 +18,19 @@ def raking_chi2(
     ----------
     y : np.ndarray
         Vector of observations
-    A: np.ndarray
+    A : np.ndarray
         Constraints matrix (output of a function from the compute_constraints module)
-    s: np.ndarray
+    s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
-    q: np.ndarray
+    q : np.ndarray
         Vector of weights (default to all 1)
 
     Returns
     -------
-    beta: np.ndarray
-        Vector of reaked values
-    lambda_k: np.ndarray
-        Dual (needed for th uncertainty computation)
+    beta : np.ndarray
+        Vector of raked values
+    lambda_k : np.ndarray
+        Dual (needed for the uncertainty computation)
     """
     assert isinstance(y, np.ndarray), \
         'The vector of observations should be a Numpy array.'
@@ -81,24 +81,24 @@ def raking_entropic(
     ----------
     y : np.ndarray
         Vector of observations
-    A: np.ndarray
+    A : np.ndarray
         Constraints matrix (output of a function from the compute_constraints module)
-    s: np.ndarray
+    s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
-    q: np.ndarray
+    q : np.ndarray
         Vector of weights (default to all 1)
-    gamma0: float
+    gamma0 : float
         Initial value for line search
-    max_iter: int
+    max_iter : int
         Number of iterations for Newton's root finding method
 
     Returns
     -------
-    beta: np.ndarray
+    beta : np.ndarray
         Vector of reaked values
-    lambda_k: np.ndarray
+    lambda_k : np.ndarray
         Dual (needed for th uncertainty computation)
-    iters_eps: int
+    iters_eps : int
         Number of iterations until convergence
     """
     assert isinstance(y, np.ndarray), \
@@ -108,7 +108,7 @@ def raking_entropic(
     if q is not None:
         assert isinstance(q, np.ndarray), \
             'The vector of weights should be a Numpy array.'
-        assert len(y.shape) == 1, \
+        assert len(q.shape) == 1, \
             'The vector of weights should be a 1D Numpy array.'
         assert len(y) == len(q), \
             'Observations and weights vectors should have the same length.'
@@ -170,26 +170,26 @@ def raking_general(
     ----------
     y : np.ndarray
         Vector of observations
-    A: np.ndarray
+    A : np.ndarray
         Constraints matrix (output of a function from the compute_constraints module)
-    s: np.ndarray
+    s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
-    alpha: float
+    alpha : float
         Parameter of the distance function, alpha=1 is the chi2 distance, alpha=0 is the entropic distance
-    q: np.ndarray
+    q : np.ndarray
         Vector of weights (default to all 1)
-    gamma0: float
+    gamma0 : float
         Initial value for line search
-    max_iter: int
+    max_iter : int
         Number of iterations for Newton's root finding method
 
     Returns
     -------
-    beta: np.ndarray
+    beta : np.ndarray
         Vector of reaked values
-    lambda_k: np.ndarray
+    lambda_k : np.ndarray
         Dual (needed for th uncertainty computation)
-    iters_eps: int
+    iters_eps : int
         Number of iterations until convergence
     """
     assert isinstance(y, np.ndarray), \
@@ -215,6 +215,8 @@ def raking_general(
         'The number of linear constraints should be equal to the number of margins.'
     assert np.shape(A)[1] == len(y), \
         'The number of coefficients for the linear constraints should be equal to the number of observations.'
+    assert isinstance(alpha, (int, float)), \
+        'The parameter of the distance function should be an integer or a float.'
 
     if q is None:
         q = np.ones(len(y))
@@ -288,28 +290,28 @@ def raking_logit(
     ----------
     y : np.ndarray
         Vector of observations
-    A: np.ndarray
+    A : np.ndarray
         Constraints matrix (output of a function from the compute_constraints module)
-    s: np.ndarray
+    s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
-    l: np.ndarray
+    l : np.ndarray
         Lower bounds for the observations
-    h: np.ndarray
+    h : np.ndarray
         Upper bounds for the observations
-    q: np.ndarray
+    q : np.ndarray
         Vector of weights (default to all 1)
-    gamma0: float
+    gamma0 : float
         Initial value for line search
-    max_iter: int
+    max_iter : int
         Number of iterations for Newton's root finding method
 
     Returns
     -------
-    beta: np.ndarray
+    beta : np.ndarray
         Vector of reaked values
-    lambda_k: np.ndarray
+    lambda_k : np.ndarray
         Dual (needed for th uncertainty computation)
-    iters_eps: int
+    iters_eps : int
         Number of iterations until convergence
     """
     assert isinstance(y, np.ndarray), \

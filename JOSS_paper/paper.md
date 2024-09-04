@@ -129,7 +129,7 @@ For scipy.sparse.linalg.cg and scipy.sparse.linalg.minres, we test several value
 - $\text{rtol} = 1.0 10^{-5}$ and $\text{maxiter} = 100$
 - $\text{rtol} = 1.0 10^{-2}$ and $\text{maxiter} = 100$
 
-The linear system is solved once for the raking with the $\chi^2$ distance, but as may times as iterations for the raking wit the entropic distance. As the number of iterations may vary depending on the function used to solve the linear system, we compare the total computing time and the average time per iteration:
+The linear system is solved once for the raking with the $\chi^2$ distance, but as may times as iterations for the raking wit the entropic distance. As the number of iterations may vary depending on the function used to solve the linear system, we compare the total computing time and the average time per iteration. The size of the matrix A is taken to be equal to the biggest matrix size used in the application part of our previous paper (citation of raking paper here), that is $2289 \times 2289$.
 	
 | Method | Parameters                                      | Iterations | Total time | Mean time |
 | :----- | :---------------------------------------------- | :--------: | :--------: | :-------: |
@@ -143,8 +143,20 @@ The linear system is solved once for the raking with the $\chi^2$ distance, but 
 |        | $\text{rtol} = 0.01$                            |  6         |  5.282     | 0.755     |
 |        | $\text{maxiter} = 100$                          | 63         | 65.694     | 1.026     |
 |        | $\text{rtol} = 0.01$ and $\text{maxiter} = 100$ | 63         | 64.188     | 1.003     |
+Table 1: Computation time of the solving methods used for the raking part.
 
-The conjugate gradient method has a smaller computation time and a smaller number of iterations than the other methods tested to solve the linear system. The default values of the parameters lead to the smallest computation time. We chhose this method for the raking functions implemented in the package.
+The conjugate gradient method has a smaller computation time and a smaller number of iterations than the other methods tested to solve the linear system. The default values of the parameters lead to the smallest computation time. We choose this method for the raking functions implemented in the package.
+
+## Uncertainty part
+
+We test several Python functions to solve the linear system $A X = B$, where $X4 and $B$ are matrices instead of vectors:
+
+- scipy.sparse.linalg.cg, and 
+- scipy.sparse.linalg.spsolve.
+
+We compare the computing time between the two solving methods for different sizes of the matrix $A$. For comparison, in the three examples highlighted in our previous paper, the matrix A had sizes $102 \times 102$, $1158 \times 1158$ and $8385 \times 8385$.
+
+![Computation time of the solving methods used for the uncertainty part.\label{fig:profile_uncertainty}](../profiling/profiling_uncertainty.png)
 
 # Acknowledgements
 

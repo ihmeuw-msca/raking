@@ -1,0 +1,13 @@
+Timer unit: 1e-09 s
+
+  0.01 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:69 - constraints_USHD
+  0.17 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:164 - raking_chi2
+  1.55 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:226 - raking_entropic
+  8.61 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:337 - solve_system_spsolve
+178.87 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:315 - solve_system_lu
+188.28 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_uncertainty.py:357 - compute_gradient
+Wrote profile results to profile_output.txt
+Wrote profile results to profile_output_2024-09-03T233911.txt
+Wrote profile results to profile_output.lprof
+To view details run:
+python -m line_profiler -rtmz profile_output.lprof
