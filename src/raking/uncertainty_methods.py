@@ -1,14 +1,79 @@
 """Module with methods to propagate the uncertainties through the raking process"""
 
-def delta_method(dh_x, dh_y, sigma_xx, sigma_yy, sigma_xy):
+def compute_covariance(
+    Dphi_y: np.ndarray,
+    Dphi_s: np.ndarray,
+    sigma_yy: np.ndarray,
+    sigma_ss: np.ndarray,
+    sigma_ys: np.ndarray
+) -> np.ndarray:
+    """Compute the covariance matrix of the raked values.
+
+    The covariance matrix of the raked values is phi' Sigma phi'T
+    where phi' is the matrix of the partial derivatives of the raked values beta
+    with respect to the observations y and margins s.
+
+    Parameters
+    ----------
+    dPhi_y : np.ndarray
+        Derivatives with respect to the observations
+    Dphi_s : np.ndarray
+        Derivatives with respect to the margins
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    covariance : np.ndarray
+        Covariance matrix of the raked values
     """
-    """
-    dh = np.concatenate((dh_x, dh_y), axis=0)
+    assert isinstance(dPhi_y, np.ndarray), \
+        'The derivatives matrix with respect to the observations should be a Numpy array.'
+    assert len(dPhi_y.shape) == 2, \
+        'The derivatives matrix with respect to the observations should be a 2D Numpy array.'
+    assert np.shape(dPhi_y)[0] == np.shape(dPhi_y)[1], \
+        'The derivatives matrix with respect to the observations should be a square matrix.'
+    assert isinstance(dPhi_s, np.ndarray), \
+        'The derivatives matrix with respect to the margins should be a Numpy array.'
+    assert len(dPhi_s.shape) == 2, \
+        'The derivatives matrix with respect to the margins should be a 2D Numpy array.'
+    assert isinstance(sigma_yy, np.ndarray), \
+        'The covariance matrix of the observations should be a Numpy array.'
+    assert len(sigma_yy.shape) == 2, \
+        'The covariance matrix of the observations should be a 2D Numpy array.'
+    assert np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1], \
+        'The covariance matrix of the observations should be a square matrix.'
+    assert isinstance(sigma_ss, np.ndarray), \
+        'The covariance matrix of the margins should be a Numpy array.'
+    assert len(sigma_ss.shape) == 2, \
+        'The covariance matrix of the margins should be a 2D Numpy array.'
+    assert np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1], \
+        'The covariance matrix of the margins should be a square matrix.'
+    assert isinstance(sigma_ys, np.ndarray), \
+        'The covariance matrix of the observations and margins should be a Numpy array.'
+    assert len(sigma_ys.shape) == 2, \
+        'The covariance matrix of the observations and margins should be a 2D Numpy array.'
+    assert np.shape(Dphi_y)[0] == np.shape(Dphi_s)[0], \
+        'The derivative matrices with respect to the observations and the margins should have the same number of rows.'
+    assert np.shape(Dphi_y)[0] == np.shape(sigma_yy)[0], \
+        'The derivative matrix with respect to the observations and the covariance matrix of the observations should have the same size.'
+    assert np.shape(Dphi_s)[1] == np.shape(sigma_ss)[1], \
+        'The derivative matrix with respect to the margins and the covariance matrix of the margins should have the same number of columns.'
+    assert np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0], \
+        'The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations.'
+    assert np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1], \
+        'The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins.'
+    
+    dPhi = np.concatenate((dPhi_y, dPhi_s), axis=1)
     sigma = np.concatenate(( \
-        np.concatenate((sigma_xx, sigma_xy), axis=1), \
-        np.concatenate((np.transpose(sigma_xy), sigma_yy), axis=1)), axis=0)
-    variance = np.matmul(np.transpose(dh), np.matmul(sigma, dh))
-    return variance
+        np.concatenate((sigma_yy, sigma_ys), axis=1), \
+        np.concatenate((np.transpose(sigma_ys), sigma_ss), axis=1)), axis=0)
+    covariance = np.matmul(dPhi, np.matmul(sigma, np.transpose(dPhi)))
+    return covariance
 
 def compute_gradient(
     beta_0: np.ndarray,
