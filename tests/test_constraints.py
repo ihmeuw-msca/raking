@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D, constraints_USHD
 
-@pytest.fixture
 def test_constraints_1D():
     # Generate balanced vector
     I = 3
@@ -18,7 +17,6 @@ def test_constraints_1D():
     assert np.linalg.matrix_rank(A) == 1, \
         'The constraint matrix should have rank 1.'
 
-@pytest.fixture
 def test_constraints_2D():
     # Generate balanced matrix
     I = 3
@@ -37,7 +35,6 @@ def test_constraints_2D():
     assert np.linalg.matrix_rank(A) == I + J - 1, \
         'The constraint matrix should have rank {}.'.format(I + J - 1)
 
-@pytest.fixture
 def test_constraints_3D():
     # Generate balanced matrix
     I = 3
@@ -58,7 +55,6 @@ def test_constraints_3D():
     assert np.linalg.matrix_rank(A) == I * J + I * K + J * K - I - J - K + 1, \
         'The constraint matrix should have rank {}.'.format(I * J + I * K + J * K - I - J - K + 1)
 
-@pytest.fixture
 def test_constraints_USHD():
     # Generate balanced matrix
     I = 3

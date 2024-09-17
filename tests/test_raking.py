@@ -3,7 +3,6 @@ import numpy as np
 from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D
 from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
 
-@pytest.fixture
 def test_chi2_raking_1D():
     # Generate balanced vector
     I = 3
@@ -20,7 +19,6 @@ def test_chi2_raking_1D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 1D with the chi2 distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_chi2_raking_2D():
     # Generate balanced matrix
     I = 3
@@ -40,7 +38,6 @@ def test_chi2_raking_2D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 2D with the chi2 distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_chi2_raking_3D():
     # Generate balanced matrix
     I = 3
@@ -62,7 +59,6 @@ def test_chi2_raking_3D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 3D with the chi2 distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_entropic_raking_1D():
     # Generate balanced vector
     I = 3
@@ -79,7 +75,6 @@ def test_entropic_raking_1D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 1D with the entropic distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_entropic_raking_2D():
     # Generate balanced matrix
     I = 3
@@ -99,7 +94,6 @@ def test_entropic_raking_2D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 2D with the entropic distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_entropic_raking_3D():
     # Generate balanced matrix
     I = 3
@@ -121,7 +115,6 @@ def test_entropic_raking_3D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 3D with the entropic distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_general_raking_1D():
     # Generate balanced vector
     I = 3
@@ -138,7 +131,6 @@ def test_general_raking_1D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 1D with the general distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_general_raking_2D():
     # Generate balanced matrix
     I = 3
@@ -158,7 +150,6 @@ def test_general_raking_2D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 2D with the general distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_general_raking_3D():
     # Generate balanced matrix
     I = 3
@@ -180,7 +171,6 @@ def test_general_raking_3D():
     assert np.allclose(np.matmul(A, beta_star), s), \
         'For the raking in 3D with the general distance, the constraint A beta_star = s is not respected.'
 
-@pytest.fixture
 def test_logit_raking_1D():
     # Generate balanced vector
     I = 3
@@ -205,7 +195,6 @@ def test_logit_raking_1D():
     assert np.all(h - beta_star > -1.0e-5), \
         'For the raking in 1D with the logit distance, some raked values are higher than the upper bound.'
 
-@pytest.fixture
 def test_logit_raking_2D():
     # Generate balanced matrix
     I = 3
@@ -233,7 +222,6 @@ def test_logit_raking_2D():
     assert np.all(h - beta_star > -1.0e-5), \
         'For the raking in 2D with the logit distance, some raked values are higher than the upper bound.'
 
-@pytest.fixture
 def test_logit_raking_3D():
     # Generate balanced matrix
     I = 3
