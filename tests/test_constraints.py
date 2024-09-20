@@ -56,7 +56,7 @@ def test_constraints_3D():
         'The constraint matrix should have rank {}.'.format(I * J + I * K + J * K - I - J - K + 1)
 
 def test_constraints_USHD():
-    # Generate balanced matrix
+    # Generate balanced array
     I = 3
     J = 4
     K = 5

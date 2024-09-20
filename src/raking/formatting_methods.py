@@ -181,7 +181,7 @@ def format_data_2D(
     for var_name in var_names:
         assert isinstance(var_name, str), \
             'The name of the categorical variable ' + str(var_name) + ' should be a string.'
-        assert var_name in df.columns.tolist(), \
+        assert var_name in df_obs.columns.tolist(), \
             'The column for the categorical variable ' + var_name + ' is missing from the observations data frame.'
 
     assert var_names[1] in df_margins_1.columns.tolist(), \
@@ -354,7 +354,7 @@ def format_data_3D(
     for var_name in var_names:
         assert isinstance(var_name, str), \
             'The name of the categorical variable ' + + str(var_name) + ' should be a string.'
-        assert var_name in df.columns.tolist(), \
+        assert var_name in df_obs.columns.tolist(), \
             'The column for the categorical variable ' + var_name + ' is missing from the observations data frame.'
 
     assert var_names[1] in df_margins_1.columns.tolist(), \
@@ -415,7 +415,7 @@ def format_data_3D(
         'There are missing values in the value_agg_over' + var_names[0] + ' column of the first margins.'
     assert len(df_margins_1[df_margins_1.duplicated([var_names[1], var_names[2]])]) == 0, \
         'There are duplicated rows in the first margins data frame.'
-    count_obs = df_margins_1[var_names[1], var_names[2]].value_counts()
+    count_obs = df_margins_1[[var_names[1], var_names[2]]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
         'There are missing combinations of ' + var_names[1] + ' and ' + var_names[2] + ' in the first margins.'
 
@@ -426,9 +426,9 @@ def format_data_3D(
         'There are missing values in the ' + var_names[2] + ' column of the second margins.'
     assert df_margins_2['value_agg_over_' + var_names[1]].isna().sum() == 0, \
         'There are missing values in the value_agg_over' + var_names[1] + ' column of the second margins.'
-    assert len(df_margins_2[df_margins_.duplicated([var_names[0], var_names[2]])]) == 0, \
+    assert len(df_margins_2[df_margins_2.duplicated([var_names[0], var_names[2]])]) == 0, \
         'There are duplicated rows in the second margins data frame.'
-    count_obs = df_margins_2[var_names[0], var_names[2]].value_counts()
+    count_obs = df_margins_2[[var_names[0], var_names[2]]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
         'There are missing combinations of ' + var_names[0] + ' and ' + var_names[2] + ' in the second margins.'
 
@@ -439,9 +439,9 @@ def format_data_3D(
         'There are missing values in the ' + var_names[1] + ' column of the third margins.'
     assert df_margins_3['value_agg_over_' + var_names[2]].isna().sum() == 0, \
         'There are missing values in the value_agg_over' + var_names[2] + ' column of the third margins.'
-    assert len(df_margins_3[df_margins_.duplicated([var_names[0], var_names[1]])]) == 0, \
+    assert len(df_margins_3[df_margins_3.duplicated([var_names[0], var_names[1]])]) == 0, \
         'There are duplicated rows in the third margins data frame.'
-    count_obs = df_margins_3[var_names[0], var_names[1]].value_counts()
+    count_obs = df_margins_3[[var_names[0], var_names[1]]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
         'There are missing combinations of ' + var_names[0] + ' and ' + var_names[1] + ' in the third margins.'
 
