@@ -67,15 +67,15 @@ def test_format_data_3D():
     # Generate the first margins data frame
     var2 = np.tile(np.arange(0, J), K)
     var3 = np.repeat(np.arange(0, K), J)
-    df_margins_1 = pd.DataFrame({'var2': var2, 'var3', var3, 'value_agg_over_var1': s1})
+    df_margins_1 = pd.DataFrame({'var2': var2, 'var3': var3, 'value_agg_over_var1': s1})
     # Generate the second margins data frame
     var1 = np.tile(np.arange(0, I), K)
     var3 = np.repeat(np.arange(0, K), I)
-    df_margins_2 = pd.DataFrame({'var1': var1, 'var3', var3, 'value_agg_over_var2': s2})
+    df_margins_2 = pd.DataFrame({'var1': var1, 'var3': var3, 'value_agg_over_var2': s2})
     # Generate the third margins data frame
     var1 = np.tile(np.arange(0, I), J)
     var2 = np.repeat(np.arange(0, J), I)
-    df_margins_3 = pd.DataFrame({'var1': var1, 'var2', var2, 'value_agg_over_var3': s3})
+    df_margins_3 = pd.DataFrame({'var1': var1, 'var2': var2, 'value_agg_over_var3': s3})
     # Get the formatted data
     (y, s1, s2, s3, I, J, K, q, l, h) = format_data_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, ['var1', 'var2', 'var3'])
     # Generate the constraints
