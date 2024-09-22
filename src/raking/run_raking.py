@@ -3,9 +3,9 @@
 import numpy as np
 import pandas as pd
 
-from compute_constraints import constraints_1D, constraints_2D, constraints_3D
-from formatting_methods import format_data_1D, format_data_2D, format_data_3D
-from raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
+from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D
+from raking.formatting_methods import format_data_1D, format_data_2D, format_data_3D
+from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
 
 def run_raking(
     dim: int,
