@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 
+pd.options.mode.chained_assignment = None
+
 def format_data_1D(
     df_obs: pd.DataFrame,
     df_margins: pd.DataFrame,

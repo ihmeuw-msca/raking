@@ -11,6 +11,8 @@ from raking.formatting_methods import format_data_1D, format_data_2D, format_dat
 from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
 from raking.uncertainty_methods import compute_covariance, compute_gradient
 
+pd.options.mode.chained_assignment = None
+
 def run_raking(
     dim: int,
     df_obs: pd.DataFrame,

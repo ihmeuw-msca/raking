@@ -1,5 +1,7 @@
 """Module with methods to propagate the uncertainties through the raking process"""
 
+import numpy as np
+
 def compute_covariance(
     Dphi_y: np.ndarray,
     Dphi_s: np.ndarray,
