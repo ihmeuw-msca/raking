@@ -156,10 +156,10 @@ def compute_covariance_margins_3D(
     df1.sort_values(by=[var_names[2], var_names[1], draws], inplace=True)
     df2 = df_margins_2[[var_names[0], var_names[2], 'value_agg_over_' + var_names[1], draws]]
     df2 = df2.loc[df2[var_names[2]].isin(var3[0:-1])]
-    df2.sort_values(by=[var_names[0], var_names[2], draws, inplace=True)
+    df2.sort_values(by=[var_names[0], var_names[2], draws], inplace=True)
     df3 = df_margins_3[[var_names[0], var_names[1], 'value_agg_over_' + var_names[2], draws]]
     df3 = df3.loc[df3[var_names[0]].isin(var1[0:-1])]
-    df3.sort_values(by=[var_names[1], var_names[0], draws, inplace=True)
+    df3.sort_values(by=[var_names[1], var_names[0], draws], inplace=True)
     value1 = df1['value_agg_over_' + var_names[0]].to_numpy()
     value2 = df2['value_agg_over_' + var_names[1]].to_numpy()
     value3 = df3['value_agg_over_' + var_names[2]].to_numpy()
@@ -316,10 +316,10 @@ def compute_covariance_obs_margins_3D(
     df_margins_1.sort_values(by=[var_names[2], var_names[1], draws], inplace=True)
     df_margins_2 = df_margins_2[[var_names[0], var_names[2], 'value_agg_over_' + var_names[1], draws]]
     df_margins_2 = df_margins_2.loc[df_margins_2[var_names[2]].isin(var3[0:-1])]
-    df_margins_2.sort_values(by=[var_names[0], var_names[2], draws, inplace=True)
+    df_margins_2.sort_values(by=[var_names[0], var_names[2], draws], inplace=True)
     df_margins_3 = df_margins_3[[var_names[0], var_names[1], 'value_agg_over_' + var_names[2], draws]]
     df_margins_3 = df_margins_3.loc[df_margins_3[var_names[0]].isin(var1[0:-1])]
-    df_margins_3.sort_values(by=[var_names[1], var_names[0], draws, inplace=True)
+    df_margins_3.sort_values(by=[var_names[1], var_names[0], draws], inplace=True)
     value_obs = df_obs['value'].to_numpy()
     value_margins_1 = df_margins_1['value_agg_over_' + var_names[0]].to_numpy()
     value_margins_2 = df_margins_2['value_agg_over_' + var_names[1]].to_numpy()
