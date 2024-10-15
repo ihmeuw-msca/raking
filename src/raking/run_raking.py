@@ -312,8 +312,8 @@ def run_raking_3D(
     return (y, s, q, l, h, A)
 
 def compute_covariance_1D(
-    df_obs: pd.dataFrame,
-    df_margins: pd.dataFrame,
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
     var_names: list,
     draws: str,
     sigma_yy: np.ndarray = None,
@@ -405,7 +405,7 @@ def compute_covariance_2D(
     return (sigma_yy, sigma_ss, sigma_ys)
 
 def compute_covariance_3D(
-    df_obs: pd.dataFrame,
+    df_obs: pd.DataFrame,
     df_margins: pd.DataFrame,
     var_names: list,
     draws: str,
