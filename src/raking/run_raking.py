@@ -311,8 +311,42 @@ def run_raking_3D(
     (A, s) = constraints_3D(s1, s2, s3, I, J, K, rtol, atol)
     return (y, s, q, l, h, A)
 
-def compute_covariance_1D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys):
-    """
+def compute_covariance_1D(
+    df_obs: pd.dataFrame,
+    df_margins: pd.dataFrame,
+    var_names: list,
+    draws: str,
+    sigma_yy: np.ndarray = None,
+    sigma_ss: np.ndarray = None,
+    sigma_ys: np.ndarray = None
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 1D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
     """
     df_margins = df_margins[0]
     if sigma_yy is None:
@@ -321,13 +355,44 @@ def compute_covariance_1D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_
         sigma_ss = compute_covariance_margins_1D(df_margins, var_names, draws)
     if sigma_ys is None:
         sigma_ys = compute_covariance_obs_margins_1D(df_obs, df_margins, var_names, draws)
-    sigma = np.concatenate(( \
-        np.concatenate((sigma_yy, sigma_ys), axis=1), \
-        np.concatenate((np.transpose(sigma_ys), sigma_ss), axis=1)), axis=0)
     return (sigma_yy, sigma_ss, sigma_ys)
 
-def compute_covariance_2D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys):
-    """
+def compute_covariance_2D(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+    sigma_yy: np.ndarray,
+    sigma_ss: np.ndarray,
+    sigma_ys: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 2D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
     """
     df_margins_1 = df_margins[0]
     df_margins_2 = df_margins[1]
@@ -337,13 +402,44 @@ def compute_covariance_2D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_
         sigma_ss = compute_covariance_margins_2D(df_margins_1, df_margins_2, var_names, draws)
     if sigma_ys is None:
         sigma_ys = compute_covariance_obs_margins_2D(df_obs, df_margins_1, df_margins_2, var_names, draws)
-    sigma = np.concatenate(( \
-        np.concatenate((sigma_yy, sigma_ys), axis=1), \
-        np.concatenate((np.transpose(sigma_ys), sigma_ss), axis=1)), axis=0)
     return (sigma_yy, sigma_ss, sigma_ys)
 
-def compute_covariance_3D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys):
-    """
+def compute_covariance_3D(
+    df_obs: pd.dataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+    sigma_yy: np.ndarray,
+    sigma_ss: np.ndarray,
+    sigma_ys: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 3D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
     """
     df_margins_1 = df_margins[0]
     df_margins_2 = df_margins[1]
@@ -354,8 +450,5 @@ def compute_covariance_3D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_
         sigma_ss = compute_covariance_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_names, draws)
     if sigma_ys is None:
         sigma_ys = compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws)
-    sigma = np.concatenate(( \
-        np.concatenate((sigma_yy, sigma_ys), axis=1), \
-        np.concatenate((np.transpose(sigma_ys), sigma_ss), axis=1)), axis=0)
     return (sigma_yy, sigma_ss, sigma_ys)
 

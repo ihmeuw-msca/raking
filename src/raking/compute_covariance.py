@@ -28,7 +28,7 @@ def compute_covariance_obs(
     Returns
     -------
     sigma_yy : np.ndarray
-        (IJK) * (IJK) covariance matrix
+        (I * J * K) * (I * J * K) covariance matrix
     """
     nsamples = len(df_obs[draws].unique())
     var_names.reverse()
@@ -98,7 +98,7 @@ def compute_covariance_margins_2D(
     -------
     sigma_ss : np.ndarray
         (I + J - 1) * (I + J - 1) covariance matrix
-    """    
+    """
     nsamples = len(df_margins_1[draws].unique())
     df1 = df_margins_1[[var_names[1], 'value_agg_over_' + var_names[0], draws]]
     df1.sort_values(by=[var_names[1], draws], inplace=True)
@@ -114,8 +114,36 @@ def compute_covariance_margins_2D(
     sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
     return sigma_ss
 
-def compute_covariance_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_names, draws):
-    
+def compute_covariance_margins_3D(
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    df_margins_3: pd.DataFrame,
+    var_names: list,
+    draws:str
+) -> np.ndarray:
+    """Compute the covariance matrix of the margins in 3D.
+
+    The margins are sorted in the same order as what is done
+    when computing the constraint matrix.
+
+    Parameters
+    ----------
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    df_margins_3 : pd.DataFrame
+        Margins data (sums over the third variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ss : np.ndarray
+        (I J + I K + J K - I - J - K + 1) * (I J + I K + J K - I - J - K + 1) covariance matrix
+    """    
     nsamples = len(df_margins_1[draws].unique())
     var1 = df_margins_2[var_names[0]].unique().tolist()
     var2 = df_margins_1[var_names[1]].unique().tolist()
@@ -124,7 +152,7 @@ def compute_covariance_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_
     var2.sort()
     var3.sort()
     df1 = df_margins_1[[var_names[1], var_names[2], 'value_agg_over_' + var_names[0], draws]]
-    df1 = df1.loc[(df1[var_names[1]].isin(var2[0:-1]) | ((df1[var_names[1]]==var2[-1]) & (df1[var_names[2]]==var3[-1]))]
+    df1 = df1.loc[(df1[var_names[1]].isin(var2[0:-1])) | ((df1[var_names[1]]==var2[-1]) & (df1[var_names[2]]==var3[-1]))]
     df1.sort_values(by=[var_names[2], var_names[1], draws], inplace=True)
     df2 = df_margins_2[[var_names[0], var_names[2], 'value_agg_over_' + var_names[1], draws]]
     df2 = df2.loc[df2[var_names[2]].isin(var3[0:-1])]
@@ -142,8 +170,34 @@ def compute_covariance_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_
     sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
     return sigma_ss
 
-def compute_covariance_obs_margins_1D(df_obs, df_margins, var_names, draws):
+def compute_covariance_obs_margins_1D(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str
+) -> np.ndarray:
+    """Compute the covariance matrix of the observations and the margins in 1D.
 
+    The observations will be sorted by var3, var2, var1, meaning that
+    sigma_yy contains on its diagonal in this order the variances of
+    y_111, ... , y_I11, y_121, ... , y_IJ1, y_112, ... , y_IJK.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : pd.DataFrame
+        Margins data (sums over the first variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ys : np.ndarray
+        (I * J * K) * 1 covariance matrix
+    """
     nsamples = len(df_obs[draws].unique())
     var_names.reverse()
     df_obs = df_obs[['value'] + var_names + [draws]]
@@ -161,8 +215,37 @@ def compute_covariance_obs_margins_1D(df_obs, df_margins, var_names, draws):
     sigma_ys = np.matmul(np.transpose(Xc), Yc) / nsamples
     return sigma_ys
 
-def compute_covariance_obs_margins_2D(df_obs, df_margins_1, df_margins_2, var_names, draws):
+def compute_covariance_obs_margins_2D(
+    df_obs: pd.DataFrame,
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    var_names: list,
+    draws: str
+) -> np.ndarray:
+    """Compute the covariance matrix of the observations and the margins in 2D.
 
+    The observations will be sorted by var3, var2, var1, meaning that
+    sigma_yy contains on its diagonal in this order the variances of
+    y_111, ... , y_I11, y_121, ... , y_IJ1, y_112, ... , y_IJK.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ys : np.ndarray
+        (I * J * K) * (I + J - 1) covariance matrix
+    """
     nsamples = len(df_obs[draws].unique())
     var_names.reverse()
     df_obs = df_obs[var_names + [draws]]
@@ -184,8 +267,40 @@ def compute_covariance_obs_margins_2D(df_obs, df_margins_1, df_margins_2, var_na
     sigma_ys = np.matmul(np.transpose(Xc), Yc) / nsamples
     return sigma_ys
 
-def compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws):
+def compute_covariance_obs_margins_3D(
+    df_obs: pd.DataFrame,
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    df_margins_3: pd.DataFrame,
+    var_names: list,
+    draws: str
+) -> np.ndarray:
+    """Compute the covariance matrix of the observations and the margins in 3D.
 
+    The observations will be sorted by var3, var2, var1, meaning that
+    sigma_yy contains on its diagonal in this order the variances of
+    y_111, ... , y_I11, y_121, ... , y_IJ1, y_112, ... , y_IJK.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    df_margins_3 : pd.DataFrame
+        Margins data (sums over the third variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ys : np.ndarray
+        (I * J * K) * (I J + I K + J K - I - J - K + 1) covariance matrix
+    """
     nsamples = len(df_obs[draws].unique())
     var_names.reverse()
     df_obs = df_obs[var_names + [draws]]
@@ -197,7 +312,7 @@ def compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_mar
     var2.sort()
     var3.sort()
     df_margins_1 = df_margins_1[[var_names[1], var_names[2], 'value_agg_over_' + var_names[0], draws]]
-    df_margins_1 = df_margins_1.loc[(df_margins_1[var_names[1]].isin(var2[0:-1]) | ((df_margins_1[var_names[1]]==var2[-1]) & (df_margins_1[var_names[2]]==var3[-1]))]
+    df_margins_1 = df_margins_1.loc[(df_margins_1[var_names[1]].isin(var2[0:-1])) | ((df_margins_1[var_names[1]]==var2[-1]) & (df_margins_1[var_names[2]]==var3[-1]))]
     df_margins_1.sort_values(by=[var_names[2], var_names[1], draws], inplace=True)
     df_margins_2 = df_margins_2[[var_names[0], var_names[2], 'value_agg_over_' + var_names[1], draws]]
     df_margins_2 = df_margins_2.loc[df_margins_2[var_names[2]].isin(var3[0:-1])]
@@ -216,8 +331,33 @@ def compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_mar
     sigma_ys = np.matmul(np.transpose(Xc), Xc) / nsamples
     return sigma_ys
 
-def check_covariance(sigma_yy, sigma_ss, sigma_ys):
-    """
+def check_covariance(
+    sigma_yy: np.ndarray,
+    sigma_ss: np.ndarray,
+    sigma_ys: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Check if the covariance matrix is definite positive.
+
+    If it is not, assumes independence of the variables
+    and return the diagonal matrix of the variances.
+
+    Parameters
+    ----------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
     """
     sigma = np.concatenate(( \
         np.concatenate((sigma_yy, sigma_ys), axis=1), \
