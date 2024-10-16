@@ -113,7 +113,11 @@ def run_raking(
             pass
     # Check if matrix is definite positive
         (sigma_yy, sigma_ss, sigma_ys) = check_covariance(sigma_yy, sigma_ss, sigma_ys)
-            
+
+    # Compute the mean (if we have draws)
+    if cov_mat:
+        (df_obs, df_margins) = compute_mean(df_obs, df_margins, varnames, draws)
+        
     # Get the input variables for the raking
     if dim == 1:
         (y, s, q, l, h, A) = run_raking_1D(df_obs, df_margins, var_names, weights, lower, upper, rtol, atol)
@@ -451,4 +455,40 @@ def compute_covariance_3D(
     if sigma_ys is None:
         sigma_ys = compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws)
     return (sigma_yy, sigma_ss, sigma_ys)
+
+def compute_mean(
+    df_obs: pd.DataFrame,
+    df_margins: list,
+    varnames: list,
+    draws: str
+) -> tuple[pd.DataFrame, list]:
+    """Compute the means of the values over all the samples.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+
+    Returns
+    -------
+    df_obs_mean : pd.DataFrame
+        Means of observations data
+    df_margins_mean : list of pd.DataFrame
+        list of data frames contatining the mans of the margins data
+    """
+    columns = df_obs.columns.drop([draws, 'value']).to_list()
+    df_obs_mean = df_obs.groupby(columns).mean().reset_index().drop(columns=[draws])
+    df_margins_mean = []
+    for (df_margin, var_name) in zip(df_margins, var_names):
+        value_name = 'value_agg_over_' + var_name
+        columns = df_margin.columns.drop([draws, value_name]).to_list()
+        df_margin_mean = df_margin.groupby(columns).mean().reset_index().drop(columns=[draws])
+        df_margins_mean.append(df_margin_mean)
+    return (df_obs_mean, df_margins_mean)
 
