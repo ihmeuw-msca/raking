@@ -30,6 +30,40 @@ def compute_covariance_obs(
     sigma_yy : np.ndarray
         (I * J * K) * (I * J * K) covariance matrix
     """
+    assert isinstance(df_obs, pd.DataFrame), \
+        'The observations should be a pandas data frame.'
+    assert len(df_obs) >= 2, \
+        'There should be at least 2 data points for the observations.'
+
+    assert 'value' in df_obs.columns.tolist(), \
+        'The observations data frame should contain a value column.'
+
+    assert isinstance(var_names, list), \
+        'Please enter the names of the columns containing the values of the categorical variables as a list.'
+    for var_name in var_names:
+        assert isinstance(var_name, str), \
+            'The name of the categorical variable ' + str(var_name) + ' should be a string.'
+        assert var_name in df_obs.columns.tolist(), \
+            'The column for the categorical variable ' + var_name + ' is missing from the observations data frame.'
+
+    assert isinstance(draws, str), \
+        'The name of the column containing the draws should be a string.'
+    assert draws in df_obs.columns.tolist(), \
+        'The column containing the draws is missing from the observations data frame.'
+
+    assert df_obs.value.isna().sum() == 0, \
+        'There are missing values in the value column of the observations.'
+    for var_name in var_names:
+        assert df_obs[var_name].isna().sum() == 0, \
+            'There are missing values in the ' + var_name + ' column of the observations.'
+    assert df_obs[draws].isna().sum() == 0, \
+        'There are missing values in the draws column of the observations.'
+    assert len(df_obs[df_obs.duplicated(var_names + [draws])]) == 0, \
+        'There are duplicated rows in the observations.'
+    count_obs = df_obs[var_names + [draws]].value_counts()
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
+        'There are missing combinations of variables and draws in the observations.'
+
     nsamples = len(df_obs[draws].unique())
     var_names_reverse = var_names.copy()
     var_names_reverse.reverse()
@@ -63,6 +97,35 @@ def compute_covariance_margins_1D(
     sigma_ss : np.ndarray
         1 * 1 covariance matrix
     """
+    assert isinstance(df_margins, pd.DataFrame), \
+        'The margins should be a pandas data frame.'
+    assert len(df_margins) >= 1, \
+        'There should be at least 1 data point for the margins.'
+
+    assert isinstance(var_names, list), \
+        'Please enter the names of the columns containing the values of the categorical variables as a list.'
+    assert len(var_names)  == 1, \
+        'You should have 1 categorical variable.'
+    assert isinstance(var_names[0], str), \
+        'The name of the categorical variable should be a string.'
+    assert 'value_agg_over_' + var_names[0] in df_margins.columns.tolist(), \
+        'The column for the aggregated value over ' + var_names[0] + ' is missing from the margins data frame.'
+
+    assert isinstance(draws, str), \
+        'The name of the column containing the draws should be a string.'
+    assert draws in df_margins.columns.tolist(), \
+        'The column containing the draws is missing from the margins data frame.'
+
+    assert df_margins['value_agg_over_' + var_names[0]].isna().sum() == 0, \
+        'There are missing values in the value_agg_over' + var_names[0] + ' column of the margins.'
+    assert df_margins[draws].isna().sum() == 0, \
+        'There are missing values in the draws column of the margins.'
+    assert len(df_margins[df_margins.duplicated([draws])]) == 0, \
+        'There are duplicated rows in the margins.'
+    count_obs = df_margins[[draws]].value_counts()
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
+        'There are missing draws in the margins.'
+
     nsamples = len(df_margins[draws].unique())
     df = df_margins[['value_agg_over_' + var_names[0]] + [draws]]
     df.sort_values(by=[draws], inplace=True)
@@ -100,6 +163,67 @@ def compute_covariance_margins_2D(
     sigma_ss : np.ndarray
         (I + J - 1) * (I + J - 1) covariance matrix
     """
+    assert isinstance(df_margins_1, pd.DataFrame), \
+        'The margins for the first variable should be a pandas data frame.'
+    assert len(df_margins_1) >= 2, \
+        'There should be at least 2 data points for the first margins.'
+
+    assert isinstance(df_margins_2, pd.DataFrame), \
+        'The margins for the second variable should be a pandas data frame.'
+    assert len(df_margins_2) >= 2, \
+        'There should be at least 2 data points for the second margins.'
+
+    assert isinstance(var_names, list), \
+        'Please enter the names of the columns containing the values of the categorical variables as a list.'
+    assert len(var_names)  == 2, \
+        'You should have 2 categorical variables.'
+    for var_name in var_names:
+        assert isinstance(var_name, str), \
+            'The name of the categorical variable ' + str(var_name) + ' should be a string.'
+
+    assert var_names[1] in df_margins_1.columns.tolist(), \
+        'The column for the categorigal variable ' + var_name[1] + ' is missing from the first margins data frame.'
+    assert 'value_agg_over_' + var_names[0] in df_margins_1.columns.tolist(), \
+        'The column for the aggregated value over ' + var_names[0] + ' is missing from the first margins data frame.'
+
+    assert var_names[0] in df_margins_2.columns.tolist(), \
+        'The column for the categorigal variable ' + var_name[0] + ' is missing from the second margins data frame.'
+    assert 'value_agg_over_' + var_names[1] in df_margins_2.columns.tolist(), \
+        'The column for the aggregated value over ' + var_names[1] + ' is missing from the second margins data frame.'
+
+    assert isinstance(draws, str), \
+        'The name of the column containing the draws should be a string.'
+    assert draws in df_margins_1.columns.tolist(), \
+        'The column containing the draws is missing from the first margins data frame.'
+    assert draws in df_margins_2.columns.tolist(), \
+        'The column containing the draws is missing from the second margins data frame.'
+
+    # Check the first margins data
+    assert df_margins_1[var_names[1]].isna().sum() == 0, \
+        'There are missing values in the ' + var_names[1] + ' column of the margins.'
+    assert df_margins_1['value_agg_over_' + var_names[0]].isna().sum() == 0, \
+        'There are missing values in the value_agg_over' + var_names[0] + ' column of the margins.'
+    assert df_margins_1[draws].isna().sum() == 0, \
+        'There are missing values in the draws column of the first margins.'
+    assert len(df_margins_1[df_margins_1.duplicated([var_names[1]] + [draws])]) == 0, \
+        'There are duplicated rows in the first margins data frame.'
+    count_obs = df_margins_1[[var_names[1]] + [draws]].value_counts()
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
+        'There are missing combinations of ' + var_names[1] + ' and draws in the first margins.'
+
+    # Check the second margins data
+    assert df_margins_2[var_names[0]].isna().sum() == 0, \
+        'There are missing values in the ' + var_names[0] + ' column of the margins.'
+    assert df_margins_2['value_agg_over_' + var_names[1]].isna().sum() == 0, \
+        'There are missing values in the value_agg_over' + var_names[1] + ' column of the margins.'
+    assert df_margins_2[draws].isna().sum() == 0, \
+        'There are missing values in the draws column of the second margins.'
+    assert len(df_margins_2[df_margins_2.duplicated([var_names[0]] + [draws])]) == 0, \
+        'There are duplicated rows in the second margins data frame.'
+    count_obs = df_margins_2[[var_names[0]] + [draws]].value_counts()
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), \
+        'There are missing combinations of ' + var_names[0] + ' and draws in the second margins.'
+
     nsamples = len(df_margins_1[draws].unique())
     df1 = df_margins_1[[var_names[1], 'value_agg_over_' + var_names[0], draws]]
     df1.sort_values(by=[var_names[1], draws], inplace=True)
