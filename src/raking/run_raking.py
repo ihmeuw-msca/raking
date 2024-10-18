@@ -7,6 +7,7 @@ from raking.compute_constraints import constraints_1D, constraints_2D, constrain
 from raking.compute_covariance import compute_covariance_obs
 from raking.compute_covariance import compute_covariance_margins_1D, compute_covariance_margins_2D, compute_covariance_margins_3D
 from raking.compute_covariance import compute_covariance_obs_margins_1D, compute_covariance_obs_margins_2D, compute_covariance_obs_margins_3D
+from raking.compute_covariance import check_covariance
 from raking.formatting_methods import format_data_1D, format_data_2D, format_data_3D
 from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
 from raking.uncertainty_methods import compute_covariance, compute_gradient
@@ -107,16 +108,16 @@ def run_raking(
             (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
         elif dim == 2:
             (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
-        elif dim == 2:
+        elif dim == 3:
             (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
         else:
             pass
     # Check if matrix is definite positive
-        (sigma_yy, sigma_ss, sigma_ys) = check_covariance(sigma_yy, sigma_ss, sigma_ys)
+        (sigma_yy, sigma_ss, sigma_ys) = check_covariance(sigma_yy, sigma_ss, sigma_ys, rtol, atol)
 
     # Compute the mean (if we have draws)
     if cov_mat:
-        (df_obs, df_margins) = compute_mean(df_obs, df_margins, varnames, draws)
+        (df_obs, df_margins) = compute_mean(df_obs, df_margins, var_names, draws)
         
     # Get the input variables for the raking
     if dim == 1:
@@ -459,7 +460,7 @@ def compute_covariance_3D(
 def compute_mean(
     df_obs: pd.DataFrame,
     df_margins: list,
-    varnames: list,
+    var_names: list,
     draws: str
 ) -> tuple[pd.DataFrame, list]:
     """Compute the means of the values over all the samples.
@@ -488,7 +489,10 @@ def compute_mean(
     for (df_margin, var_name) in zip(df_margins, var_names):
         value_name = 'value_agg_over_' + var_name
         columns = df_margin.columns.drop([draws, value_name]).to_list()
-        df_margin_mean = df_margin.groupby(columns).mean().reset_index().drop(columns=[draws])
+        if len(columns) == 0:
+            df_margin_mean = pd.DataFrame({value_name:np.array([df_margin.mean()[value_name]])})
+        else:
+            df_margin_mean = df_margin.groupby(columns).mean().reset_index().drop(columns=[draws])
         df_margins_mean.append(df_margin_mean)
     return (df_obs_mean, df_margins_mean)
 

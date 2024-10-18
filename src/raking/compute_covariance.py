@@ -31,9 +31,10 @@ def compute_covariance_obs(
         (I * J * K) * (I * J * K) covariance matrix
     """
     nsamples = len(df_obs[draws].unique())
-    var_names.reverse()
+    var_names_reverse = var_names.copy()
+    var_names_reverse.reverse()
     df = df_obs[['value'] + var_names + [draws]]
-    df.sort_values(by=var_names + [draws], inplace=True)
+    df.sort_values(by=var_names_reverse + [draws], inplace=True)
     value = df['value'].to_numpy()
     X = np.reshape(value, shape=(nsamples, -1), order='F')
     Xmean = np.mean(X, axis=0)
@@ -199,9 +200,10 @@ def compute_covariance_obs_margins_1D(
         (I * J * K) * 1 covariance matrix
     """
     nsamples = len(df_obs[draws].unique())
-    var_names.reverse()
+    var_names_reverse = var_names.copy()
+    var_names_reverse.reverse()
     df_obs = df_obs[['value'] + var_names + [draws]]
-    df_obs.sort_values(by=var_names + [draws], inplace=True)
+    df_obs.sort_values(by=var_names_reverse + [draws], inplace=True)
     df_margins = df_margins[['value_agg_over_' + var_names[0]] + [draws]]
     df_margins.sort_values(by=[draws], inplace=True)
     value_obs = df_obs['value'].to_numpy()
@@ -247,9 +249,10 @@ def compute_covariance_obs_margins_2D(
         (I * J * K) * (I + J - 1) covariance matrix
     """
     nsamples = len(df_obs[draws].unique())
-    var_names.reverse()
-    df_obs = df_obs[var_names + [draws]]
-    df_obs.sort_values(by=var_names + [draws], inplace=True)
+    var_names_reverse = var_names.copy()
+    var_names_reverse.reverse()
+    df_obs = df_obs[['value'] + var_names + [draws]]
+    df_obs.sort_values(by=var_names_reverse + [draws], inplace=True)
     df_margins_1 = df_margins_1[[var_names[1], 'value_agg_over_' + var_names[0], draws]]
     df_margins_1.sort_values(by=[var_names[1], draws], inplace=True)
     df_margins_2 = df_margins_2[[var_names[0], 'value_agg_over_' + var_names[1], draws]]
@@ -260,6 +263,7 @@ def compute_covariance_obs_margins_2D(
     value_margins_2 = df_margins_2['value_agg_over_' + var_names[1]].to_numpy()
     value_margins = np.concatenate((value_margins_1, value_margins_2))
     Y = np.reshape(value_margins, shape=(nsamples, -1), order='F')
+    Y = Y[:, 0:-1]
     Xmean = np.mean(X, axis=0)
     Ymean = np.mean(Y, axis=0)
     Xc = X - Xmean
@@ -302,9 +306,10 @@ def compute_covariance_obs_margins_3D(
         (I * J * K) * (I J + I K + J K - I - J - K + 1) covariance matrix
     """
     nsamples = len(df_obs[draws].unique())
-    var_names.reverse()
-    df_obs = df_obs[var_names + [draws]]
-    df_obs.sort_values(by=var_names + [draws], inplace=True)
+    var_names_reverse = var_names.copy()
+    var_names_reverse.reverse()
+    df_obs = df_obs[['value'] + var_names + [draws]]
+    df_obs.sort_values(by=var_names_reverse + [draws], inplace=True)
     var1 = df_margins_2[var_names[0]].unique().tolist()
     var2 = df_margins_1[var_names[1]].unique().tolist()
     var3 = df_margins_1[var_names[2]].unique().tolist()
@@ -321,20 +326,25 @@ def compute_covariance_obs_margins_3D(
     df_margins_3 = df_margins_3.loc[df_margins_3[var_names[0]].isin(var1[0:-1])]
     df_margins_3.sort_values(by=[var_names[1], var_names[0], draws], inplace=True)
     value_obs = df_obs['value'].to_numpy()
+    X = np.reshape(value_obs, shape=(nsamples, -1), order='F')
     value_margins_1 = df_margins_1['value_agg_over_' + var_names[0]].to_numpy()
     value_margins_2 = df_margins_2['value_agg_over_' + var_names[1]].to_numpy()
     value_margins_3 = df_margins_3['value_agg_over_' + var_names[2]].to_numpy()
-    value = np.concatenate((value_obs, value_margins_1, df_margins_2, df_margins_3))
-    X = np.reshape(value, shape=(nsamples, -1), order='F')
+    value_margins = np.concatenate((value_margins_1, value_margins_2, value_margins_3))
+    Y = np.reshape(value_margins, shape=(nsamples, -1), order='F')
     Xmean = np.mean(X, axis=0)
+    Ymean = np.mean(Y, axis=0)
     Xc = X - Xmean
-    sigma_ys = np.matmul(np.transpose(Xc), Xc) / nsamples
+    Yc = Y - Ymean
+    sigma_ys = np.matmul(np.transpose(Xc), Yc) / nsamples
     return sigma_ys
 
 def check_covariance(
     sigma_yy: np.ndarray,
     sigma_ss: np.ndarray,
-    sigma_ys: np.ndarray
+    sigma_ys: np.ndarray,
+    rtol: float = 1e-05, 
+    atol:float = 1e-08
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Check if the covariance matrix is definite positive.
 
@@ -349,6 +359,10 @@ def check_covariance(
         Covariance matrix of the margins
     sigma_ys : np.ndarray
         Covariance matrix of the observations and margins
+    rtol : float
+        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    atol : float
+        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
 
     Returns
     -------

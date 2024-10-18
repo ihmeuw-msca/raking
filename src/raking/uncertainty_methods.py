@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from scipy.linalg import lu_factor, lu_solve
+
 def compute_covariance(
     Dphi_y: np.ndarray,
     Dphi_s: np.ndarray,
@@ -33,15 +35,15 @@ def compute_covariance(
     covariance : np.ndarray
         Covariance matrix of the raked values
     """
-    assert isinstance(dPhi_y, np.ndarray), \
+    assert isinstance(Dphi_y, np.ndarray), \
         'The derivatives matrix with respect to the observations should be a Numpy array.'
-    assert len(dPhi_y.shape) == 2, \
+    assert len(Dphi_y.shape) == 2, \
         'The derivatives matrix with respect to the observations should be a 2D Numpy array.'
-    assert np.shape(dPhi_y)[0] == np.shape(dPhi_y)[1], \
+    assert np.shape(Dphi_y)[0] == np.shape(Dphi_y)[1], \
         'The derivatives matrix with respect to the observations should be a square matrix.'
-    assert isinstance(dPhi_s, np.ndarray), \
+    assert isinstance(Dphi_s, np.ndarray), \
         'The derivatives matrix with respect to the margins should be a Numpy array.'
-    assert len(dPhi_s.shape) == 2, \
+    assert len(Dphi_s.shape) == 2, \
         'The derivatives matrix with respect to the margins should be a 2D Numpy array.'
     assert isinstance(sigma_yy, np.ndarray), \
         'The covariance matrix of the observations should be a Numpy array.'
@@ -70,11 +72,11 @@ def compute_covariance(
     assert np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1], \
         'The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins.'
     
-    dPhi = np.concatenate((dPhi_y, dPhi_s), axis=1)
+    Dphi = np.concatenate((Dphi_y, Dphi_s), axis=1)
     sigma = np.concatenate(( \
         np.concatenate((sigma_yy, sigma_ys), axis=1), \
         np.concatenate((np.transpose(sigma_ys), sigma_ss), axis=1)), axis=0)
-    covariance = np.matmul(dPhi, np.matmul(sigma, np.transpose(dPhi)))
+    covariance = np.matmul(Dphi, np.matmul(sigma, np.transpose(Dphi)))
     return covariance
 
 def compute_gradient(
