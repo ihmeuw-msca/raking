@@ -3,36 +3,58 @@
 import numpy as np
 import pandas as pd
 
-from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D
+from raking.compute_constraints import (
+    constraints_1D,
+    constraints_2D,
+    constraints_3D,
+)
 from raking.compute_covariance import compute_covariance_obs
-from raking.compute_covariance import compute_covariance_margins_1D, compute_covariance_margins_2D, compute_covariance_margins_3D
-from raking.compute_covariance import compute_covariance_obs_margins_1D, compute_covariance_obs_margins_2D, compute_covariance_obs_margins_3D
+from raking.compute_covariance import (
+    compute_covariance_margins_1D,
+    compute_covariance_margins_2D,
+    compute_covariance_margins_3D,
+)
+from raking.compute_covariance import (
+    compute_covariance_obs_margins_1D,
+    compute_covariance_obs_margins_2D,
+    compute_covariance_obs_margins_3D,
+)
 from raking.compute_covariance import check_covariance
-from raking.formatting_methods import format_data_1D, format_data_2D, format_data_3D
-from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
+from raking.formatting_methods import (
+    format_data_1D,
+    format_data_2D,
+    format_data_3D,
+)
+from raking.raking_methods import (
+    raking_chi2,
+    raking_entropic,
+    raking_general,
+    raking_logit,
+)
 from raking.uncertainty_methods import compute_covariance, compute_gradient
 
 pd.options.mode.chained_assignment = None
+
 
 def run_raking(
     dim: int,
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list,
-    draws: str = 'draws',
+    draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
     sigma_ss: np.ndarray = None,
     sigma_ys: np.ndarray = None,
-    method: str = 'chi2',
+    method: str = "chi2",
     alpha: float = 1,
     weights: str = None,
     lower: str = None,
     upper: str = None,
-    rtol: float = 1e-05, 
-    atol:float = 1e-08,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
     gamma0: float = 1.0,
-    max_iter: int = 500
+    max_iter: int = 500,
 ) -> np.ndarray:
     """
     This function allows the user to run the raking problem.
@@ -85,76 +107,132 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(dim, int), \
-        'The dimension of the raking problem must be an integer.'
-    assert dim in [1, 2, 3], \
-        'The dimension of the raking problem must be 1, 2 or 3.'
-    assert isinstance(var_names, list), \
-        'The variables over which we rake must be entered as a list.'
-    assert dim == len(var_names), \
-        'The number of variables over which we rake must be equal to the dimension of the problem.'
-    assert isinstance(df_margins, list), \
-        'The margins data frames must be entered as a list.'
-    assert dim == len(df_margins), \
-        'The number of margins data frames must be equal to the dimension of the problem.'
-    assert isinstance(method, str), \
-        'The name of the distance function used for the raking must be a string.'
-    assert method in ['chi2', 'entropic', 'general', 'logit'], \
-        'The distance function must be chi2, entropic, general or logit.'
+    assert isinstance(
+        dim, int
+    ), "The dimension of the raking problem must be an integer."
+    assert dim in [
+        1,
+        2,
+        3,
+    ], "The dimension of the raking problem must be 1, 2 or 3."
+    assert isinstance(
+        var_names, list
+    ), "The variables over which we rake must be entered as a list."
+    assert (
+        dim == len(var_names)
+    ), "The number of variables over which we rake must be equal to the dimension of the problem."
+    assert isinstance(
+        df_margins, list
+    ), "The margins data frames must be entered as a list."
+    assert (
+        dim == len(df_margins)
+    ), "The number of margins data frames must be equal to the dimension of the problem."
+    assert isinstance(
+        method, str
+    ), "The name of the distance function used for the raking must be a string."
+    assert method in [
+        "chi2",
+        "entropic",
+        "general",
+        "logit",
+    ], "The distance function must be chi2, entropic, general or logit."
 
     # Compute the covariance matrix
     if cov_mat:
         if dim == 1:
-            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
+            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(
+                df_obs,
+                df_margins,
+                var_names,
+                draws,
+                sigma_yy,
+                sigma_ss,
+                sigma_ys,
+            )
         elif dim == 2:
-            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
+            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(
+                df_obs,
+                df_margins,
+                var_names,
+                draws,
+                sigma_yy,
+                sigma_ss,
+                sigma_ys,
+            )
         elif dim == 3:
-            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(df_obs, df_margins, var_names, draws, sigma_yy, sigma_ss, sigma_ys)
+            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(
+                df_obs,
+                df_margins,
+                var_names,
+                draws,
+                sigma_yy,
+                sigma_ss,
+                sigma_ys,
+            )
         else:
             pass
-    # Check if matrix is definite positive
-        (sigma_yy, sigma_ss, sigma_ys) = check_covariance(sigma_yy, sigma_ss, sigma_ys, rtol, atol)
+        # Check if matrix is definite positive
+        (sigma_yy, sigma_ss, sigma_ys) = check_covariance(
+            sigma_yy, sigma_ss, sigma_ys, rtol, atol
+        )
 
     # Compute the mean (if we have draws)
     if cov_mat:
-        (df_obs, df_margins) = compute_mean(df_obs, df_margins, var_names, draws)
-        
+        (df_obs, df_margins) = compute_mean(
+            df_obs, df_margins, var_names, draws
+        )
+
     # Get the input variables for the raking
     if dim == 1:
-        (y, s, q, l, h, A) = run_raking_1D(df_obs, df_margins, var_names, weights, lower, upper, rtol, atol)
+        (y, s, q, l, h, A) = run_raking_1D(
+            df_obs, df_margins, var_names, weights, lower, upper, rtol, atol
+        )
     elif dim == 2:
-        (y, s, q, l, h, A) = run_raking_2D(df_obs, df_margins, var_names, weights, lower, upper, atol, rtol)
+        (y, s, q, l, h, A) = run_raking_2D(
+            df_obs, df_margins, var_names, weights, lower, upper, atol, rtol
+        )
     elif dim == 3:
-        (y, s, q, l, h, A) = run_raking_3D(df_obs, df_margins, var_names, weights, lower, upper, rtol, atol)
+        (y, s, q, l, h, A) = run_raking_3D(
+            df_obs, df_margins, var_names, weights, lower, upper, rtol, atol
+        )
     else:
         pass
 
     # Rake
-    if method == 'chi2':
+    if method == "chi2":
         (beta, lambda_k) = raking_chi2(y, A, s, q)
-    elif method == 'entropic':
-        (beta, lambda_k, iter_eps) = raking_entropic(y, A, s, q, gamma0, max_iter)
-    elif method == 'general':
-        (beta, lambda_k, iter_eps) = raking_general(y, A, s, alpha, q, gamma0, max_iter)
-    elif method == 'logit':
-        (beta, lambda_k, iter_eps) = raking_logit(y, A, s, l, h, q, gamma0, max_iter)
+    elif method == "entropic":
+        (beta, lambda_k, iter_eps) = raking_entropic(
+            y, A, s, q, gamma0, max_iter
+        )
+    elif method == "general":
+        (beta, lambda_k, iter_eps) = raking_general(
+            y, A, s, alpha, q, gamma0, max_iter
+        )
+    elif method == "logit":
+        (beta, lambda_k, iter_eps) = raking_logit(
+            y, A, s, l, h, q, gamma0, max_iter
+        )
     else:
         pass
 
     # Create data frame for the raked values
     var_names.reverse()
     df_obs.sort_values(by=var_names, inplace=True)
-    df_obs['raked_value'] = beta
+    df_obs["raked_value"] = beta
 
     # Compute the covariance matrix of the raked values
     if cov_mat:
-        (Dphi_y, Dphi_s) = compute_gradient(beta, lambda_k, y, A, method, alpha, l, h, q)
+        (Dphi_y, Dphi_s) = compute_gradient(
+            beta, lambda_k, y, A, method, alpha, l, h, q
+        )
         sigma = compute_covariance(Dphi_y, Dphi_s, sigma_yy, sigma_ss, sigma_ys)
     else:
         Dphi_y = None
         Dphi_s = None
         sigma = None
     return (df_obs, Dphi_y, Dphi_s, sigma)
+
 
 def run_raking_1D(
     df_obs: pd.DataFrame,
@@ -164,8 +242,15 @@ def run_raking_1D(
     lower: str = None,
     upper: str = None,
     rtol: float = 1e-05,
-    atol:float = 1e-08
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray | None, np.ndarray]:
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
     """
     This function prepares variables to run the raking problem in 1D.
 
@@ -205,9 +290,12 @@ def run_raking_1D(
     """
     df_margins = df_margins[0]
     var_name = var_names[0]
-    (y, s, I, q, l, h) = format_data_1D(df_obs, df_margins, var_name, weights, lower, upper)
+    (y, s, I, q, l, h) = format_data_1D(
+        df_obs, df_margins, var_name, weights, lower, upper
+    )
     (A, s) = constraints_1D(s, I)
     return (y, s, q, l, h, A)
+
 
 def run_raking_2D(
     df_obs: pd.DataFrame,
@@ -216,9 +304,16 @@ def run_raking_2D(
     weights: str = None,
     lower: str = None,
     upper: str = None,
-    rtol: float = 1e-05, 
-    atol:float = 1e-08
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray | None, np.ndarray]:
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
     """
     This function prepares variables to run the raking problem in 2D.
 
@@ -258,9 +353,12 @@ def run_raking_2D(
     """
     df_margins_1 = df_margins[0]
     df_margins_2 = df_margins[1]
-    (y, s1, s2, I, J, q, l, h) = format_data_2D(df_obs, df_margins_1, df_margins_2, var_names, weights, lower, upper)
+    (y, s1, s2, I, J, q, l, h) = format_data_2D(
+        df_obs, df_margins_1, df_margins_2, var_names, weights, lower, upper
+    )
     (A, s) = constraints_2D(s1, s2, I, J, rtol, atol)
     return (y, s, q, l, h, A)
+
 
 def run_raking_3D(
     df_obs: pd.DataFrame,
@@ -269,9 +367,16 @@ def run_raking_3D(
     weights: str = None,
     lower: str = None,
     upper: str = None,
-    rtol: float = 1e-05, 
-    atol:float = 1e-08
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray | None, np.ndarray]:
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
     """
     This function prepares variables to run the raking problem in 3D.
 
@@ -312,9 +417,19 @@ def run_raking_3D(
     df_margins_1 = df_margins[0]
     df_margins_2 = df_margins[1]
     df_margins_3 = df_margins[2]
-    (y, s1, s2, s3, I, J, K, q, l, h) = format_data_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, weights, lower, upper)
+    (y, s1, s2, s3, I, J, K, q, l, h) = format_data_3D(
+        df_obs,
+        df_margins_1,
+        df_margins_2,
+        df_margins_3,
+        var_names,
+        weights,
+        lower,
+        upper,
+    )
     (A, s) = constraints_3D(s1, s2, s3, I, J, K, rtol, atol)
     return (y, s, q, l, h, A)
+
 
 def compute_covariance_1D(
     df_obs: pd.DataFrame,
@@ -323,7 +438,7 @@ def compute_covariance_1D(
     draws: str,
     sigma_yy: np.ndarray = None,
     sigma_ss: np.ndarray = None,
-    sigma_ys: np.ndarray = None
+    sigma_ys: np.ndarray = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the covariance matrix of observations and margins in 1D.
 
@@ -359,8 +474,11 @@ def compute_covariance_1D(
     if sigma_ss is None:
         sigma_ss = compute_covariance_margins_1D(df_margins, var_names, draws)
     if sigma_ys is None:
-        sigma_ys = compute_covariance_obs_margins_1D(df_obs, df_margins, var_names, draws)
+        sigma_ys = compute_covariance_obs_margins_1D(
+            df_obs, df_margins, var_names, draws
+        )
     return (sigma_yy, sigma_ss, sigma_ys)
+
 
 def compute_covariance_2D(
     df_obs: pd.DataFrame,
@@ -369,7 +487,7 @@ def compute_covariance_2D(
     draws: str,
     sigma_yy: np.ndarray,
     sigma_ss: np.ndarray,
-    sigma_ys: np.ndarray
+    sigma_ys: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the covariance matrix of observations and margins in 2D.
 
@@ -404,10 +522,15 @@ def compute_covariance_2D(
     if sigma_yy is None:
         sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
     if sigma_ss is None:
-        sigma_ss = compute_covariance_margins_2D(df_margins_1, df_margins_2, var_names, draws)
+        sigma_ss = compute_covariance_margins_2D(
+            df_margins_1, df_margins_2, var_names, draws
+        )
     if sigma_ys is None:
-        sigma_ys = compute_covariance_obs_margins_2D(df_obs, df_margins_1, df_margins_2, var_names, draws)
+        sigma_ys = compute_covariance_obs_margins_2D(
+            df_obs, df_margins_1, df_margins_2, var_names, draws
+        )
     return (sigma_yy, sigma_ss, sigma_ys)
+
 
 def compute_covariance_3D(
     df_obs: pd.DataFrame,
@@ -416,7 +539,7 @@ def compute_covariance_3D(
     draws: str,
     sigma_yy: np.ndarray,
     sigma_ss: np.ndarray,
-    sigma_ys: np.ndarray
+    sigma_ys: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the covariance matrix of observations and margins in 3D.
 
@@ -452,16 +575,18 @@ def compute_covariance_3D(
     if sigma_yy is None:
         sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
     if sigma_ss is None:
-        sigma_ss = compute_covariance_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_names, draws)
+        sigma_ss = compute_covariance_margins_3D(
+            df_margins_1, df_margins_2, df_margins_3, var_names, draws
+        )
     if sigma_ys is None:
-        sigma_ys = compute_covariance_obs_margins_3D(df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws)
+        sigma_ys = compute_covariance_obs_margins_3D(
+            df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws
+        )
     return (sigma_yy, sigma_ss, sigma_ys)
 
+
 def compute_mean(
-    df_obs: pd.DataFrame,
-    df_margins: list,
-    var_names: list,
-    draws: str
+    df_obs: pd.DataFrame, df_margins: list, var_names: list, draws: str
 ) -> tuple[pd.DataFrame, list]:
     """Compute the means of the values over all the samples.
 
@@ -483,16 +608,24 @@ def compute_mean(
     df_margins_mean : list of pd.DataFrame
         list of data frames contatining the mans of the margins data
     """
-    columns = df_obs.columns.drop([draws, 'value']).to_list()
-    df_obs_mean = df_obs.groupby(columns).mean().reset_index().drop(columns=[draws])
+    columns = df_obs.columns.drop([draws, "value"]).to_list()
+    df_obs_mean = (
+        df_obs.groupby(columns).mean().reset_index().drop(columns=[draws])
+    )
     df_margins_mean = []
-    for (df_margin, var_name) in zip(df_margins, var_names):
-        value_name = 'value_agg_over_' + var_name
+    for df_margin, var_name in zip(df_margins, var_names):
+        value_name = "value_agg_over_" + var_name
         columns = df_margin.columns.drop([draws, value_name]).to_list()
         if len(columns) == 0:
-            df_margin_mean = pd.DataFrame({value_name:np.array([df_margin.mean()[value_name]])})
+            df_margin_mean = pd.DataFrame(
+                {value_name: np.array([df_margin.mean()[value_name]])}
+            )
         else:
-            df_margin_mean = df_margin.groupby(columns).mean().reset_index().drop(columns=[draws])
+            df_margin_mean = (
+                df_margin.groupby(columns)
+                .mean()
+                .reset_index()
+                .drop(columns=[draws])
+            )
         df_margins_mean.append(df_margin_mean)
     return (df_obs_mean, df_margins_mean)
-

@@ -1,7 +1,17 @@
 import pytest
 import numpy as np
-from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D
-from raking.raking_methods import raking_chi2, raking_entropic, raking_general, raking_logit
+from raking.compute_constraints import (
+    constraints_1D,
+    constraints_2D,
+    constraints_3D,
+)
+from raking.raking_methods import (
+    raking_chi2,
+    raking_entropic,
+    raking_general,
+    raking_logit,
+)
+
 
 def test_chi2_raking_1D():
     # Generate balanced vector
@@ -16,8 +26,10 @@ def test_chi2_raking_1D():
     # Rake using chi2 distance
     (beta_star, lambda_star) = raking_chi2(y, A, s)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 1D with the chi2 distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 1D with the chi2 distance, the constraint A beta_star = s is not respected."
+
 
 def test_chi2_raking_2D():
     # Generate balanced matrix
@@ -29,14 +41,16 @@ def test_chi2_raking_2D():
     s2 = np.sum(beta, axis=1)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_2D(s1, s2, I, J)
     # Rake using chi2 distance
     (beta_star, lambda_star) = raking_chi2(y, A, s)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 2D with the chi2 distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 2D with the chi2 distance, the constraint A beta_star = s is not respected."
+
 
 def test_chi2_raking_3D():
     # Generate balanced matrix
@@ -50,14 +64,16 @@ def test_chi2_raking_3D():
     s3 = np.sum(beta, axis=2)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_3D(s1, s2, s3, I, J, K)
     # Rake using chi2 distance
     (beta_star, lambda_star) = raking_chi2(y, A, s)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 3D with the chi2 distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 3D with the chi2 distance, the constraint A beta_star = s is not respected."
+
 
 def test_entropic_raking_1D():
     # Generate balanced vector
@@ -72,8 +88,10 @@ def test_entropic_raking_1D():
     # Rake using entropic distance
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 1D with the entropic distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 1D with the entropic distance, the constraint A beta_star = s is not respected."
+
 
 def test_entropic_raking_2D():
     # Generate balanced matrix
@@ -85,14 +103,16 @@ def test_entropic_raking_2D():
     s2 = np.sum(beta, axis=1)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_2D(s1, s2, I, J)
     # Rake using entropic distance
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 2D with the entropic distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 2D with the entropic distance, the constraint A beta_star = s is not respected."
+
 
 def test_entropic_raking_3D():
     # Generate balanced matrix
@@ -106,14 +126,16 @@ def test_entropic_raking_3D():
     s3 = np.sum(beta, axis=2)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_3D(s1, s2, s3, I, J, K)
     # Rake using entropic distance
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 3D with the entropic distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 3D with the entropic distance, the constraint A beta_star = s is not respected."
+
 
 def test_general_raking_1D():
     # Generate balanced vector
@@ -128,8 +150,10 @@ def test_general_raking_1D():
     # Rake using general distance
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 1D with the general distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 1D with the general distance, the constraint A beta_star = s is not respected."
+
 
 def test_general_raking_2D():
     # Generate balanced matrix
@@ -141,14 +165,16 @@ def test_general_raking_2D():
     s2 = np.sum(beta, axis=1)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_2D(s1, s2, I, J)
     # Rake using general distance
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 2D with the general distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 2D with the general distance, the constraint A beta_star = s is not respected."
+
 
 def test_general_raking_3D():
     # Generate balanced matrix
@@ -162,14 +188,16 @@ def test_general_raking_3D():
     s3 = np.sum(beta, axis=2)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     # Generate the constraints
     (A, s) = constraints_3D(s1, s2, s3, I, J, K)
     # Rake using general distance
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
-   # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 3D with the general distance, the constraint A beta_star = s is not respected.'
+    # Verify that the constraint A beta_star = s is respected
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 3D with the general distance, the constraint A beta_star = s is not respected."
+
 
 def test_logit_raking_1D():
     # Generate balanced vector
@@ -186,14 +214,18 @@ def test_logit_raking_1D():
     # Rake using logit distance
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 1D with the logit distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 1D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
-    assert np.all(beta_star - l > -1.0e-5), \
-        'For the raking in 1D with the logit distance, some raked values are lower than the lower bound.'
+    assert np.all(
+        beta_star - l > -1.0e-5
+    ), "For the raking in 1D with the logit distance, some raked values are lower than the lower bound."
     # Verify that the upper bound is respected
-    assert np.all(h - beta_star > -1.0e-5), \
-        'For the raking in 1D with the logit distance, some raked values are higher than the upper bound.'
+    assert np.all(
+        h - beta_star > -1.0e-5
+    ), "For the raking in 1D with the logit distance, some raked values are higher than the upper bound."
+
 
 def test_logit_raking_2D():
     # Generate balanced matrix
@@ -205,7 +237,7 @@ def test_logit_raking_2D():
     s2 = np.sum(beta, axis=1)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     l = np.repeat(np.min(y), len(y))
     h = np.repeat(np.max(y), len(y))
     # Generate the constraints
@@ -213,14 +245,18 @@ def test_logit_raking_2D():
     # Rake using logit distance
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 2D with the logit distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 2D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
-    assert np.all(beta_star - l > -1.0e-5), \
-        'For the raking in 2D with the logit distance, some raked values are lower than the lower bound.'
+    assert np.all(
+        beta_star - l > -1.0e-5
+    ), "For the raking in 2D with the logit distance, some raked values are lower than the lower bound."
     # Verify that the upper bound is respected
-    assert np.all(h - beta_star > -1.0e-5), \
-        'For the raking in 2D with the logit distance, some raked values are higher than the upper bound.'
+    assert np.all(
+        h - beta_star > -1.0e-5
+    ), "For the raking in 2D with the logit distance, some raked values are higher than the upper bound."
+
 
 def test_logit_raking_3D():
     # Generate balanced matrix
@@ -234,7 +270,7 @@ def test_logit_raking_3D():
     s3 = np.sum(beta, axis=2)
     # Add noise
     y = beta + rng.normal(0.0, 0.1, size=beta.shape)
-    y = y.flatten(order='F')
+    y = y.flatten(order="F")
     l = np.repeat(np.min(y), len(y))
     h = np.repeat(np.max(y), len(y))
     # Generate the constraints
@@ -242,12 +278,14 @@ def test_logit_raking_3D():
     # Rake using logitdistance
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
-    assert np.allclose(np.matmul(A, beta_star), s), \
-        'For the raking in 3D with the logit distance, the constraint A beta_star = s is not respected.'
+    assert np.allclose(
+        np.matmul(A, beta_star), s
+    ), "For the raking in 3D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
-    assert np.all(beta_star - l > -1.0e-5), \
-        'For the raking in 3D with the logit distance, some raked values are lower than the lower bound.'
+    assert np.all(
+        beta_star - l > -1.0e-5
+    ), "For the raking in 3D with the logit distance, some raked values are lower than the lower bound."
     # Verify that the upper bound is respected
-    assert np.all(h - beta_star > -1.0e-5), \
-        'For the raking in 3D with the logit distance, some raked values are higher than the upper bound.'
-
+    assert np.all(
+        h - beta_star > -1.0e-5
+    ), "For the raking in 3D with the logit distance, some raked values are higher than the upper bound."

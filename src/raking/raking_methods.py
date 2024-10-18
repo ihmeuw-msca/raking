@@ -3,6 +3,7 @@
 import numpy as np
 from scipy.sparse.linalg import cg
 
+
 def raking_chi2(
     y: np.ndarray,
     A: np.ndarray,
@@ -32,29 +33,38 @@ def raking_chi2(
     lambda_k : np.ndarray
         Dual (needed for the uncertainty computation)
     """
-    assert isinstance(y, np.ndarray), \
-        'The vector of observations should be a Numpy array.'
-    assert len(y.shape) == 1, \
-        'The vector of observations should be a 1D Numpy array.'
+    assert isinstance(
+        y, np.ndarray
+    ), "The vector of observations should be a Numpy array."
+    assert (
+        len(y.shape) == 1
+    ), "The vector of observations should be a 1D Numpy array."
     if q is not None:
-        assert isinstance(q, np.ndarray), \
-            'The vector of weights should be a Numpy array.'
-        assert len(y.shape) == 1, \
-            'The vector of weights should be a 1D Numpy array.'
-        assert len(y) == len(q), \
-            'Observations and weights vectors should have the same length.'
-    assert isinstance(A, np.ndarray), \
-        'The constraint matrix should be a Numpy array.'
-    assert len(A.shape) == 2, \
-        'The constraints matrix should be a 2D Numpy array.'
-    assert isinstance(s, np.ndarray), \
-        'The margins vector should be a Numpy array.'
-    assert len(s.shape) == 1, \
-        'The margins vector should be a 1D Numpy array.'
-    assert np.shape(A)[0] == len(s), \
-        'The number of linear constraints should be equal to the number of margins.'
-    assert np.shape(A)[1] == len(y), \
-        'The number of coefficients for the linear constraints should be equal to the number of observations.'
+        assert isinstance(
+            q, np.ndarray
+        ), "The vector of weights should be a Numpy array."
+        assert (
+            len(y.shape) == 1
+        ), "The vector of weights should be a 1D Numpy array."
+        assert len(y) == len(
+            q
+        ), "Observations and weights vectors should have the same length."
+    assert isinstance(
+        A, np.ndarray
+    ), "The constraint matrix should be a Numpy array."
+    assert (
+        len(A.shape) == 2
+    ), "The constraints matrix should be a 2D Numpy array."
+    assert isinstance(
+        s, np.ndarray
+    ), "The margins vector should be a Numpy array."
+    assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
+    assert (
+        np.shape(A)[0] == len(s)
+    ), "The number of linear constraints should be equal to the number of margins."
+    assert (
+        np.shape(A)[1] == len(y)
+    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if q is None:
         q = np.ones(len(y))
@@ -64,13 +74,14 @@ def raking_chi2(
     beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
     return (beta, lambda_k)
 
+
 def raking_entropic(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
     q: np.ndarray = None,
     gamma0: float = 1.0,
-    max_iter: int = 500
+    max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
 
@@ -101,29 +112,38 @@ def raking_entropic(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(y, np.ndarray), \
-        'The vector of observations should be a Numpy array.'
-    assert len(y.shape) == 1, \
-        'The vector of observations should be a 1D Numpy array.'
+    assert isinstance(
+        y, np.ndarray
+    ), "The vector of observations should be a Numpy array."
+    assert (
+        len(y.shape) == 1
+    ), "The vector of observations should be a 1D Numpy array."
     if q is not None:
-        assert isinstance(q, np.ndarray), \
-            'The vector of weights should be a Numpy array.'
-        assert len(q.shape) == 1, \
-            'The vector of weights should be a 1D Numpy array.'
-        assert len(y) == len(q), \
-            'Observations and weights vectors should have the same length.'
-    assert isinstance(A, np.ndarray), \
-        'The constraint matrix should be a Numpy array.'
-    assert len(A.shape) == 2, \
-        'The constraints matrix should be a 2D Numpy array.'
-    assert isinstance(s, np.ndarray), \
-        'The margins vector should be a Numpy array.'
-    assert len(s.shape) == 1, \
-        'The margins vector should be a 1D Numpy array.'
-    assert np.shape(A)[0] == len(s), \
-        'The number of linear constraints should be equal to the number of margins.'
-    assert np.shape(A)[1] == len(y), \
-        'The number of coefficients for the linear constraints should be equal to the number of observations.'
+        assert isinstance(
+            q, np.ndarray
+        ), "The vector of weights should be a Numpy array."
+        assert (
+            len(q.shape) == 1
+        ), "The vector of weights should be a 1D Numpy array."
+        assert len(y) == len(
+            q
+        ), "Observations and weights vectors should have the same length."
+    assert isinstance(
+        A, np.ndarray
+    ), "The constraint matrix should be a Numpy array."
+    assert (
+        len(A.shape) == 2
+    ), "The constraints matrix should be a 2D Numpy array."
+    assert isinstance(
+        s, np.ndarray
+    ), "The margins vector should be a Numpy array."
+    assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
+    assert (
+        np.shape(A)[0] == len(s)
+    ), "The number of linear constraints should be equal to the number of margins."
+    assert (
+        np.shape(A)[1] == len(y)
+    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if q is None:
         q = np.ones(len(y))
@@ -133,24 +153,28 @@ def raking_entropic(
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(A, y * (1.0 - np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
-        D = np.diag(y * q * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+        Phi = np.matmul(
+            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
+        )
+        D = np.diag(y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         J = np.matmul(np.matmul(A, D), np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
-        beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+        beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         if iter_eps > 0:
-            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
-                  (iter_gam < max_iter):
+            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+                iter_gam < max_iter
+            ):
                 gamma = gamma / 2.0
                 iter_gam = iter_gam + 1
                 lambda_k = lambda_k - gamma * delta_lambda
-                beta = y * np.exp(- q * np.matmul(np.transpose(A), lambda_k))
+                beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
+
 
 def raking_general(
     y: np.ndarray,
@@ -159,7 +183,7 @@ def raking_general(
     alpha: float = 1,
     q: np.ndarray = None,
     gamma0: float = 1.0,
-    max_iter: int = 500
+    max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the general distance f(beta, y) = 1/alpha (y/alpha+1 (beta/y)^alpha+1 - beta + c(y)).
 
@@ -192,31 +216,41 @@ def raking_general(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(y, np.ndarray), \
-        'The vector of observations should be a Numpy array.'
-    assert len(y.shape) == 1, \
-        'The vector of observations should be a 1D Numpy array.'
+    assert isinstance(
+        y, np.ndarray
+    ), "The vector of observations should be a Numpy array."
+    assert (
+        len(y.shape) == 1
+    ), "The vector of observations should be a 1D Numpy array."
     if q is not None:
-        assert isinstance(q, np.ndarray), \
-            'The vector of weights should be a Numpy array.'
-        assert len(y.shape) == 1, \
-            'The vector of weights should be a 1D Numpy array.'
-        assert len(y) == len(q), \
-            'Observations and weights vectors should have the same length.'
-    assert isinstance(A, np.ndarray), \
-        'The constraint matrix should be a Numpy array.'
-    assert len(A.shape) == 2, \
-        'The constraints matrix should be a 2D Numpy array.'
-    assert isinstance(s, np.ndarray), \
-        'The margins vector should be a Numpy array.'
-    assert len(s.shape) == 1, \
-        'The margins vector should be a 1D Numpy array.'
-    assert np.shape(A)[0] == len(s), \
-        'The number of linear constraints should be equal to the number of margins.'
-    assert np.shape(A)[1] == len(y), \
-        'The number of coefficients for the linear constraints should be equal to the number of observations.'
-    assert isinstance(alpha, (int, float)), \
-        'The parameter of the distance function should be an integer or a float.'
+        assert isinstance(
+            q, np.ndarray
+        ), "The vector of weights should be a Numpy array."
+        assert (
+            len(y.shape) == 1
+        ), "The vector of weights should be a 1D Numpy array."
+        assert len(y) == len(
+            q
+        ), "Observations and weights vectors should have the same length."
+    assert isinstance(
+        A, np.ndarray
+    ), "The constraint matrix should be a Numpy array."
+    assert (
+        len(A.shape) == 2
+    ), "The constraints matrix should be a 2D Numpy array."
+    assert isinstance(
+        s, np.ndarray
+    ), "The margins vector should be a Numpy array."
+    assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
+    assert (
+        np.shape(A)[0] == len(s)
+    ), "The number of linear constraints should be equal to the number of margins."
+    assert (
+        np.shape(A)[1] == len(y)
+    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
+    assert isinstance(
+        alpha, (int, float)
+    ), "The parameter of the distance function should be an integer or a float."
 
     if q is None:
         q = np.ones(len(y))
@@ -226,7 +260,9 @@ def raking_general(
         return (beta, lambda_k, 0)
 
     if alpha == 0:
-        (beta, lambda_k, iter_eps) = raking_entropic(y, A, s, q, gamma0, max_iter)
+        (beta, lambda_k, iter_eps) = raking_entropic(
+            y, A, s, q, gamma0, max_iter
+        )
         return (beta, lambda_k, iter_eps)
 
     s_hat = np.matmul(A, y)
@@ -235,51 +271,102 @@ def raking_general(
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(A, y * (1.0 - np.power(1 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)))
-        D = np.diag(y * q * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha - 1))
+        Phi = np.matmul(
+            A,
+            y
+            * (
+                1.0
+                - np.power(
+                    1 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                    1.0 / alpha,
+                )
+            ),
+        )
+        D = np.diag(
+            y
+            * q
+            * np.power(
+                1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                1.0 / alpha - 1,
+            )
+        )
         J = np.matmul(np.matmul(A, D), np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
-        beta = y * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)
+        beta = y * np.power(
+            1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha
+        )
         if (alpha > 0.5) or (alpha < -1.0):
             if iter_eps > 0:
-                while (np.any(1 - alpha * q * np.matmul(np.transpose(A), lambda_k - gamma * delta_lambda) <= 0.0)) & \
-                      (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
-                      (iter_gam < max_iter):
+                while (
+                    (
+                        np.any(
+                            1
+                            - alpha
+                            * q
+                            * np.matmul(
+                                np.transpose(A), lambda_k - gamma * delta_lambda
+                            )
+                            <= 0.0
+                        )
+                    )
+                    & (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon)
+                    & (iter_gam < max_iter)
+                ):
                     gamma = gamma / 2.0
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)
+                    beta = y * np.power(
+                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 / alpha,
+                    )
             else:
-                while (np.any(1 - alpha * q * np.matmul(np.transpose(A), lambda_k - gamma * delta_lambda) <= 0.0)) & \
-                      (iter_gam < max_iter):
+                while (
+                    np.any(
+                        1
+                        - alpha
+                        * q
+                        * np.matmul(
+                            np.transpose(A), lambda_k - gamma * delta_lambda
+                        )
+                        <= 0.0
+                    )
+                ) & (iter_gam < max_iter):
                     gamma = gamma / 2.0
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)
+                    beta = y * np.power(
+                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 / alpha,
+                    )
         else:
             if iter_eps > 0:
-                while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
-                      (iter_gam < max_iter):
+                while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+                    iter_gam < max_iter
+                ):
                     gamma = gamma / 2.0
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)
+                    beta = y * np.power(
+                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 / alpha,
+                    )
         epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
+
 
 def raking_logit(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
     l: np.ndarray = None,
-    h: np.ndarray = None, 
+    h: np.ndarray = None,
     q: np.ndarray = None,
     gamma0: float = 1.0,
-    max_iter: int = 500
+    max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Logit raking ensuring that l < beta < h.
 
@@ -314,58 +401,74 @@ def raking_logit(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(y, np.ndarray), \
-        'The vector of observations should be a Numpy array.'
-    assert len(y.shape) == 1, \
-        'The vector of observations should be a 1D Numpy array.'
+    assert isinstance(
+        y, np.ndarray
+    ), "The vector of observations should be a Numpy array."
+    assert (
+        len(y.shape) == 1
+    ), "The vector of observations should be a 1D Numpy array."
     if q is not None:
-        assert isinstance(q, np.ndarray), \
-            'The vector of weights should be a Numpy array.'
-        assert len(y.shape) == 1, \
-            'The vector of weights should be a 1D Numpy array.'
-        assert len(y) == len(q), \
-            'Observations and weights vectors should have the same length.'
-    assert isinstance(A, np.ndarray), \
-        'The constraint matrix should be a Numpy array.'
-    assert len(A.shape) == 2, \
-        'The constraints matrix should be a 2D Numpy array.'
-    assert isinstance(s, np.ndarray), \
-        'The margins vector should be a Numpy array.'
-    assert len(s.shape) == 1, \
-        'The margins vector should be a 1D Numpy array.'
-    assert np.shape(A)[0] == len(s), \
-        'The number of linear constraints should be equal to the number of margins.'
-    assert np.shape(A)[1] == len(y), \
-        'The number of coefficients for the linear constraints should be equal to the number of observations.'
+        assert isinstance(
+            q, np.ndarray
+        ), "The vector of weights should be a Numpy array."
+        assert (
+            len(y.shape) == 1
+        ), "The vector of weights should be a 1D Numpy array."
+        assert len(y) == len(
+            q
+        ), "Observations and weights vectors should have the same length."
+    assert isinstance(
+        A, np.ndarray
+    ), "The constraint matrix should be a Numpy array."
+    assert (
+        len(A.shape) == 2
+    ), "The constraints matrix should be a 2D Numpy array."
+    assert isinstance(
+        s, np.ndarray
+    ), "The margins vector should be a Numpy array."
+    assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
+    assert (
+        np.shape(A)[0] == len(s)
+    ), "The number of linear constraints should be equal to the number of margins."
+    assert (
+        np.shape(A)[1] == len(y)
+    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if l is None:
         l = np.zeros(len(y))
-    assert isinstance(l, np.ndarray), \
-        'The vector of lower bounds should be a Numpy array.'
-    assert len(l.shape) == 1, \
-        'The vector of lower bounds should be a 1D Numpy array.'
-    assert len(y) == len(l), \
-        'Observations and lower bounds vectors should have the same length.'
-    assert np.all(l >= 0.0), \
-        'The lower bounds must be positive.'
-    assert np.all(l <= y), \
-        'The observations must be superior or equal to the corresponding lower bounds.'
+    assert isinstance(
+        l, np.ndarray
+    ), "The vector of lower bounds should be a Numpy array."
+    assert (
+        len(l.shape) == 1
+    ), "The vector of lower bounds should be a 1D Numpy array."
+    assert len(y) == len(
+        l
+    ), "Observations and lower bounds vectors should have the same length."
+    assert np.all(l >= 0.0), "The lower bounds must be positive."
+    assert np.all(
+        l <= y
+    ), "The observations must be superior or equal to the corresponding lower bounds."
 
     if h is None:
         h = np.ones(len(y))
-    assert isinstance(h, np.ndarray), \
-        'The vector of upper bounds should be a Numpy array.'
-    assert len(h.shape) == 1, \
-        'The vector of upper bounds should be a 1D Numpy array.'
-    assert len(y) == len(h), \
-        'Observations and upper bounds vectors should have the same length.'
-    assert np.all(h > 0.0), \
-        'The upper bounds must be strictly positive.'
-    assert np.all(h >= y), \
-        'The observations must be inferior or equal to the correspondings upper bounds.'
-   
-    assert np.all(l < h), \
-        'The lower bounds must be stricty inferior to the correspondings upper bounds.'
+    assert isinstance(
+        h, np.ndarray
+    ), "The vector of upper bounds should be a Numpy array."
+    assert (
+        len(h.shape) == 1
+    ), "The vector of upper bounds should be a 1D Numpy array."
+    assert len(y) == len(
+        h
+    ), "Observations and upper bounds vectors should have the same length."
+    assert np.all(h > 0.0), "The upper bounds must be strictly positive."
+    assert np.all(
+        h >= y
+    ), "The observations must be inferior or equal to the correspondings upper bounds."
+
+    assert np.all(
+        l < h
+    ), "The lower bounds must be stricty inferior to the correspondings upper bounds."
 
     if q is None:
         q = np.ones(len(y))
@@ -374,26 +477,56 @@ def raking_logit(
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(A, (l * (h - y) + h * (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k))) / \
-            ((h - y) + (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k))))
-        D = np.diag(- q * ((y - l) * (h - y) * (h - l)) / \
-            np.square((h - y) + (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k))))    
+        Phi = np.matmul(
+            A,
+            (
+                l * (h - y)
+                + h
+                * (y - l)
+                * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+            )
+            / (
+                (h - y)
+                + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+            ),
+        )
+        D = np.diag(
+            -q
+            * ((y - l) * (h - y) * (h - l))
+            / np.square(
+                (h - y)
+                + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+            )
+        )
         J = np.matmul(np.matmul(A, D), np.transpose(A))
         delta_lambda = cg(J, Phi - s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
-        beta = (l * (h - y) + h * (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k))) / \
-            ((h - y) + (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+        beta = (
+            l * (h - y)
+            + h * (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+        ) / (
+            (h - y)
+            + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+        )
         if iter_eps > 0:
-            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & \
-                (iter_gam < max_iter):
+            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+                iter_gam < max_iter
+            ):
                 gamma = gamma / 2.0
                 iter_gam = iter_gam + 1
                 lambda_k = lambda_k - gamma * delta_lambda
-                beta = (l * (h - y) + h * (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k))) / \
-                    ((h - y) + (y - l) * np.exp(- q * np.matmul(np.transpose(A), lambda_k)))
+                beta = (
+                    l * (h - y)
+                    + h
+                    * (y - l)
+                    * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                ) / (
+                    (h - y)
+                    + (y - l)
+                    * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                )
         epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
-
