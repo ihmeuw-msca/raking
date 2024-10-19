@@ -879,8 +879,8 @@ def compute_covariance_obs_margins_2D(
 def check_obs_margins_3D(
     df_obs: pd.DataFrame,
     df_margins_1: pd.DataFrame,
-    df_margins_2: pd.dataFrame,
-    df_margins_3: pd.dataFrame,
+    df_margins_2: pd.DataFrame,
+    df_margins_3: pd.DataFrame,
     var_names: list,
     draws: str,
 ) -> None:
