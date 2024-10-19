@@ -116,6 +116,9 @@ def run_raking(
         3,
     ], "The dimension of the raking problem must be 1, 2 or 3."
     assert isinstance(
+        cov_mat, bool
+    ), "cov_mat indicates whether we compute the covariance matrix, must be True or False."
+    assert isinstance(
         var_names, list
     ), "The variables over which we rake must be entered as a list."
     assert (
@@ -227,6 +230,7 @@ def run_raking(
             beta, lambda_k, y, A, method, alpha, l, h, q
         )
         sigma = compute_covariance(Dphi_y, Dphi_s, sigma_yy, sigma_ss, sigma_ys)
+        df_obs["variance"] = np.diag(sigma)
     else:
         Dphi_y = None
         Dphi_s = None

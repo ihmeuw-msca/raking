@@ -123,8 +123,8 @@ def check_margins_1D(
 
     Parameters
     ----------
-    df_obs : pd.DataFrame
-        Observations data
+    df_margins : pd.DataFrame
+        Margins data (sums over the first variable)
     var_names : list of strings
         Names of the variables over which we rake (e.g. cause, race, county)
     draws : string
@@ -210,16 +210,13 @@ def compute_covariance_margins_1D(
     return sigma_ss
 
 
-def compute_covariance_margins_2D(
+def check_margins_2D(
     df_margins_1: pd.DataFrame,
     df_margins_2: pd.DataFrame,
     var_names: list,
     draws: str,
-) -> np.ndarray:
-    """Compute the covariance matrix of the margins in 2D.
-
-    The margins are sorted in the same order as what is done
-    when computing the constraint matrix.
+) -> None:
+    """Check whether the margins data frame are valid in 2D.
 
     Parameters
     ----------
@@ -234,8 +231,7 @@ def compute_covariance_margins_2D(
 
     Returns
     -------
-    sigma_ss : np.ndarray
-        (I + J - 1) * (I + J - 1) covariance matrix
+    None
     """
     assert isinstance(
         df_margins_1, pd.DataFrame
@@ -294,7 +290,6 @@ def compute_covariance_margins_2D(
         draws in df_margins_2.columns.tolist()
     ), "The column containing the draws is missing from the second margins data frame."
 
-    # Check the first margins data
     assert df_margins_1[var_names[1]].isna().sum() == 0, (
         "There are missing values in the "
         + var_names[1]
@@ -309,8 +304,7 @@ def compute_covariance_margins_2D(
         df_margins_1[draws].isna().sum() == 0
     ), "There are missing values in the draws column of the first margins."
     assert (
-        len(df_margins_1[df_margins_1.duplicated([var_names[1], draws])])
-        == 0
+        len(df_margins_1[df_margins_1.duplicated([var_names[1], draws])]) == 0
     ), "There are duplicated rows in the first margins data frame."
     count_obs = df_margins_1[[var_names[1], draws]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
@@ -319,7 +313,6 @@ def compute_covariance_margins_2D(
         + " and draws in the first margins."
     )
 
-    # Check the second margins data
     assert df_margins_2[var_names[0]].isna().sum() == 0, (
         "There are missing values in the "
         + var_names[0]
@@ -334,8 +327,7 @@ def compute_covariance_margins_2D(
         df_margins_2[draws].isna().sum() == 0
     ), "There are missing values in the draws column of the second margins."
     assert (
-        len(df_margins_2[df_margins_2.duplicated([var_names[0], draws])])
-        == 0
+        len(df_margins_2[df_margins_2.duplicated([var_names[0], draws])]) == 0
     ), "There are duplicated rows in the second margins data frame."
     count_obs = df_margins_2[[var_names[0], draws]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
@@ -343,6 +335,36 @@ def compute_covariance_margins_2D(
         + var_names[0]
         + " and draws in the second margins."
     )
+
+
+def compute_covariance_margins_2D(
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    var_names: list,
+    draws: str,
+) -> np.ndarray:
+    """Compute the covariance matrix of the margins in 2D.
+
+    The margins are sorted in the same order as what is done
+    when computing the constraint matrix.
+
+    Parameters
+    ----------
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ss : np.ndarray
+        (I + J - 1) * (I + J - 1) covariance matrix
+    """
+    check_margins_2D(df_margins_1, df_margins_2, var_names, draws)
 
     nsamples = len(df_margins_1[draws].unique())
     df1 = df_margins_1[[var_names[1], "value_agg_over_" + var_names[0], draws]]
@@ -360,17 +382,14 @@ def compute_covariance_margins_2D(
     return sigma_ss
 
 
-def compute_covariance_margins_3D(
+def check_margins_3D(
     df_margins_1: pd.DataFrame,
     df_margins_2: pd.DataFrame,
     df_margins_3: pd.DataFrame,
     var_names: list,
     draws: str,
-) -> np.ndarray:
-    """Compute the covariance matrix of the margins in 3D.
-
-    The margins are sorted in the same order as what is done
-    when computing the constraint matrix.
+) -> None:
+    """Check whether the margins data frames are valid in 3D.
 
     Parameters
     ----------
@@ -387,8 +406,7 @@ def compute_covariance_margins_3D(
 
     Returns
     -------
-    sigma_ss : np.ndarray
-        (I J + I K + J K - I - J - K + 1) * (I J + I K + J K - I - J - K + 1) covariance matrix
+    None
     """
     assert isinstance(
         df_margins_1, pd.DataFrame
@@ -483,7 +501,6 @@ def compute_covariance_margins_3D(
         draws in df_margins_3.columns.tolist()
     ), "The column containing the draws is missing from the third margins data frame."
 
-    # Check the first margins data
     assert df_margins_1[var_names[1]].isna().sum() == 0, (
         "There are missing values in the "
         + var_names[1]
@@ -503,10 +520,14 @@ def compute_covariance_margins_3D(
         df_margins_1[draws].isna().sum() == 0
     ), "There are missing values in the draws column of the first margins."
     assert (
-        len(df_margins_1[df_margins_1.duplicated([var_names[1], var_names[2], draws])])
+        len(
+            df_margins_1[
+                df_margins_1.duplicated([var_names[1], var_names[2], draws])
+            ]
+        )
         == 0
     ), "There are duplicated rows in the first margins data frame."
-    count_obs = df_margins_1[[var_names[1], var_names[2],  draws]].value_counts()
+    count_obs = df_margins_1[[var_names[1], var_names[2], draws]].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
         "There are missing combinations of "
         + var_names[1]
@@ -515,7 +536,6 @@ def compute_covariance_margins_3D(
         + " and draws in the first margins."
     )
 
-    # Check the second margins data
     assert df_margins_2[var_names[0]].isna().sum() == 0, (
         "There are missing values in the "
         + var_names[0]
@@ -535,7 +555,11 @@ def compute_covariance_margins_3D(
         df_margins_2[draws].isna().sum() == 0
     ), "There are missing values in the draws column of the second margins."
     assert (
-        len(df_margins_2[df_margins_2.duplicated([var_names[0], var_names[2], draws])])
+        len(
+            df_margins_2[
+                df_margins_2.duplicated([var_names[0], var_names[2], draws])
+            ]
+        )
         == 0
     ), "There are duplicated rows in the second margins data frame."
     count_obs = df_margins_2[[var_names[0], var_names[2], draws]].value_counts()
@@ -547,7 +571,6 @@ def compute_covariance_margins_3D(
         + " and draws in the second margins."
     )
 
-    # Check the third margins data
     assert df_margins_3[var_names[0]].isna().sum() == 0, (
         "There are missing values in the "
         + var_names[0]
@@ -567,7 +590,11 @@ def compute_covariance_margins_3D(
         df_margins_3[draws].isna().sum() == 0
     ), "There are missing values in the draws column of the third margins."
     assert (
-        len(df_margins_3[df_margins_3.duplicated([var_names[0], var_names[1], draws])])
+        len(
+            df_margins_3[
+                df_margins_3.duplicated([var_names[0], var_names[1], draws])
+            ]
+        )
         == 0
     ), "There are duplicated rows in the third margins data frame."
     count_obs = df_margins_3[[var_names[0], var_names[1], draws]].value_counts()
@@ -578,6 +605,39 @@ def compute_covariance_margins_3D(
         + var_names[1]
         + " and draws in the third margins."
     )
+
+
+def compute_covariance_margins_3D(
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    df_margins_3: pd.DataFrame,
+    var_names: list,
+    draws: str,
+) -> np.ndarray:
+    """Compute the covariance matrix of the margins in 3D.
+
+    The margins are sorted in the same order as what is done
+    when computing the constraint matrix.
+
+    Parameters
+    ----------
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    df_margins_3 : pd.DataFrame
+        Margins data (sums over the third variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    sigma_ss : np.ndarray
+        (I J + I K + J K - I - J - K + 1) * (I J + I K + J K - I - J - K + 1) covariance matrix
+    """
+    check_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_names, draws)
 
     nsamples = len(df_margins_1[draws].unique())
     var1 = df_margins_2[var_names[0]].unique().tolist()
@@ -615,6 +675,30 @@ def compute_covariance_margins_3D(
     return sigma_ss
 
 
+def check_obs_margins_1D(
+    df_obs: pd.DataFrame, df_margins: pd.DataFrame, draws: str
+) -> None:
+    """Check whether the observations and margins data frames are consistent in 1D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : pd.DataFrame
+        Margins data (sums over the first variable)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    None
+    """
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins[draws].unique().tolist())
+    ), "The draws should be the same in the observations and margins data frames."
+
+
 def compute_covariance_obs_margins_1D(
     df_obs: pd.DataFrame, df_margins: pd.DataFrame, var_names: list, draws: str
 ) -> np.ndarray:
@@ -642,6 +726,7 @@ def compute_covariance_obs_margins_1D(
     """
     check_observations(df_obs, var_names, draws)
     check_margins_1D(df_margins, var_names, draws)
+    check_obs_margins_1D(df_obs, df_margins, draws)
 
     nsamples = len(df_obs[draws].unique())
     var_names_reverse = var_names.copy()
@@ -660,6 +745,72 @@ def compute_covariance_obs_margins_1D(
     Yc = Y - Ymean
     sigma_ys = np.matmul(np.transpose(Xc), Yc) / nsamples
     return sigma_ys
+
+
+def check_obs_margins_2D(
+    df_obs: pd.DataFrame,
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.DataFrame,
+    var_names: list,
+    draws: str,
+) -> None:
+    """Check whether the observations and margins data frames are consistent in 2D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    None
+    """
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_1[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the first margins data frames."
+
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_2[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the second margins data frames."
+
+    assert len(df_obs[var_names[0]].unique()) == len(
+        df_margins_2[var_names[0]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[0]
+        + " should be the same in the observations and margins data frames."
+    )
+    assert set(df_obs[var_names[0]].unique().tolist()) == set(
+        df_margins_2[var_names[0]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[0]
+        + " should be the same in the observations and margins data frames."
+    )
+    assert len(df_obs[var_names[1]].unique()) == len(
+        df_margins_1[var_names[1]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[1]
+        + " should be the same in the observations and margins data frames."
+    )
+    assert set(df_obs[var_names[1]].unique().tolist()) == set(
+        df_margins_1[var_names[1]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[1]
+        + " should be the same in the observations and margins data frames."
+    )
 
 
 def compute_covariance_obs_margins_2D(
@@ -693,6 +844,10 @@ def compute_covariance_obs_margins_2D(
     sigma_ys : np.ndarray
         (I * J * K) * (I + J - 1) covariance matrix
     """
+    check_observations(df_obs, var_names, draws)
+    check_margins_2D(df_margins_1, df_margins_2, var_names, draws)
+    check_obs_margins_2D(df_obs, df_margins_1, df_margins_2, var_names, draws)
+
     nsamples = len(df_obs[draws].unique())
     var_names_reverse = var_names.copy()
     var_names_reverse.reverse()
@@ -719,6 +874,143 @@ def compute_covariance_obs_margins_2D(
     Yc = Y - Ymean
     sigma_ys = np.matmul(np.transpose(Xc), Yc) / nsamples
     return sigma_ys
+
+
+def check_obs_margins_3D(
+    df_obs: pd.DataFrame,
+    df_margins_1: pd.DataFrame,
+    df_margins_2: pd.dataFrame,
+    df_margins_3: pd.dataFrame,
+    var_names: list,
+    draws: str,
+) -> None:
+    """Check whether the observations and margins data frame are consistent in 3D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins_1 : pd.DataFrame
+        Margins data (sums over the first variable)
+    df_margins_2 : pd.DataFrame
+        Margins data (sums over the second variable)
+    df_margins_3 : pd.DataFrame
+        Margins data (sums over the third variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    None
+    """
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_1[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the first margins data frames."
+
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_2[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the second margins data frames."
+
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_3[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the third margins data frames."
+
+    assert (
+        set(df_obs[draws].unique().tolist())
+        == set(df_margins_2[draws].unique().tolist())
+    ), "The draws should be the same in the observations and the second margins data frames."
+
+    assert len(df_obs[var_names[1]].unique()) == len(
+        df_margins_1[var_names[1]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[1]
+        + " should be the same in the observations and first margins data frames."
+    )
+    assert set(df_obs[var_names[1]].unique().tolist()) == set(
+        df_margins_1[var_names[1]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[1]
+        + " should be the same in the observations and first margins data frames."
+    )
+    assert len(df_obs[var_names[2]].unique()) == len(
+        df_margins_1[var_names[2]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[2]
+        + " should be the same in the observations and first margins data frames."
+    )
+    assert set(df_obs[var_names[2]].unique().tolist()) == set(
+        df_margins_1[var_names[2]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[2]
+        + " should be the same in the observations and first margins data frames."
+    )
+
+    assert len(df_obs[var_names[0]].unique()) == len(
+        df_margins_2[var_names[0]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[0]
+        + " should be the same in the observations and second margins data frames."
+    )
+    assert set(df_obs[var_names[0]].unique().tolist()) == set(
+        df_margins_2[var_names[0]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[0]
+        + " should be the same in the observations and second margins data frames."
+    )
+    assert len(df_obs[var_names[2]].unique()) == len(
+        df_margins_2[var_names[2]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[2]
+        + " should be the same in the observations and second margins data frames."
+    )
+    assert set(df_obs[var_names[2]].unique().tolist()) == set(
+        df_margins_2[var_names[2]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[2]
+        + " should be the same in the observations and second margins data frames."
+    )
+
+    assert len(df_obs[var_names[0]].unique()) == len(
+        df_margins_3[var_names[0]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[0]
+        + " should be the same in the observations and third margins data frames."
+    )
+    assert set(df_obs[var_names[0]].unique().tolist()) == set(
+        df_margins_3[var_names[0]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[0]
+        + " should be the same in the observations and third margins data frames."
+    )
+    assert len(df_obs[var_names[1]].unique()) == len(
+        df_margins_3[var_names[1]].unique()
+    ), (
+        "The number of categories for "
+        + var_names[1]
+        + " should be the same in the observations and third margins data frames."
+    )
+    assert set(df_obs[var_names[1]].unique().tolist()) == set(
+        df_margins_3[var_names[1]].unique().tolist()
+    ), (
+        "The names of the categories for "
+        + var_names[1]
+        + " should be the same in the observations and third margins data frames."
+    )
 
 
 def compute_covariance_obs_margins_3D(
@@ -755,6 +1047,12 @@ def compute_covariance_obs_margins_3D(
     sigma_ys : np.ndarray
         (I * J * K) * (I J + I K + J K - I - J - K + 1) covariance matrix
     """
+    check_observations(df_obs, var_names, draws)
+    check_margins_3D(df_margins_1, df_margins_2, df_margins_3, var_names, draws)
+    check_obs_margins_3D(
+        df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws
+    )
+
     nsamples = len(df_obs[draws].unique())
     var_names_reverse = var_names.copy()
     var_names_reverse.reverse()
@@ -810,6 +1108,56 @@ def compute_covariance_obs_margins_3D(
     return sigma_ys
 
 
+def check_format_covariance(
+    sigma_yy: np.ndarray, sigma_ss: np.ndarray, sigma_ys: np.ndarray
+) -> None:
+    """Check the format of the input covariance matrices.
+
+    Parameters
+    ----------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    None
+    """
+    assert isinstance(
+        sigma_yy, np.ndarray
+    ), "The covariance matrix of the observations should be a Numpy array."
+    assert (
+        len(sigma_yy.shape) == 2
+    ), "The covariance matrix of the observations should be a 2D Numpy array."
+    assert (
+        np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1]
+    ), "The covariance matrix of the observations should be a square matrix."
+    assert isinstance(
+        sigma_ss, np.ndarray
+    ), "The covariance matrix of the margins should be a Numpy array."
+    assert (
+        len(sigma_ss.shape) == 2
+    ), "The covariance matrix of the margins should be a 2D Numpy array."
+    assert (
+        np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1]
+    ), "The covariance matrix of the margins should be a square matrix."
+    assert isinstance(
+        sigma_ys, np.ndarray
+    ), "The covariance matrix of the observations and margins should be a Numpy array."
+    assert (
+        len(sigma_ys.shape) == 2
+    ), "The covariance matrix of the observations and margins should be a 2D Numpy array."
+    assert (
+        np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0]
+    ), "The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations."
+    assert (
+        np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1]
+    ), "The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins."
+
+
 def check_covariance(
     sigma_yy: np.ndarray,
     sigma_ss: np.ndarray,
@@ -844,6 +1192,7 @@ def check_covariance(
     sigma_ys : np.ndarray
         Covariance matrix of the observations and margins
     """
+    check_format_covariance(sigma_yy, sigma_ss, sigma_ys)
     sigma = np.concatenate(
         (
             np.concatenate((sigma_yy, sigma_ys), axis=1),
