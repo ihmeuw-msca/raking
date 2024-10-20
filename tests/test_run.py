@@ -9,6 +9,10 @@ def test_run_raking_1D(example_1D):
         var_names=["var1"],
         cov_mat=False,
     )
+    assert np.allclose(
+        df_obs["raked_value"].sum(),
+        example_1D.df_margin["value_agg_over_var1"].iloc[0],
+    ), "The raked values do not sum to the margin."
 
 
 def test_run_raking_2D(example_2D):
@@ -19,6 +23,24 @@ def test_run_raking_2D(example_2D):
         var_names=["var1", "var2"],
         cov_mat=False,
     )
+    sum_over_var1 = (
+        df_obs.groupby(["var2"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_2D.df_margins_1, on="var2")
+    )
+    assert np.allclose(
+        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    ), "The sums over the first variable must match the first margins."
+    sum_over_var2 = (
+        df_obs.groupby(["var1"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_2D.df_margins_2, on="var1")
+    )
+    assert np.allclose(
+        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    ), "The sums over the second variable must match the second margins."
 
 
 def test_run_raking_3D(example_3D):
@@ -33,6 +55,33 @@ def test_run_raking_3D(example_3D):
         var_names=["var1", "var2", "var3"],
         cov_mat=False,
     )
+    sum_over_var1 = (
+        df_obs.groupby(["var2", "var3"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_3D.df_margins_1, on=["var2", "var3"])
+    )
+    assert np.allclose(
+        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    ), "The sums over the first variable must match the first margins."
+    sum_over_var2 = (
+        df_obs.groupby(["var1", "var3"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_3D.df_margins_2, on=["var1", "var3"])
+    )
+    assert np.allclose(
+        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    ), "The sums over the second variable must match the second margins."
+    sum_over_var3 = (
+        df_obs.groupby(["var1", "var2"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_3D.df_margins_3, on=["var1", "var2"])
+    )
+    assert np.allclose(
+        sum_over_var3["raked_value"], sum_over_var3["value_agg_over_var3"]
+    ), "The sums over the third variable must match the third margins."
 
 
 def test_run_raking_1D_draws(example_1D_draws):
@@ -44,6 +93,10 @@ def test_run_raking_1D_draws(example_1D_draws):
         draws="draws",
         cov_mat=True,
     )
+    assert np.allclose(
+        df_obs["raked_value"].sum(),
+        example_1D_draws.df_margin["value_agg_over_var1"].mean(),
+    ), "The raked values do not sum to the margin."
 
 
 def test_run_raking_2D_draws(example_2D_draws):
@@ -58,6 +111,34 @@ def test_run_raking_2D_draws(example_2D_draws):
         draws="draws",
         cov_mat=True,
     )
+    sum_over_var1 = (
+        df_obs.groupby(["var2"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            example_2D_draws.df_margins_1.groupby(["var2"])
+            .agg({"value_agg_over_var1": "mean"})
+            .reset_index(),
+            on="var2",
+        )
+    )
+    assert np.allclose(
+        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    ), "The sums over the first variable must match the first margins."
+    sum_over_var2 = (
+        df_obs.groupby(["var1"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            example_2D_draws.df_margins_2.groupby(["var1"])
+            .agg({"value_agg_over_var2": "mean"})
+            .reset_index(),
+            on="var1",
+        )
+    )
+    assert np.allclose(
+        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    ), "The sums over the second variable must match the second margins."
 
 
 def test_run_raking_3D_draws(example_3D_draws):
@@ -73,3 +154,45 @@ def test_run_raking_3D_draws(example_3D_draws):
         draws="draws",
         cov_mat=True,
     )
+    sum_over_var1 = (
+        df_obs.groupby(["var2", "var3"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            example_3D_draws.df_margins_1.groupby(["var2", "var3"])
+            .agg({"value_agg_over_var1": "mean"})
+            .reset_index(),
+            on=["var2", "var3"],
+        )
+    )
+    assert np.allclose(
+        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    ), "The sums over the first variable must match the first margins."
+    sum_over_var2 = (
+        df_obs.groupby(["var1", "var3"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            example_3D_draws.df_margins_2.groupby(["var1", "var3"])
+            .agg({"value_agg_over_var2": "mean"})
+            .reset_index(),
+            on=["var1", "var3"],
+        )
+    )
+    assert np.allclose(
+        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    ), "The sums over the second variable must match the second margins."
+    sum_over_var3 = (
+        df_obs.groupby(["var1", "var2"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            example_3D_draws.df_margins_3.groupby(["var1", "var2"])
+            .agg({"value_agg_over_var3": "mean"})
+            .reset_index(),
+            on=["var1", "var2"],
+        )
+    )
+    assert np.allclose(
+        sum_over_var3["raked_value"], sum_over_var3["value_agg_over_var3"]
+    ), "The sums over the third variable must match the third margins."
