@@ -1,3 +1,5 @@
+import pytest
+import numpy as np
 from raking.run_raking import run_raking
 
 
