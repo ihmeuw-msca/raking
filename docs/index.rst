@@ -9,22 +9,7 @@ PyPkg documentation
    api_reference/index
    developer_guide/index
 
-.. note::
-
-   In this page, please use one or two paragraphs to summarize the main purpose of the package.
-   Following the summary, please provide guidence of how people should use this documentation.
-
-PyPkg is a template package to guide you setup your own Python package.
-It can be cloned and used as a starting point for your project.
-We also want to use this documentation to help users understand key concepts when building a Python package, include
-
-* Project organization
-* Style guide
-* Testing and documentation
-* Continuous integration and deployment
-
-It will bring standards, consistency and best practices into your projects and
-make collaborations easier.
+Raking is a well known method in survey sampling to adjust the cases in a contingency table to match the known marginal totals. This package has been developed to rake 1, 2 and 3D contingency tables.
 
 .. list-table::
    :header-rows: 1
@@ -33,8 +18,8 @@ make collaborations easier.
    * - :ref:`Getting started`
      - :ref:`User guide`
 
-   * - If you are new to PyPkg, this is where you should go. It contains main use cases and examples to help you get started.
-     - The user guide provides in-depth information on key concepts of package building with useful background information and explanation.
+   * - How to install the package.
+     - The user guide provides in-depth information on key concepts of raking and what you can do with the package.
 
 .. list-table::
    :header-rows: 1
