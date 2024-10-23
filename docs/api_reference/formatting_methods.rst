@@ -1,7 +1,7 @@
-compute_constraints
+formatting_methods
 ===================
 
-.. automodule:: raking.compute_constraints
+.. automodule:: raking.formatting_methods
    :members:
    :undoc-members:
    :show-inheritance:

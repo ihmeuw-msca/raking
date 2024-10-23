@@ -1,6 +1,6 @@
-================
+=================
 Installing raking
-================
+=================
 
 Python version
 --------------
@@ -28,4 +28,4 @@ Then launch Jupyter notebook using:
 
     jupyter notebook
 
-Open the notebook getting_started.ipynb and change the kernel to "env_raking" on the top right of the page. You can then run the examples.
+Open the notebook docs/getting_started.ipynb and change the kernel to "env_raking" on the top right of the page. You can then run the examples.
