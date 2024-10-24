@@ -1,5 +1,5 @@
-PyPkg documentation
-===================
+Raking documentation
+====================
 
 .. toctree::
    :hidden:
