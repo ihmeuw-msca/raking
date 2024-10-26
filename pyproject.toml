@@ -22,6 +22,7 @@ dependencies = ["numpy", "pandas", "scipy"]
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
 docs = ["sphinx", "sphinx-autodoc-typehints", "furo", "ipykernel"]
+dev = ["test", "docs", "pre-commit", "ruff"]
 
 [project.urls]
 github = "https://github.com/ihmeuw-msca/raking"
