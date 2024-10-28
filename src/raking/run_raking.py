@@ -7,6 +7,7 @@ from raking.compute_constraints import (
     constraints_1D,
     constraints_2D,
     constraints_3D,
+    constraints_USHD,
 )
 from raking.compute_covariance import compute_covariance_obs
 from raking.compute_covariance import (
@@ -24,6 +25,7 @@ from raking.formatting_methods import (
     format_data_1D,
     format_data_2D,
     format_data_3D,
+    format_data_USHD,
 )
 from raking.raking_methods import (
     raking_chi2,
@@ -37,10 +39,10 @@ pd.options.mode.chained_assignment = None
 
 
 def run_raking(
-    dim: int,
+    dim: int | str,
     df_obs: pd.DataFrame,
     df_margins: list,
-    var_names: list,
+    var_names: list | None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
@@ -61,14 +63,14 @@ def run_raking(
 
     Parameters
     ----------
-    dim : integer
-        Dimension of the raking problem (1, 2, 3)
+    dim : integer or string
+        Dimension of the raking problem (1, 2, 3) or special case (USHD)
     df_obs : pd.DataFrame
         Observations data
     df_margins : list of pd.DataFrame
         list of data frames contatining the margins data
     var_names : list of strings
-        Names of the variables over which we rake (e.g. cause, race, county)
+        Names of the variables over which we rake (e.g. cause, race, county). None if using special case.
     draws: string
         Name of the column that contains the samples.
     cov_mat : boolean
@@ -107,29 +109,34 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(
-        dim, int
-    ), "The dimension of the raking problem must be an integer."
+    assert isinstance(dim, int) or isinstance(dim, str)
+    ), "The dimension of the raking problem must be an integer or string."
     assert dim in [
         1,
         2,
         3,
-    ], "The dimension of the raking problem must be 1, 2 or 3."
+        "USHD"
+    ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
     assert isinstance(
         cov_mat, bool
     ), "cov_mat indicates whether we compute the covariance matrix, must be True or False."
-    assert isinstance(
-        var_names, list
-    ), "The variables over which we rake must be entered as a list."
-    assert (
-        dim == len(var_names)
-    ), "The number of variables over which we rake must be equal to the dimension of the problem."
+    if dim in [1, 2, 3]:
+        assert isinstance(
+            var_names, list
+        ), "The variables over which we rake must be entered as a list."
+        assert (
+            dim == len(var_names)
+        ), "The number of variables over which we rake must be equal to the dimension of the problem."
     assert isinstance(
         df_margins, list
     ), "The margins data frames must be entered as a list."
-    assert (
-        dim == len(df_margins)
-    ), "The number of margins data frames must be equal to the dimension of the problem."
+    if dim in [1, 2, 3]:
+        assert (
+            dim == len(df_margins)
+        ), "The number of margins data frames must be equal to the dimension of the problem."
+    else:
+        assert len(df_margins) == 1, \
+            "There should be only one margins data frame in the list."
     assert isinstance(
         method, str
     ), "The name of the distance function used for the raking must be a string."
@@ -172,6 +179,8 @@ def run_raking(
                 sigma_ss,
                 sigma_ys,
             )
+        elif dim == "USHD":
+            pass
         else:
             pass
         # Check if matrix is definite positive
@@ -197,6 +206,10 @@ def run_raking(
     elif dim == 3:
         (y, s, q, l, h, A) = run_raking_3D(
             df_obs, df_margins, var_names, weights, lower, upper, rtol, atol
+        )
+    elif dim == "USHD":
+        (y, s, q, l, h, A) = run_raking_USHD(
+            df_obs, df_margins, weights, lower, upper, rtol, atol
         )
     else:
         pass
@@ -432,6 +445,69 @@ def run_raking_3D(
         upper,
     )
     (A, s) = constraints_3D(s1, s2, s3, I, J, K, rtol, atol)
+    return (y, s, q, l, h, A)
+
+
+def run_raking_USHD(
+    df_obs: pd.DataFrame,
+    df_margins: list,
+    weights: str = None,
+    lower: str = None,
+    upper: str = None,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
+    """
+    This function prepares variables to run the raking problem for the USHD case.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    weights : string
+        Name of the column containing the raking weights
+    lower : string
+        Name of the column containing the lower boundaries (for logit raking)
+    upper : string
+        Name of the column containing the upper boundaries (for logit raking)
+    rtol : float
+        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    atol : float
+        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+
+    Returns
+    -------
+    y : np.ndarray
+        Vector of observations
+    s : np.ndarray
+        Margins vector
+    q : np.ndarray
+        Vector of weights
+    l : np.ndarray
+        Lower bounds for the observations
+    h : np.ndarray
+        Upper bounds for the observations
+    A : np.ndarray
+        Constraints matrix
+    """
+    df_margins = df_margins[0]
+    (y, s, I, J, K, q, l, h) = format_data_USHD(
+        df_obs,
+        df_margins,
+        weights,
+        lower,
+        upper,
+    )
+    (A, s) = constraints_USHD(s, I, J, K, rtol, atol)
     return (y, s, q, l, h, A)
 
 

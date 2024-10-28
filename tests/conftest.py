@@ -76,6 +76,24 @@ class Example3D_draws:
         )
 
 
+class ExampleUSHD:
+    def __init__(self):
+        self.df_obs = pd.read_csv(EXAMPLES / "example_USHD" / "observations.csv")
+        self.df_margins = pd.read_csv(
+            EXAMPLES / "example_USHD" / "margins.csv"
+        )
+
+
+class ExampleUSHD_draws:
+    def __init__(self):
+        self.df_obs = pd.read_csv(
+            EXAMPLES / "example_USHD_draws" / "observations.csv"
+        )
+        self.df_margins = pd.read_csv(
+            EXAMPLES / "example_USHD_draws" / "margins.csv"
+        )
+
+
 @pytest.fixture
 def example_1D():
     return Example1D()
@@ -104,3 +122,14 @@ def example_3D():
 @pytest.fixture
 def example_3D_draws():
     return Example3D_draws()
+
+
+@pytest.fixture
+def example_USHD():
+    return ExampleUSHD()
+
+
+@pytest.fixture
+def example_USHD_draws():
+    return ExampleUSHD_draws()
+
