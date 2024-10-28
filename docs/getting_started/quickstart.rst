@@ -5,7 +5,7 @@ Quickstart
 Example 1
 ---------
 
-This is how to use the raking packkage when we do not have draws and we do not want the covariance matrix of the raked values.
+This is how to use the raking package when we do not have draws and we do not want the covariance matrix of the raked values.
 
 .. code-block:: python
 
@@ -50,7 +50,7 @@ This is how to use the raking packkage when we do not have draws and we do not w
         cov_mat=False
     )
 
-This is how to use the raking packkage when we have draws and we want the covariance matrix of the raked values.
+This is how to use the raking package when we have draws and we want the covariance matrix of the raked values.
 
 .. code-block:: python
 
