@@ -109,8 +109,8 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(dim, int) or isinstance(dim, str)
-    ), "The dimension of the raking problem must be an integer or string."
+    assert isinstance(dim, int) or isinstance(dim, str), \
+        "The dimension of the raking problem must be an integer or string."
     assert dim in [
         1,
         2,
