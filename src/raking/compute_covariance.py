@@ -675,6 +675,112 @@ def compute_covariance_margins_3D(
     return sigma_ss
 
 
+def check_margins_USHD(
+    df_margins: pd.DataFrame, var_names: list, draws: str
+) -> None:
+    """Check whether the margin data frame is valid for the USHD case.
+
+    Parameters
+    ----------
+    df_margins : pd.DataFrame
+        Margins data (sums over the first variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause)
+    draws : string
+        Names of the column containing the indices of the draws
+
+    Returns
+    -------
+    None
+    """
+    assert isinstance(
+        df_margins, pd.DataFrame
+    ), "The margins should be a pandas data frame."
+    assert (
+        len(df_margins) >= 2
+    ), "There should be at least 2 data points for the margins."
+
+    assert (
+        "value_agg_over_race_county" in df_margins.columns.tolist()
+    ), "The column for the aggregated value over race and county is missing from the margins data frame."
+    assert (
+        df_margins["value_agg_over_race_county"].isna().sum() == 0
+    ), "There are missing values in the value_agg_over_race_county column of the margins."
+
+    assert isinstance(
+        draws, str
+    ), "The name of the column containing the draws should be a string."
+    assert (
+        draws in df_margins.columns.tolist()
+    ), "The column containing the draws is missing from the margins data frame."
+    assert (
+        df_margins[draws].isna().sum() == 0
+    ), "There are missing values in the draws column of the margins."
+    assert (
+        len(df_margins[df_margins.duplicated(["cause", draws])]) == 0
+    ), "There are duplicated rows in the margins."
+    count_obs = df_margins[["cause", draws]].value_counts()
+    assert (len(count_obs.unique()) == 1) and (
+        count_obs.unique()[0] == 1
+    ), "There are missing draws in the margins."
+
+
+def compute_covariance_margins_USHD(
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+    I: int,
+    J: int,
+    K: int,
+) -> np.ndarray:
+    """Compute the covariance matrix of the margins for the USHD case.
+
+    Parameters
+    ----------
+    df_margins : pd.DataFrame
+        Margins data (sums over the first variable)
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause)
+    draws : string
+        Names of the column containing the indices of the draws
+    I : int
+        Number of causes of deaths
+    J : int
+        Number of races and ethnicities
+    K : int
+        Number of counties
+
+    Returns
+    -------
+    sigma_ss : np.ndarray
+        I * I covariance matrix
+    """
+    check_margins_USHD(df_margins, var_names, draws)
+
+    nsamples = len(df_margins[draws].unique())
+    df = df_margins[["cause", "value_agg_over_race_county", draws]].loc[
+        df_margins.cause != "_all"
+    ]
+    df.sort_values(by=["cause", draws], inplace=True)
+    value = df["value_agg_over_race_county"].to_numpy()
+    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    Xmean = np.mean(X, axis=0)
+    Xc = X - Xmean
+    sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
+    sigma_12 = np.zeros((I, 2 * K + J * K + (I - 1) * K))
+    sigma_22 = np.zeros(
+        (2 * K + J * K + (I - 1) * K, 2 * K + J * K + (I - 1) * K)
+    )
+    sigma_ss = np.concatenate(
+        (
+            np.concatenate((sigma_ss, sigma_12), axis=1),
+            np.concatenate((np.transpose(sigma_12), sigma_22), axis=1),
+        ),
+        axis=0,
+    )
+    return sigma_ss
+
+
 def check_obs_margins_1D(
     df_obs: pd.DataFrame, df_margins: pd.DataFrame, draws: str
 ) -> None:

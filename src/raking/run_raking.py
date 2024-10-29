@@ -14,6 +14,7 @@ from raking.compute_covariance import (
     compute_covariance_margins_1D,
     compute_covariance_margins_2D,
     compute_covariance_margins_3D,
+    compute_covariance_margins_USHD,
 )
 from raking.compute_covariance import (
     compute_covariance_obs_margins_1D,
@@ -184,7 +185,15 @@ def run_raking(
                 sigma_ys,
             )
         elif dim == "USHD":
-            pass
+            (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_USHD(
+                df_obs,
+                df_margins,
+                var_names,
+                draws,
+                sigma_yy,
+                sigma_ss,
+                sigma_ys,
+            )
         else:
             pass
         # Check if matrix is definite positive
@@ -194,9 +203,14 @@ def run_raking(
 
     # Compute the mean (if we have draws)
     if cov_mat:
-        (df_obs, df_margins) = compute_mean(
-            df_obs, df_margins, var_names, draws
-        )
+        if dim in [1, 2, 3]:
+            (df_obs, df_margins) = compute_mean(
+                df_obs, df_margins, var_names, draws
+            )
+        else:
+            (df_obs, df_margins) = compute_mean(
+                df_obs, df_margins, ["race_county"], draws
+            )
 
     # Get the input variables for the raking
     if dim == 1:
@@ -666,6 +680,58 @@ def compute_covariance_3D(
         sigma_ys = compute_covariance_obs_margins_3D(
             df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws
         )
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+
+def compute_covariance_USHD(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+    sigma_yy: np.ndarray,
+    sigma_ss: np.ndarray,
+    sigma_ys: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins for the USHD case.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+    """
+    df_margins = df_margins[0]
+    if sigma_yy is None:
+        sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
+    if sigma_ss is None:
+        I = len(df_obs["cause"].unique()) - 1
+        J = len(df_obs["race"].unique()) - 1
+        K = len(df_obs["county"].unique())
+        sigma_ss = compute_covariance_margins_USHD(
+            df_margins, ["cause"], draws, I, J, K
+        )
+    if sigma_ys is None:
+        sigma_ys = np.zeros((sigma_yy.shape[0], sigma_ss.shape[0]))
     return (sigma_yy, sigma_ss, sigma_ys)
 
 
