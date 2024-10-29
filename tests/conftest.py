@@ -78,10 +78,10 @@ class Example3D_draws:
 
 class ExampleUSHD:
     def __init__(self):
-        self.df_obs = pd.read_csv(EXAMPLES / "example_USHD" / "observations.csv")
-        self.df_margins = pd.read_csv(
-            EXAMPLES / "example_USHD" / "margins.csv"
+        self.df_obs = pd.read_csv(
+            EXAMPLES / "example_USHD" / "observations.csv"
         )
+        self.df_margins = pd.read_csv(EXAMPLES / "example_USHD" / "margins.csv")
 
 
 class ExampleUSHD_draws:
@@ -132,4 +132,3 @@ def example_USHD():
 @pytest.fixture
 def example_USHD_draws():
     return ExampleUSHD_draws()
-

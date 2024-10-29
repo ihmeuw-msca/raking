@@ -881,19 +881,19 @@ def format_data_USHD(
         len(df_margins) >= 3
     ), "There should be at least 3 data points for the margins."
 
-    for var_name in ['value', 'cause', 'race' 'county']:
+    for var_name in ["value", "cause", "race", "county"]:
         assert var_name in df_obs.columns.tolist(), (
             "The column for the categorical variable "
             + var_name
             + " is missing from the observations data frame."
         )
 
-    assert 'cause' in df_margins.columns.tolist(), (
-        "The cause column is missing from the margins data frame."
-    )
-    assert "value_agg_over_race_county" in df_margins.columns.tolist(), (
-        "The column for the aggregated value over races and counties is missing from the margins data frame."
-    )
+    assert (
+        "cause" in df_margins.columns.tolist()
+    ), "The cause column is missing from the margins data frame."
+    assert (
+        "value_agg_over_race_county" in df_margins.columns.tolist()
+    ), "The column for the aggregated value over races and counties is missing from the margins data frame."
 
     if weights is not None:
         assert isinstance(
@@ -918,53 +918,48 @@ def format_data_USHD(
         ), "The column containing the upper_boundaries is missing from the data frame."
 
     # Check the observations data
-    for var_name in ['value', 'cause', 'race' 'county']:
+    for var_name in ["value", "cause", "race", "county"]:
         assert df_obs[var_name].isna().sum() == 0, (
             "There are missing values in the "
             + var_name
             + " column of the observations."
         )
     assert (
-        len(df_obs[df_obs.duplicated(['cause', 'race' 'county'])]) == 0
+        len(df_obs[df_obs.duplicated(["cause", "race", "county"])]) == 0
     ), "There are duplicated rows in the observations."
-    count_obs = df_obs[['cause', 'race' 'county']].value_counts()
-    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
-        "There are missing combinations of cause, race and county in the observations."
-    )
+    count_obs = df_obs[["cause", "race", "county"]].value_counts()
+    assert (
+        (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1)
+    ), "There are missing combinations of cause, race and county in the observations."
 
     # Check the margins data
-    assert df_margins['cause'].isna().sum() == 0, (
-        "There are missing values in the cause column of the margins."
-    )
-    assert df_margins["value_agg_over_race_county"].isna().sum() == 0, (
-        "There are missing values in the value_agg_over_race_county column of the margins."
-    )
     assert (
-        len(df_margins[df_margins.duplicated(['cause'])]) == 0
+        df_margins["cause"].isna().sum() == 0
+    ), "There are missing values in the cause column of the margins."
+    assert (
+        df_margins["value_agg_over_race_county"].isna().sum() == 0
+    ), "There are missing values in the value_agg_over_race_county column of the margins."
+    assert (
+        len(df_margins[df_margins.duplicated(["cause"])]) == 0
     ), "There are duplicated rows in the margins data frame."
 
     # Check consistency between observations and margins
-    assert len(df_obs['cause'].unique()) == len(
-        df_margins['cause'].unique()
-    ), (
-        "The number of categories for cause should be the same in the observations and margins data frames."
-    )
-    assert set(df_obs['cause'].unique().tolist()) == set(
-        df_margins['cause'].unique().tolist()
-    ), (
-        "The names of the categories for cause should be the same in the observations and margins data frames."
-    )
+    assert (
+        len(df_obs["cause"].unique()) == len(df_margins["cause"].unique())
+    ), "The number of categories for cause should be the same in the observations and margins data frames."
+    assert (
+        set(df_obs["cause"].unique().tolist())
+        == set(df_margins["cause"].unique().tolist())
+    ), "The names of the categories for cause should be the same in the observations and margins data frames."
 
     # Create input variables for the raking functions
-    df_obs.sort_values(
-        by=['county', 'race', 'cause'], inplace=True
-    )
-    df_margins.sort_values(by=['cause'], inplace=True)
-    I = len(df_obs['cause'].unique()) - 1
-    J = len(df_obs['race'].unique()) - 1
-    K = len(df_obs['county'].unique())
+    df_obs.sort_values(by=["county", "race", "cause"], inplace=True)
+    df_margins.sort_values(by=["cause"], inplace=True)
+    I = len(df_obs["cause"].unique()) - 1
+    J = len(df_obs["race"].unique()) - 1
+    K = len(df_obs["county"].unique())
     y = df_obs.value.to_numpy()
-    s = df_margins["value_agg_over_race-county"].to_numpy()
+    s = df_margins["value_agg_over_race_county"].to_numpy()
     if weights is not None:
         q = df_obs[weights].to_numpy()
     else:
@@ -978,4 +973,3 @@ def format_data_USHD(
     else:
         h = None
     return (y, s, I, J, K, q, l, h)
-

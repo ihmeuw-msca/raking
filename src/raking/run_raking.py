@@ -109,13 +109,14 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(dim, int) or isinstance(dim, str), \
-        "The dimension of the raking problem must be an integer or string."
+    assert isinstance(dim, int) or isinstance(
+        dim, str
+    ), "The dimension of the raking problem must be an integer or string."
     assert dim in [
         1,
         2,
         3,
-        "USHD"
+        "USHD",
     ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
     assert isinstance(
         cov_mat, bool
@@ -127,6 +128,8 @@ def run_raking(
         assert (
             dim == len(var_names)
         ), "The number of variables over which we rake must be equal to the dimension of the problem."
+    else:
+        var_names = ["cause", "race", "county"]
     assert isinstance(
         df_margins, list
     ), "The margins data frames must be entered as a list."
@@ -135,8 +138,9 @@ def run_raking(
             dim == len(df_margins)
         ), "The number of margins data frames must be equal to the dimension of the problem."
     else:
-        assert len(df_margins) == 1, \
-            "There should be only one margins data frame in the list."
+        assert (
+            len(df_margins) == 1
+        ), "There should be only one margins data frame in the list."
     assert isinstance(
         method, str
     ), "The name of the distance function used for the raking must be a string."
