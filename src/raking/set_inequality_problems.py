@@ -1,4 +1,4 @@
-"""Module with methods to set up the problems with enequality constraints"""
+"""Module with methods to set up the problems with inequality constraints"""
 
 import numpy as np
 
@@ -14,8 +14,14 @@ def set_infant_mortality(
     y1: np.ndarray,
     y2: np.ndarray,
     s1: float,
-    s2: float
-) -> tuple[np.ndarray, np.ndarray]:
+    s2: float,
+    q1: np.ndarray,
+    q2: np.ndarray,
+    l1: np.ndarray = None,
+    l2: np.ndarray = None,
+    h1: np.ndarray = None,
+    h2: np.ndarray = None
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Set up the optimization problem for the infant mortality problem.
 
     We need to define the problem:
@@ -40,18 +46,27 @@ def set_infant_mortality(
     C
     c
     """
-    I = len(y1
+    I = len(y1)
     y = np.concatenate((y1, y2))
     (A1, s1) = constraints_1D(s1, I)
     (A2, s2) = constraints_1D(s2, I)
     A = np.concatenate(
         (
-            np.concatenate((A1, np.zeros(I)), axis=1),
-            np.concatenate((np.zeros(I), A2), axis=1),
+            np.concatenate((A1, np.zeros((1, I))), axis=1),
+            np.concatenate((np.zeros((1, I)), A2), axis=1),
         ),
         axis=0,
     )
-    s = np.array([s1, s2])
+    s = np.concatenate((s1, s2))
     (C, c) = inequality_infant_mortality(n1, n2, t1, t2)
-    return (y, A, s, C, c)
+    q = np.concatenate((q1, q2))
+    if (l1 is not None) and (l2 is not None):
+        l = np.concatenate((l1, l2))
+    else:
+        l = None
+    if (h1 is not None) and (h2 is not None):
+        h = np.concatenate((h1, h2))
+    else:
+        h = None
+    return (y, A, s, C, c, q, l, h)
 

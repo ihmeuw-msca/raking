@@ -29,9 +29,9 @@ def inequality_infant_mortality(
     Returns
     -------
     C : np.ndarray
-        2I * 2I constraints matrix
+        I * 2I constraints matrix
     c : np.ndarray
-        length 2I inequality vector vector
+        length I inequality vector vector
     """
     assert isinstance(
         n1, np.ndarray
@@ -51,21 +51,15 @@ def inequality_infant_mortality(
     assert isinstance(
         t1, float
     ), "The time interval between 0 and 1 month must be a float."
-     assert isinstance(
+    assert isinstance(
         t2, float
     ), "The time interval between 0 and 1 year must be a float."
-   assert (
+    assert (
         t2 > t1
     ), "The time interval between 0 and 1 year must be larger than the time interval between 0 and a month."
 
     I = len(n1)
-    C = np.concatenate(
-        (
-            np.concatenate((np.diag(t1 / n1), np.zeros((I, I))), axis=1),
-            np.concatenate((np.zeros((I, I)), np.diag(- t2 / n2)), axis=1),
-        ),
-        axis=0,
-    )
-    c = np.zeros(2 * I)
+    C = np.concatenate((np.diag(t1 / n1), np.diag(- t2 / n2)), axis=1)
+    c = np.zeros(I)
     return (C, c)
 
