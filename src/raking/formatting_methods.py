@@ -87,7 +87,7 @@ def format_data_1D(
 
     if weights is not None:
         assert isinstance(
-            weigths, str
+            weights, str
         ), "The name of the column containing the weights should be a string."
         assert (
             weights in df_obs.columns.tolist()
@@ -267,7 +267,7 @@ def format_data_2D(
 
     if weights is not None:
         assert isinstance(
-            weigths, str
+            weights, str
         ), "The name of the column containing the weights should be a string."
         assert (
             weights in df_obs.columns.tolist()
@@ -555,7 +555,7 @@ def format_data_3D(
 
     if weights is not None:
         assert isinstance(
-            weigths, str
+            weights, str
         ), "The name of the column containing the weights should be a string."
         assert (
             weights in df_obs.columns.tolist()
@@ -897,7 +897,7 @@ def format_data_USHD(
 
     if weights is not None:
         assert isinstance(
-            weigths, str
+            weights, str
         ), "The name of the column containing the weights should be a string."
         assert (
             weights in df_obs.columns.tolist()

@@ -1,4 +1,4 @@
-"""Module with methods to compute the covaraince matrices of observations and margins"""
+"""Module with methods to compute the covariance matrices of observations and margins"""
 
 import numpy as np
 import pandas as pd
