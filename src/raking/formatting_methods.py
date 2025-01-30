@@ -53,26 +53,26 @@ def format_data_1D(
     h : np.ndarray
         Upper bounds for the observations
     """
-    assert isinstance(
-        df_obs, pd.DataFrame
-    ), "The observations should be a pandas data frame."
-    assert (
-        len(df_obs) >= 2
-    ), "There should be at least 2 data points for the observations."
+    assert isinstance(df_obs, pd.DataFrame), (
+        "The observations should be a pandas data frame."
+    )
+    assert len(df_obs) >= 2, (
+        "There should be at least 2 data points for the observations."
+    )
 
-    assert isinstance(
-        df_margins, pd.DataFrame
-    ), "The margins should be a pandas data frame."
-    assert (
-        len(df_margins) == 1
-    ), "There should be only one data point for the margins."
+    assert isinstance(df_margins, pd.DataFrame), (
+        "The margins should be a pandas data frame."
+    )
+    assert len(df_margins) == 1, (
+        "There should be only one data point for the margins."
+    )
 
-    assert (
-        "value" in df_obs.columns.tolist()
-    ), "The observations data frame should contain a value column."
-    assert isinstance(
-        var_name, str
-    ), "The name of the categorical variable should be a string."
+    assert "value" in df_obs.columns.tolist(), (
+        "The observations data frame should contain a value column."
+    )
+    assert isinstance(var_name, str), (
+        "The name of the categorical variable should be a string."
+    )
     assert var_name in df_obs.columns.tolist(), (
         "The column for the categorical variable "
         + var_name
@@ -86,39 +86,39 @@ def format_data_1D(
     )
 
     if weights is not None:
-        assert isinstance(
-            weights, str
-        ), "The name of the column containing the weights should be a string."
-        assert (
-            weights in df_obs.columns.tolist()
-        ), "The column containing the weights is missing from the data frame."
+        assert isinstance(weights, str), (
+            "The name of the column containing the weights should be a string."
+        )
+        assert weights in df_obs.columns.tolist(), (
+            "The column containing the weights is missing from the data frame."
+        )
     if lower is not None:
-        assert isinstance(
-            lower, str
-        ), "The name of the column containing the lower boundaries should be a string."
-        assert (
-            lower in df_obs.columns.tolist()
-        ), "The column containing the lower boundaries is missing from the data frame."
+        assert isinstance(lower, str), (
+            "The name of the column containing the lower boundaries should be a string."
+        )
+        assert lower in df_obs.columns.tolist(), (
+            "The column containing the lower boundaries is missing from the data frame."
+        )
     if upper is not None:
-        assert isinstance(
-            upper, str
-        ), "The name of the column containing the upper boundaries should be a string."
-        assert (
-            upper in df_obs.columns.tolist()
-        ), "The column containing the upper_boundaries is missing from the data frame."
+        assert isinstance(upper, str), (
+            "The name of the column containing the upper boundaries should be a string."
+        )
+        assert upper in df_obs.columns.tolist(), (
+            "The column containing the upper_boundaries is missing from the data frame."
+        )
 
     # Check the observations data
-    assert (
-        df_obs.value.isna().sum() == 0
-    ), "There are missing values in the value column of the observations."
+    assert df_obs.value.isna().sum() == 0, (
+        "There are missing values in the value column of the observations."
+    )
     assert df_obs[var_name].isna().sum() == 0, (
         "There are missing values in the "
         + var_name
         + " column of the observations."
     )
-    assert (
-        len(df_obs[df_obs.duplicated([var_name])]) == 0
-    ), "There are duplicated rows in the observations."
+    assert len(df_obs[df_obs.duplicated([var_name])]) == 0, (
+        "There are duplicated rows in the observations."
+    )
 
     # Check the margins data
     assert df_margins["value_agg_over_" + var_name].isna().sum() == 0, (
@@ -203,33 +203,33 @@ def format_data_2D(
     h : np.ndarray
         Upper bounds for the observations
     """
-    assert isinstance(
-        df_obs, pd.DataFrame
-    ), "The observations should be a pandas data frame."
-    assert (
-        len(df_obs) >= 4
-    ), "There should be at least 4 data points for the observations."
+    assert isinstance(df_obs, pd.DataFrame), (
+        "The observations should be a pandas data frame."
+    )
+    assert len(df_obs) >= 4, (
+        "There should be at least 4 data points for the observations."
+    )
 
-    assert isinstance(
-        df_margins_1, pd.DataFrame
-    ), "The margins for the first variable should be a pandas data frame."
-    assert (
-        len(df_margins_1) >= 2
-    ), "There should be at least 2 data points for the first margins."
+    assert isinstance(df_margins_1, pd.DataFrame), (
+        "The margins for the first variable should be a pandas data frame."
+    )
+    assert len(df_margins_1) >= 2, (
+        "There should be at least 2 data points for the first margins."
+    )
 
-    assert isinstance(
-        df_margins_2, pd.DataFrame
-    ), "The margins for the second variable should be a pandas data frame."
-    assert (
-        len(df_margins_2) >= 2
-    ), "There should be at least 2 data points for the second margins."
+    assert isinstance(df_margins_2, pd.DataFrame), (
+        "The margins for the second variable should be a pandas data frame."
+    )
+    assert len(df_margins_2) >= 2, (
+        "There should be at least 2 data points for the second margins."
+    )
 
-    assert (
-        "value" in df_obs.columns.tolist()
-    ), "The observations data frame should contain a value column."
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert "value" in df_obs.columns.tolist(), (
+        "The observations data frame should contain a value column."
+    )
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     assert len(var_names) == 2, "You should have 2 categorical variables."
     for var_name in var_names:
         assert isinstance(var_name, str), (
@@ -266,40 +266,40 @@ def format_data_2D(
     )
 
     if weights is not None:
-        assert isinstance(
-            weights, str
-        ), "The name of the column containing the weights should be a string."
-        assert (
-            weights in df_obs.columns.tolist()
-        ), "The column containing the weights is missing from the data frame."
+        assert isinstance(weights, str), (
+            "The name of the column containing the weights should be a string."
+        )
+        assert weights in df_obs.columns.tolist(), (
+            "The column containing the weights is missing from the data frame."
+        )
     if lower is not None:
-        assert isinstance(
-            lower, str
-        ), "The name of the column containing the lower boundaries should be a string."
-        assert (
-            lower in df_obs.columns.tolist()
-        ), "The column containing the lower boundaries is missing from the data frame."
+        assert isinstance(lower, str), (
+            "The name of the column containing the lower boundaries should be a string."
+        )
+        assert lower in df_obs.columns.tolist(), (
+            "The column containing the lower boundaries is missing from the data frame."
+        )
     if upper is not None:
-        assert isinstance(
-            upper, str
-        ), "The name of the column containing the upper boundaries should be a string."
-        assert (
-            upper in df_obs.columns.tolist()
-        ), "The column containing the upper_boundaries is missing from the data frame."
+        assert isinstance(upper, str), (
+            "The name of the column containing the upper boundaries should be a string."
+        )
+        assert upper in df_obs.columns.tolist(), (
+            "The column containing the upper_boundaries is missing from the data frame."
+        )
 
     # Check the observations data
-    assert (
-        df_obs.value.isna().sum() == 0
-    ), "There are missing values in the value column of the observations."
+    assert df_obs.value.isna().sum() == 0, (
+        "There are missing values in the value column of the observations."
+    )
     for var_name in var_names:
         assert df_obs[var_name].isna().sum() == 0, (
             "There are missing values in the "
             + var_name
             + " column of the observations."
         )
-    assert (
-        len(df_obs[df_obs.duplicated(var_names)]) == 0
-    ), "There are duplicated rows in the observations."
+    assert len(df_obs[df_obs.duplicated(var_names)]) == 0, (
+        "There are duplicated rows in the observations."
+    )
     count_obs = df_obs[var_names].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
         "There are missing combinations of "
@@ -320,9 +320,9 @@ def format_data_2D(
         + var_names[0]
         + " column of the margins."
     )
-    assert (
-        len(df_margins_1[df_margins_1.duplicated([var_names[1]])]) == 0
-    ), "There are duplicated rows in the first margins data frame."
+    assert len(df_margins_1[df_margins_1.duplicated([var_names[1]])]) == 0, (
+        "There are duplicated rows in the first margins data frame."
+    )
 
     # Check the second margins data
     assert df_margins_2[var_names[0]].isna().sum() == 0, (
@@ -335,9 +335,9 @@ def format_data_2D(
         + var_names[1]
         + " column of the margins."
     )
-    assert (
-        len(df_margins_2[df_margins_2.duplicated([var_names[0]])]) == 0
-    ), "There are duplicated rows in the second margins data frame."
+    assert len(df_margins_2[df_margins_2.duplicated([var_names[0]])]) == 0, (
+        "There are duplicated rows in the second margins data frame."
+    )
 
     # Check consistency between observations and margins
     assert len(df_obs[var_names[0]].unique()) == len(
@@ -458,40 +458,40 @@ def format_data_3D(
     h : np.ndarray
         Upper bounds for the observations
     """
-    assert isinstance(
-        df_obs, pd.DataFrame
-    ), "The observations should be a pandas data frame."
-    assert (
-        len(df_obs) >= 8
-    ), "There should be at least 8 data points for the observations."
+    assert isinstance(df_obs, pd.DataFrame), (
+        "The observations should be a pandas data frame."
+    )
+    assert len(df_obs) >= 8, (
+        "There should be at least 8 data points for the observations."
+    )
 
-    assert isinstance(
-        df_margins_1, pd.DataFrame
-    ), "The margins for the first variable should be a pandas data frame."
-    assert (
-        len(df_margins_1) >= 4
-    ), "There should be at least 4 data points for the first margins."
+    assert isinstance(df_margins_1, pd.DataFrame), (
+        "The margins for the first variable should be a pandas data frame."
+    )
+    assert len(df_margins_1) >= 4, (
+        "There should be at least 4 data points for the first margins."
+    )
 
-    assert isinstance(
-        df_margins_2, pd.DataFrame
-    ), "The margins for the second variable should be a pandas data frame."
-    assert (
-        len(df_margins_2) >= 4
-    ), "There should be at least 4 data points for the second margins."
+    assert isinstance(df_margins_2, pd.DataFrame), (
+        "The margins for the second variable should be a pandas data frame."
+    )
+    assert len(df_margins_2) >= 4, (
+        "There should be at least 4 data points for the second margins."
+    )
 
-    assert isinstance(
-        df_margins_3, pd.DataFrame
-    ), "The margins for the third variable should be a pandas data frame."
-    assert (
-        len(df_margins_3) >= 4
-    ), "There should be at least 4 data points for the third margins."
+    assert isinstance(df_margins_3, pd.DataFrame), (
+        "The margins for the third variable should be a pandas data frame."
+    )
+    assert len(df_margins_3) >= 4, (
+        "There should be at least 4 data points for the third margins."
+    )
 
-    assert (
-        "value" in df_obs.columns.tolist()
-    ), "The observations data frame should contain a value column."
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert "value" in df_obs.columns.tolist(), (
+        "The observations data frame should contain a value column."
+    )
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     assert len(var_names) == 3, "You should have 3 categorical variables."
     for var_name in var_names:
         assert isinstance(var_name, str), (
@@ -554,40 +554,40 @@ def format_data_3D(
     )
 
     if weights is not None:
-        assert isinstance(
-            weights, str
-        ), "The name of the column containing the weights should be a string."
-        assert (
-            weights in df_obs.columns.tolist()
-        ), "The column containing the weights is missing from the data frame."
+        assert isinstance(weights, str), (
+            "The name of the column containing the weights should be a string."
+        )
+        assert weights in df_obs.columns.tolist(), (
+            "The column containing the weights is missing from the data frame."
+        )
     if lower is not None:
-        assert isinstance(
-            lower, str
-        ), "The name of the column containing the lower boundaries should be a string."
-        assert (
-            lower in df_obs.columns.tolist()
-        ), "The column containing the lower boundaries is missing from the data frame."
+        assert isinstance(lower, str), (
+            "The name of the column containing the lower boundaries should be a string."
+        )
+        assert lower in df_obs.columns.tolist(), (
+            "The column containing the lower boundaries is missing from the data frame."
+        )
     if upper is not None:
-        assert isinstance(
-            upper, str
-        ), "The name of the column containing the upper boundaries should be a string."
-        assert (
-            upper in df_obs.columns.tolist()
-        ), "The column containing the upper_boundaries is missing from the data frame."
+        assert isinstance(upper, str), (
+            "The name of the column containing the upper boundaries should be a string."
+        )
+        assert upper in df_obs.columns.tolist(), (
+            "The column containing the upper_boundaries is missing from the data frame."
+        )
 
     # Check the observations data
-    assert (
-        df_obs.value.isna().sum() == 0
-    ), "There are missing values in the value column of the observations."
+    assert df_obs.value.isna().sum() == 0, (
+        "There are missing values in the value column of the observations."
+    )
     for var_name in var_names:
         assert df_obs[var_name].isna().sum() == 0, (
             "There are missing values in the "
             + var_name
             + " column of the observations."
         )
-    assert (
-        len(df_obs[df_obs.duplicated(var_names)]) == 0
-    ), "There are duplicated rows in the observations."
+    assert len(df_obs[df_obs.duplicated(var_names)]) == 0, (
+        "There are duplicated rows in the observations."
+    )
     count_obs = df_obs[var_names].value_counts()
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
         "There are missing combinations of "
@@ -867,19 +867,19 @@ def format_data_USHD(
     h : np.ndarray
         Upper bounds for the observations
     """
-    assert isinstance(
-        df_obs, pd.DataFrame
-    ), "The observations should be a pandas data frame."
-    assert (
-        len(df_obs) >= 18
-    ), "There should be at least 18 data points for the observations."
+    assert isinstance(df_obs, pd.DataFrame), (
+        "The observations should be a pandas data frame."
+    )
+    assert len(df_obs) >= 18, (
+        "There should be at least 18 data points for the observations."
+    )
 
-    assert isinstance(
-        df_margins, pd.DataFrame
-    ), "The margins should be a pandas data frame."
-    assert (
-        len(df_margins) >= 3
-    ), "There should be at least 3 data points for the margins."
+    assert isinstance(df_margins, pd.DataFrame), (
+        "The margins should be a pandas data frame."
+    )
+    assert len(df_margins) >= 3, (
+        "There should be at least 3 data points for the margins."
+    )
 
     for var_name in ["value", "cause", "race", "county"]:
         assert var_name in df_obs.columns.tolist(), (
@@ -888,34 +888,34 @@ def format_data_USHD(
             + " is missing from the observations data frame."
         )
 
-    assert (
-        "cause" in df_margins.columns.tolist()
-    ), "The cause column is missing from the margins data frame."
-    assert (
-        "value_agg_over_race_county" in df_margins.columns.tolist()
-    ), "The column for the aggregated value over races and counties is missing from the margins data frame."
+    assert "cause" in df_margins.columns.tolist(), (
+        "The cause column is missing from the margins data frame."
+    )
+    assert "value_agg_over_race_county" in df_margins.columns.tolist(), (
+        "The column for the aggregated value over races and counties is missing from the margins data frame."
+    )
 
     if weights is not None:
-        assert isinstance(
-            weights, str
-        ), "The name of the column containing the weights should be a string."
-        assert (
-            weights in df_obs.columns.tolist()
-        ), "The column containing the weights is missing from the data frame."
+        assert isinstance(weights, str), (
+            "The name of the column containing the weights should be a string."
+        )
+        assert weights in df_obs.columns.tolist(), (
+            "The column containing the weights is missing from the data frame."
+        )
     if lower is not None:
-        assert isinstance(
-            lower, str
-        ), "The name of the column containing the lower boundaries should be a string."
-        assert (
-            lower in df_obs.columns.tolist()
-        ), "The column containing the lower boundaries is missing from the data frame."
+        assert isinstance(lower, str), (
+            "The name of the column containing the lower boundaries should be a string."
+        )
+        assert lower in df_obs.columns.tolist(), (
+            "The column containing the lower boundaries is missing from the data frame."
+        )
     if upper is not None:
-        assert isinstance(
-            upper, str
-        ), "The name of the column containing the upper boundaries should be a string."
-        assert (
-            upper in df_obs.columns.tolist()
-        ), "The column containing the upper_boundaries is missing from the data frame."
+        assert isinstance(upper, str), (
+            "The name of the column containing the upper boundaries should be a string."
+        )
+        assert upper in df_obs.columns.tolist(), (
+            "The column containing the upper_boundaries is missing from the data frame."
+        )
 
     # Check the observations data
     for var_name in ["value", "cause", "race", "county"]:
@@ -924,33 +924,34 @@ def format_data_USHD(
             + var_name
             + " column of the observations."
         )
-    assert (
-        len(df_obs[df_obs.duplicated(["cause", "race", "county"])]) == 0
-    ), "There are duplicated rows in the observations."
+    assert len(df_obs[df_obs.duplicated(["cause", "race", "county"])]) == 0, (
+        "There are duplicated rows in the observations."
+    )
     count_obs = df_obs[["cause", "race", "county"]].value_counts()
-    assert (
-        (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1)
-    ), "There are missing combinations of cause, race and county in the observations."
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
+        "There are missing combinations of cause, race and county in the observations."
+    )
 
     # Check the margins data
-    assert (
-        df_margins["cause"].isna().sum() == 0
-    ), "There are missing values in the cause column of the margins."
-    assert (
-        df_margins["value_agg_over_race_county"].isna().sum() == 0
-    ), "There are missing values in the value_agg_over_race_county column of the margins."
-    assert (
-        len(df_margins[df_margins.duplicated(["cause"])]) == 0
-    ), "There are duplicated rows in the margins data frame."
+    assert df_margins["cause"].isna().sum() == 0, (
+        "There are missing values in the cause column of the margins."
+    )
+    assert df_margins["value_agg_over_race_county"].isna().sum() == 0, (
+        "There are missing values in the value_agg_over_race_county column of the margins."
+    )
+    assert len(df_margins[df_margins.duplicated(["cause"])]) == 0, (
+        "There are duplicated rows in the margins data frame."
+    )
 
     # Check consistency between observations and margins
-    assert (
-        len(df_obs["cause"].unique()) == len(df_margins["cause"].unique())
-    ), "The number of categories for cause should be the same in the observations and margins data frames."
-    assert (
-        set(df_obs["cause"].unique().tolist())
-        == set(df_margins["cause"].unique().tolist())
-    ), "The names of the categories for cause should be the same in the observations and margins data frames."
+    assert len(df_obs["cause"].unique()) == len(df_margins["cause"].unique()), (
+        "The number of categories for cause should be the same in the observations and margins data frames."
+    )
+    assert set(df_obs["cause"].unique().tolist()) == set(
+        df_margins["cause"].unique().tolist()
+    ), (
+        "The names of the categories for cause should be the same in the observations and margins data frames."
+    )
 
     # Create input variables for the raking functions
     df_obs.sort_values(by=["county", "race", "cause"], inplace=True)

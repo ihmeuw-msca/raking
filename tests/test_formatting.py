@@ -30,9 +30,9 @@ def test_format_data_1D():
     # Generate the constraints
     (A, s) = constraints_1D(s, I)
     # Verify that the constraint A beta = s is respected
-    assert np.allclose(
-        np.matmul(A, y), s
-    ), "For the format_data_1D function, the constraint A y = s is not respected."
+    assert np.allclose(np.matmul(A, y), s), (
+        "For the format_data_1D function, the constraint A y = s is not respected."
+    )
 
 
 def test_format_data_2D():
@@ -61,9 +61,9 @@ def test_format_data_2D():
     # Generate the constraints
     (A, s) = constraints_2D(s1, s2, I, J)
     # Verify that the constraint A beta = s is respected
-    assert np.allclose(
-        np.matmul(A, y), s
-    ), "For the format_data_2D function, the constraint A y = s is not respected."
+    assert np.allclose(np.matmul(A, y), s), (
+        "For the format_data_2D function, the constraint A y = s is not respected."
+    )
 
 
 def test_format_data_3D():
@@ -116,9 +116,9 @@ def test_format_data_3D():
     # Generate the constraints
     (A, s) = constraints_3D(s1, s2, s3, I, J, K)
     # Verify that the constraint A beta = s is respected
-    assert np.allclose(
-        np.matmul(A, y), s
-    ), "For the format_data_3D function, the constraint A y = s is not respected."
+    assert np.allclose(np.matmul(A, y), s), (
+        "For the format_data_3D function, the constraint A y = s is not respected."
+    )
 
 
 def test_format_data_USHD():
@@ -157,6 +157,6 @@ def test_format_data_USHD():
     # Generate the constraints
     (A, s) = constraints_USHD(s, I, J, K)
     # Verify that the constraint A beta = s is respected
-    assert np.allclose(
-        np.matmul(A, y), s
-    ), "For the format_data_USHD function, the constraint A y = s is not respected."
+    assert np.allclose(np.matmul(A, y), s), (
+        "For the format_data_USHD function, the constraint A y = s is not respected."
+    )

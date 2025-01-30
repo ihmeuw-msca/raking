@@ -36,60 +36,60 @@ def compute_covariance(
     covariance : np.ndarray
         Covariance matrix of the raked values
     """
-    assert isinstance(
-        Dphi_y, np.ndarray
-    ), "The derivatives matrix with respect to the observations should be a Numpy array."
-    assert (
-        len(Dphi_y.shape) == 2
-    ), "The derivatives matrix with respect to the observations should be a 2D Numpy array."
-    assert (
-        np.shape(Dphi_y)[0] == np.shape(Dphi_y)[1]
-    ), "The derivatives matrix with respect to the observations should be a square matrix."
-    assert isinstance(
-        Dphi_s, np.ndarray
-    ), "The derivatives matrix with respect to the margins should be a Numpy array."
-    assert (
-        len(Dphi_s.shape) == 2
-    ), "The derivatives matrix with respect to the margins should be a 2D Numpy array."
-    assert isinstance(
-        sigma_yy, np.ndarray
-    ), "The covariance matrix of the observations should be a Numpy array."
-    assert (
-        len(sigma_yy.shape) == 2
-    ), "The covariance matrix of the observations should be a 2D Numpy array."
-    assert (
-        np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1]
-    ), "The covariance matrix of the observations should be a square matrix."
-    assert isinstance(
-        sigma_ss, np.ndarray
-    ), "The covariance matrix of the margins should be a Numpy array."
-    assert (
-        len(sigma_ss.shape) == 2
-    ), "The covariance matrix of the margins should be a 2D Numpy array."
-    assert (
-        np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1]
-    ), "The covariance matrix of the margins should be a square matrix."
-    assert isinstance(
-        sigma_ys, np.ndarray
-    ), "The covariance matrix of the observations and margins should be a Numpy array."
-    assert (
-        len(sigma_ys.shape) == 2
-    ), "The covariance matrix of the observations and margins should be a 2D Numpy array."
-    assert (
-        np.shape(Dphi_y)[0] == np.shape(Dphi_s)[0]
-    ), "The derivative matrices with respect to the observations and the margins should have the same number of rows."
-    assert (
-        np.shape(Dphi_y)[0] == np.shape(sigma_yy)[0]
-    ), "The derivative matrix with respect to the observations and the covariance matrix of the observations should have the same size."
-    assert (
-        np.shape(Dphi_s)[1] == np.shape(sigma_ss)[1]
-    ), "The derivative matrix with respect to the margins and the covariance matrix of the margins should have the same number of columns."
-    assert (
-        np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0]
-    ), "The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations."
-    assert (
-        np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1]
-    ), "The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins."
+    assert isinstance(Dphi_y, np.ndarray), (
+        "The derivatives matrix with respect to the observations should be a Numpy array."
+    )
+    assert len(Dphi_y.shape) == 2, (
+        "The derivatives matrix with respect to the observations should be a 2D Numpy array."
+    )
+    assert np.shape(Dphi_y)[0] == np.shape(Dphi_y)[1], (
+        "The derivatives matrix with respect to the observations should be a square matrix."
+    )
+    assert isinstance(Dphi_s, np.ndarray), (
+        "The derivatives matrix with respect to the margins should be a Numpy array."
+    )
+    assert len(Dphi_s.shape) == 2, (
+        "The derivatives matrix with respect to the margins should be a 2D Numpy array."
+    )
+    assert isinstance(sigma_yy, np.ndarray), (
+        "The covariance matrix of the observations should be a Numpy array."
+    )
+    assert len(sigma_yy.shape) == 2, (
+        "The covariance matrix of the observations should be a 2D Numpy array."
+    )
+    assert np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1], (
+        "The covariance matrix of the observations should be a square matrix."
+    )
+    assert isinstance(sigma_ss, np.ndarray), (
+        "The covariance matrix of the margins should be a Numpy array."
+    )
+    assert len(sigma_ss.shape) == 2, (
+        "The covariance matrix of the margins should be a 2D Numpy array."
+    )
+    assert np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1], (
+        "The covariance matrix of the margins should be a square matrix."
+    )
+    assert isinstance(sigma_ys, np.ndarray), (
+        "The covariance matrix of the observations and margins should be a Numpy array."
+    )
+    assert len(sigma_ys.shape) == 2, (
+        "The covariance matrix of the observations and margins should be a 2D Numpy array."
+    )
+    assert np.shape(Dphi_y)[0] == np.shape(Dphi_s)[0], (
+        "The derivative matrices with respect to the observations and the margins should have the same number of rows."
+    )
+    assert np.shape(Dphi_y)[0] == np.shape(sigma_yy)[0], (
+        "The derivative matrix with respect to the observations and the covariance matrix of the observations should have the same size."
+    )
+    assert np.shape(Dphi_s)[1] == np.shape(sigma_ss)[1], (
+        "The derivative matrix with respect to the margins and the covariance matrix of the margins should have the same number of columns."
+    )
+    assert np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0], (
+        "The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations."
+    )
+    assert np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1], (
+        "The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins."
+    )
 
     Dphi = np.concatenate((Dphi_y, Dphi_s), axis=1)
     sigma = np.concatenate(
@@ -148,39 +148,39 @@ def compute_gradient(
     Dphi_s: np.ndarray
         Derivatives with respect to the margins
     """
-    assert isinstance(
-        beta_0, np.ndarray
-    ), "The vector of raked values should be a Numpy array."
-    assert (
-        len(beta_0.shape) == 1
-    ), "The vector of raked values should be a 1D Numpy array."
-    assert isinstance(
-        lambda_0, np.ndarray
-    ), "The dual vector should be a Numpy array."
-    assert (
-        len(lambda_0.shape) == 1
-    ), "The vdual vector should be a 1D Numpy array."
-    assert isinstance(
-        y, np.ndarray
-    ), "The vector of observations should be a Numpy array."
-    assert (
-        len(y.shape) == 1
-    ), "The vector of observations should be a 1D Numpy array."
-    assert (
-        len(y) == len(beta_0)
-    ), "The vectors of observations and raked values should have the same length."
-    assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert (
-        np.shape(A)[0] == len(lambda_0)
-    ), "The number of linear constraints should be equal to the length of the dual vector."
-    assert (
-        np.shape(A)[1] == len(y)
-    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
+    assert isinstance(beta_0, np.ndarray), (
+        "The vector of raked values should be a Numpy array."
+    )
+    assert len(beta_0.shape) == 1, (
+        "The vector of raked values should be a 1D Numpy array."
+    )
+    assert isinstance(lambda_0, np.ndarray), (
+        "The dual vector should be a Numpy array."
+    )
+    assert len(lambda_0.shape) == 1, (
+        "The vdual vector should be a 1D Numpy array."
+    )
+    assert isinstance(y, np.ndarray), (
+        "The vector of observations should be a Numpy array."
+    )
+    assert len(y.shape) == 1, (
+        "The vector of observations should be a 1D Numpy array."
+    )
+    assert len(y) == len(beta_0), (
+        "The vectors of observations and raked values should have the same length."
+    )
+    assert isinstance(A, np.ndarray), (
+        "The constraint matrix should be a Numpy array."
+    )
+    assert len(A.shape) == 2, (
+        "The constraints matrix should be a 2D Numpy array."
+    )
+    assert np.shape(A)[0] == len(lambda_0), (
+        "The number of linear constraints should be equal to the length of the dual vector."
+    )
+    assert np.shape(A)[1] == len(y), (
+        "The number of coefficients for the linear constraints should be equal to the number of observations."
+    )
     assert method in [
         "chi2",
         "entropic",
@@ -188,53 +188,53 @@ def compute_gradient(
         "logit",
     ], 'The raking method must be "chi2", "entropic", "general", or "logit".'
     if method == "general":
-        assert isinstance(
-            alpha, (int, float)
-        ), "The parameter of the distance function should be an integer or a float."
+        assert isinstance(alpha, (int, float)), (
+            "The parameter of the distance function should be an integer or a float."
+        )
     if method == "logit":
         if l is None:
             l = np.zeros(len(y))
-        assert isinstance(
-            l, np.ndarray
-        ), "The vector of lower bounds should be a Numpy array."
-        assert (
-            len(l.shape) == 1
-        ), "The vector of lower bounds should be a 1D Numpy array."
-        assert len(y) == len(
-            l
-        ), "Observations and lower bounds vectors should have the same length."
+        assert isinstance(l, np.ndarray), (
+            "The vector of lower bounds should be a Numpy array."
+        )
+        assert len(l.shape) == 1, (
+            "The vector of lower bounds should be a 1D Numpy array."
+        )
+        assert len(y) == len(l), (
+            "Observations and lower bounds vectors should have the same length."
+        )
         assert np.all(l >= 0.0), "The lower bounds must be positive."
-        assert np.all(
-            l <= y
-        ), "The observations must be superior or equal to the corresponding lower bounds."
+        assert np.all(l <= y), (
+            "The observations must be superior or equal to the corresponding lower bounds."
+        )
         if h is None:
             h = np.ones(len(y))
-        assert isinstance(
-            h, np.ndarray
-        ), "The vector of upper bounds should be a Numpy array."
-        assert (
-            len(h.shape) == 1
-        ), "The vector of upper bounds should be a 1D Numpy array."
-        assert len(y) == len(
-            h
-        ), "Observations and upper bounds vectors should have the same length."
+        assert isinstance(h, np.ndarray), (
+            "The vector of upper bounds should be a Numpy array."
+        )
+        assert len(h.shape) == 1, (
+            "The vector of upper bounds should be a 1D Numpy array."
+        )
+        assert len(y) == len(h), (
+            "Observations and upper bounds vectors should have the same length."
+        )
         assert np.all(h > 0.0), "The upper bounds must be strictly positive."
-        assert np.all(
-            h >= y
-        ), "The observations must be inferior or equal to the correspondings upper bounds."
-        assert np.all(
-            l < h
-        ), "The lower bounds must be stricty inferior to the correspondings upper bounds."
+        assert np.all(h >= y), (
+            "The observations must be inferior or equal to the correspondings upper bounds."
+        )
+        assert np.all(l < h), (
+            "The lower bounds must be stricty inferior to the correspondings upper bounds."
+        )
     if q is not None:
-        assert isinstance(
-            q, np.ndarray
-        ), "The vector of weights should be a Numpy array."
-        assert (
-            len(q.shape) == 1
-        ), "The vector of weights should be a 1D Numpy array."
-        assert len(y) == len(
-            q
-        ), "Observations and weights vectors should have the same length."
+        assert isinstance(q, np.ndarray), (
+            "The vector of weights should be a Numpy array."
+        )
+        assert len(q.shape) == 1, (
+            "The vector of weights should be a 1D Numpy array."
+        )
+        assert len(y) == len(q), (
+            "Observations and weights vectors should have the same length."
+        )
 
     if q is None:
         q = np.ones(len(y))

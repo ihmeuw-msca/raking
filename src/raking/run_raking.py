@@ -39,6 +39,260 @@ from raking.uncertainty_methods import compute_covariance, compute_gradient
 pd.options.mode.chained_assignment = None
 
 
+class RakingData:
+    """Raking input data structure"""
+
+    def __init__(
+        self,
+        df_obs: pd.DataFrame,
+        df_margins: list,
+        var_names: list = None,
+        weights: str = None,
+        lower: str = None,
+        upper: str = None,
+        use_case: str = None,
+    ):
+        """
+        Constructor of RakingData.
+
+        Parameters
+        -----------
+        df_obs : pd.DataFrame
+            Observations data
+        df_margins : list
+            list of pd.DataFrame
+        var_names : list of strings
+            Names of the variables over which we rake (e.g. cause, race, county). None if using special case.
+        weights : string
+            Name of the column containing the raking weights
+        lower : string
+            Name of the column containing the lower boundaries (for logit raking)
+        upper : string
+            Name of the column containing the upper boundaries (for logit raking)
+        """
+        self.df_obs = df_obs
+        self.df_margins = df_margins
+        self.var_names = var_names
+        self.weights = weights
+        self.lower = lower
+        self.upper = upper
+        self.use_case = use_case
+        self.check_input_init()
+
+    def check_input_init(self):
+        """Check inputs type and compatibility."""
+        if self.use_case == None:
+            assert isinstance(self.var_names, list), (
+                "The variables over which we rake must be entered as a list."
+            )
+            assert len(self.var_names) in [1, 2, 3], (
+                "The dimension of the raking problem must be 1, 2 or 3"
+            )
+            self.dim = len(self.var_names)
+        else:
+            assert self.use_case in ["USHD"], (
+                "Only the special use case 'USHD' is currently implemented."
+            )
+            self.dim = "USHD"
+            self.var_names = ["cause", "race", "county"]
+
+        # Format the data for the raking
+        if self.dim == 1:
+            df_margins = self.df_margins[0]
+            var_name = self.var_names[0]
+            (y, s, I, q, l, h) = format_data_1D(
+                self.df_obs,
+                df_margins,
+                var_name,
+                self.weights,
+                self.lower,
+                self.upper,
+            )
+            self.y = y
+            self.s = s
+            self.I = I
+            self.q = q
+            self.l = l
+            self.h = h
+        elif self.dim == 2:
+            df_margins_1 = self.df_margins[0]
+            df_margins_2 = self.df_margins[1]
+            (y, s1, s2, I, J, q, l, h) = format_data_2D(
+                self.df_obs,
+                df_margins_1,
+                df_margins_2,
+                self.var_names,
+                self.weights,
+                self.lower,
+                self.upper,
+            )
+            self.y = y
+            self.s1 = s1
+            self.s2 = s2
+            self.I = I
+            self.J = J
+            self.q = q
+            self.l = l
+            self.h = h
+        elif self.dim == 3:
+            df_margins_1 = self.df_margins[0]
+            df_margins_2 = self.df_margins[1]
+            df_margins_3 = self.df_margins[2]
+            (y, s1, s2, s3, I, J, K, q, l, h) = format_data_3D(
+                self.df_obs,
+                df_margins_1,
+                df_margins_2,
+                df_margins_3,
+                self.var_names,
+                self.weights,
+                self.lower,
+                self.upper,
+            )
+            self.y = y
+            self.s1 = s1
+            self.s2 = s2
+            self.s3 = s3
+            self.I = I
+            self.J = J
+            self.K = K
+            self.q = q
+            self.l = l
+            self.h = h
+        elif self.dim == "USHD":
+            df_margins = self.df_margins[0]
+            (y, s, I, J, K, q, l, h) = format_data_USHD(
+                self.df_obs, df_margins, self.weights, self.lower, self.upper
+            )
+            self.y = y
+            self.s = s
+            self.I = I
+            self.J = J
+            self.K = K
+            self.q = q
+            self.l = l
+            self.h = h
+        else:
+            pass
+
+    def rake(
+        self,
+        method: str = "chi2",
+        alpha: float = 1,
+        rtol: float = 1e-05,
+        atol: float = 1e-08,
+        gamma0: float = 1.0,
+        max_iter: int = 500,
+    ):
+        """
+        Runs the raking.
+
+        Parameters
+        ----------
+        method : string
+            Name of the distance function used for the raking.
+            Possible values are chi2, entropic, general, logit
+        alpha : float
+            Parameter of the distance function, alpha=1 is the chi2 distance, alpha=0 is the entropic distance
+        rtol : float
+            Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+        atol : float
+            Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+        gamma0 : float
+            Initial value for line search
+        max_iter : int
+            Number of iterations for Newton's root finding method
+        """
+        self.method = method
+        assert isinstance(self.method, str), (
+            "The name of the distance function used for the raking must be a string."
+        )
+        assert self.method in [
+            "chi2",
+            "entropic",
+            "general",
+            "logit",
+        ], "The distance function must be chi2, entropic, general or logit."
+        self.alpha = alpha
+        self.rtol = rtol
+        self.atol = atol
+        self.gamma0 = gamma0
+        self.max_iter = max_iter
+
+        # Get the constraints for the raking
+        if self.dim == 1:
+            (A, s) = constraints_1D(self.s, self.I)
+            self.A = A
+            self.s = s
+        elif self.dim == 2:
+            (A, s) = constraints_2D(
+                self.s1, self.s2, self.I, self.J, self.rtol, self.atol
+            )
+            self.A = A
+            self.s = s
+        elif self.dim == 3:
+            (A, s) = constraints_3D(
+                self.s1,
+                self.s2,
+                self.s3,
+                self.I,
+                self.J,
+                self.K,
+                self.rtol,
+                self.atol,
+            )
+            self.A = A
+            self.s = s
+        elif self.dim == "USHD":
+            (A, s) = constraints_USHD(
+                self.s, self.I, self.J, self.K, self.rtol, self.atol
+            )
+            self.A = A
+            self.s = s
+        else:
+            pass
+
+        # Rake
+        if self.method == "chi2":
+            (beta, lambda_k) = raking_chi2(self.y, self.A, self.s, self.q)
+            iter_eps = 1
+        elif self.method == "entropic":
+            (beta, lambda_k, iter_eps) = raking_entropic(
+                self.y, self.A, self.s, self.q, self.gamma0, self.max_iter
+            )
+        elif self.method == "general":
+            (beta, lambda_k, iter_eps) = raking_general(
+                self.y,
+                self.A,
+                self.s,
+                self.alpha,
+                self.q,
+                self.gamma0,
+                self.max_iter,
+            )
+        elif self.method == "logit":
+            (beta, lambda_k, iter_eps) = raking_logit(
+                self.y,
+                self.A,
+                self.s,
+                self.l,
+                self.h,
+                self.q,
+                self.gamma0,
+                self.max_iter,
+            )
+        else:
+            pass
+
+        # Create data frame for the raked values
+        self.var_names.reverse()
+        self.df_obs.sort_values(by=self.var_names, inplace=True)
+        self.df_obs["raked_value"] = beta
+
+        # Keep track of the dual and the number of iterations
+        self.lambda_k = lambda_k
+        self.num_iters = iter_eps
+
+
 def run_raking(
     dim: int | str,
     df_obs: pd.DataFrame,
@@ -110,47 +364,9 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(dim, int) or isinstance(
-        dim, str
-    ), "The dimension of the raking problem must be an integer or string."
-    assert dim in [
-        1,
-        2,
-        3,
-        "USHD",
-    ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
-    assert isinstance(
-        cov_mat, bool
-    ), "cov_mat indicates whether we compute the covariance matrix, must be True or False."
-    if dim in [1, 2, 3]:
-        assert isinstance(
-            var_names, list
-        ), "The variables over which we rake must be entered as a list."
-        assert (
-            dim == len(var_names)
-        ), "The number of variables over which we rake must be equal to the dimension of the problem."
-    else:
-        var_names = ["cause", "race", "county"]
-    assert isinstance(
-        df_margins, list
-    ), "The margins data frames must be entered as a list."
-    if dim in [1, 2, 3]:
-        assert (
-            dim == len(df_margins)
-        ), "The number of margins data frames must be equal to the dimension of the problem."
-    else:
-        assert (
-            len(df_margins) == 1
-        ), "There should be only one margins data frame in the list."
-    assert isinstance(
-        method, str
-    ), "The name of the distance function used for the raking must be a string."
-    assert method in [
-        "chi2",
-        "entropic",
-        "general",
-        "logit",
-    ], "The distance function must be chi2, entropic, general or logit."
+    assert isinstance(cov_mat, bool), (
+        "cov_mat indicates whether we compute the covariance matrix, must be True or False."
+    )
 
     # Compute the covariance matrix
     if cov_mat:
@@ -212,49 +428,6 @@ def run_raking(
                 df_obs, df_margins, ["race_county"], draws
             )
 
-    # Get the input variables for the raking
-    if dim == 1:
-        (y, s, q, l, h, A) = run_raking_1D(
-            df_obs, df_margins, var_names, weights, lower, upper, rtol, atol
-        )
-    elif dim == 2:
-        (y, s, q, l, h, A) = run_raking_2D(
-            df_obs, df_margins, var_names, weights, lower, upper, atol, rtol
-        )
-    elif dim == 3:
-        (y, s, q, l, h, A) = run_raking_3D(
-            df_obs, df_margins, var_names, weights, lower, upper, rtol, atol
-        )
-    elif dim == "USHD":
-        (y, s, q, l, h, A) = run_raking_USHD(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
-        )
-    else:
-        pass
-
-    # Rake
-    if method == "chi2":
-        (beta, lambda_k) = raking_chi2(y, A, s, q)
-    elif method == "entropic":
-        (beta, lambda_k, iter_eps) = raking_entropic(
-            y, A, s, q, gamma0, max_iter
-        )
-    elif method == "general":
-        (beta, lambda_k, iter_eps) = raking_general(
-            y, A, s, alpha, q, gamma0, max_iter
-        )
-    elif method == "logit":
-        (beta, lambda_k, iter_eps) = raking_logit(
-            y, A, s, l, h, q, gamma0, max_iter
-        )
-    else:
-        pass
-
-    # Create data frame for the raked values
-    var_names.reverse()
-    df_obs.sort_values(by=var_names, inplace=True)
-    df_obs["raked_value"] = beta
-
     # Compute the covariance matrix of the raked values
     if cov_mat:
         (Dphi_y, Dphi_s) = compute_gradient(
@@ -267,266 +440,6 @@ def run_raking(
         Dphi_s = None
         sigma = None
     return (df_obs, Dphi_y, Dphi_s, sigma)
-
-
-def run_raking_1D(
-    df_obs: pd.DataFrame,
-    df_margins: list,
-    var_names: list,
-    weights: str = None,
-    lower: str = None,
-    upper: str = None,
-    rtol: float = 1e-05,
-    atol: float = 1e-08,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray,
-]:
-    """
-    This function prepares variables to run the raking problem in 1D.
-
-    Parameters
-    ----------
-    df_obs : pd.DataFrame
-        Observations data
-    df_margins : list of pd.DataFrame
-        list of data frames contatining the margins data
-    var_names : list of strings
-        Names of the variables over which we rake (e.g. cause, race, county)
-    weights : string
-        Name of the column containing the raking weights
-    lower : string
-        Name of the column containing the lower boundaries (for logit raking)
-    upper : string
-        Name of the column containing the upper boundaries (for logit raking)
-    rtol : float
-        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-    atol : float
-        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-
-    Returns
-    -------
-    y : np.ndarray
-        Vector of observations
-    s : np.ndarray
-        Margins vector
-    q : np.ndarray
-        Vector of weights
-    l : np.ndarray
-        Lower bounds for the observations
-    h : np.ndarray
-        Upper bounds for the observations
-    A : np.ndarray
-        Constraints matrix
-    """
-    df_margins = df_margins[0]
-    var_name = var_names[0]
-    (y, s, I, q, l, h) = format_data_1D(
-        df_obs, df_margins, var_name, weights, lower, upper
-    )
-    (A, s) = constraints_1D(s, I)
-    return (y, s, q, l, h, A)
-
-
-def run_raking_2D(
-    df_obs: pd.DataFrame,
-    df_margins: list,
-    var_names: list,
-    weights: str = None,
-    lower: str = None,
-    upper: str = None,
-    rtol: float = 1e-05,
-    atol: float = 1e-08,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray,
-]:
-    """
-    This function prepares variables to run the raking problem in 2D.
-
-    Parameters
-    ----------
-    df_obs : pd.DataFrame
-        Observations data
-    df_margins : list of pd.DataFrame
-        list of data frames contatining the margins data
-    var_names : list of strings
-        Names of the variables over which we rake (e.g. cause, race, county)
-    weights : string
-        Name of the column containing the raking weights
-    lower : string
-        Name of the column containing the lower boundaries (for logit raking)
-    upper : string
-        Name of the column containing the upper boundaries (for logit raking)
-    rtol : float
-        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-    atol : float
-        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-
-    Returns
-    -------
-    y : np.ndarray
-        Vector of observations
-    s : np.ndarray
-        Margins vector
-    q : np.ndarray
-        Vector of weights
-    l : np.ndarray
-        Lower bounds for the observations
-    h : np.ndarray
-        Upper bounds for the observations
-    A : np.ndarray
-        Constraints matrix
-    """
-    df_margins_1 = df_margins[0]
-    df_margins_2 = df_margins[1]
-    (y, s1, s2, I, J, q, l, h) = format_data_2D(
-        df_obs, df_margins_1, df_margins_2, var_names, weights, lower, upper
-    )
-    (A, s) = constraints_2D(s1, s2, I, J, rtol, atol)
-    return (y, s, q, l, h, A)
-
-
-def run_raking_3D(
-    df_obs: pd.DataFrame,
-    df_margins: list,
-    var_names: list,
-    weights: str = None,
-    lower: str = None,
-    upper: str = None,
-    rtol: float = 1e-05,
-    atol: float = 1e-08,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray,
-]:
-    """
-    This function prepares variables to run the raking problem in 3D.
-
-    Parameters
-    ----------
-    df_obs : pd.DataFrame
-        Observations data
-    df_margins : list of pd.DataFrame
-        list of data frames contatining the margins data
-    var_names : list of strings
-        Names of the variables over which we rake (e.g. cause, race, county)
-    weights : string
-        Name of the column containing the raking weights
-    lower : string
-        Name of the column containing the lower boundaries (for logit raking)
-    upper : string
-        Name of the column containing the upper boundaries (for logit raking)
-    rtol : float
-        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-    atol : float
-        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-
-    Returns
-    -------
-    y : np.ndarray
-        Vector of observations
-    s : np.ndarray
-        Margins vector
-    q : np.ndarray
-        Vector of weights
-    l : np.ndarray
-        Lower bounds for the observations
-    h : np.ndarray
-        Upper bounds for the observations
-    A : np.ndarray
-        Constraints matrix
-    """
-    df_margins_1 = df_margins[0]
-    df_margins_2 = df_margins[1]
-    df_margins_3 = df_margins[2]
-    (y, s1, s2, s3, I, J, K, q, l, h) = format_data_3D(
-        df_obs,
-        df_margins_1,
-        df_margins_2,
-        df_margins_3,
-        var_names,
-        weights,
-        lower,
-        upper,
-    )
-    (A, s) = constraints_3D(s1, s2, s3, I, J, K, rtol, atol)
-    return (y, s, q, l, h, A)
-
-
-def run_raking_USHD(
-    df_obs: pd.DataFrame,
-    df_margins: list,
-    weights: str = None,
-    lower: str = None,
-    upper: str = None,
-    rtol: float = 1e-05,
-    atol: float = 1e-08,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray | None,
-    np.ndarray,
-]:
-    """
-    This function prepares variables to run the raking problem for the USHD case.
-
-    Parameters
-    ----------
-    df_obs : pd.DataFrame
-        Observations data
-    df_margins : list of pd.DataFrame
-        list of data frames contatining the margins data
-    weights : string
-        Name of the column containing the raking weights
-    lower : string
-        Name of the column containing the lower boundaries (for logit raking)
-    upper : string
-        Name of the column containing the upper boundaries (for logit raking)
-    rtol : float
-        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-    atol : float
-        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
-
-    Returns
-    -------
-    y : np.ndarray
-        Vector of observations
-    s : np.ndarray
-        Margins vector
-    q : np.ndarray
-        Vector of weights
-    l : np.ndarray
-        Lower bounds for the observations
-    h : np.ndarray
-        Upper bounds for the observations
-    A : np.ndarray
-        Constraints matrix
-    """
-    df_margins = df_margins[0]
-    (y, s, I, J, K, q, l, h) = format_data_USHD(
-        df_obs,
-        df_margins,
-        weights,
-        lower,
-        upper,
-    )
-    (A, s) = constraints_USHD(s, I, J, K, rtol, atol)
-    return (y, s, q, l, h, A)
 
 
 def compute_covariance_1D(
