@@ -8,7 +8,7 @@ import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
 
-from raking.dimension import Dimension, Space
+from raking.experimental.dimension import Dimension, Space
 
 pd.set_option("future.no_silent_downcasting", True)
 

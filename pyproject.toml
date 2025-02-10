@@ -17,7 +17,12 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
 ]
-dependencies = ["numpy", "pandas", "scipy"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "pydantic>=2.10.6",
+    "scipy",
+]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]

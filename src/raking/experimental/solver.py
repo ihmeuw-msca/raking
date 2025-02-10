@@ -4,8 +4,8 @@ import pandas as pd
 import scipy.sparse as sps
 from scipy.optimize import LinearConstraint, minimize
 
-from raking.data import Data
-from raking.distance import distance_map
+from raking.experimental.data import Data
+from raking.experimental.distance import distance_map
 
 
 class DualSolver:
