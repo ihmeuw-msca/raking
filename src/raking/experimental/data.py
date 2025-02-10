@@ -1,12 +1,12 @@
 import itertools
 import operator
-from dataclasses import dataclass
 from typing import TypedDict
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
+from pydantic import BaseModel, Field
 
 from raking.experimental.dimension import Dimension, Space
 
@@ -30,12 +30,12 @@ class Data(TypedDict):
     span: pd.DataFrame
 
 
-@dataclass
-class DataBuilder:
+class DataBuilder(BaseModel):
     dim_specs: dict[str, int | str]
     value: str
     weights: str
     bounds: tuple[str, str] | None = None
+    space: Space | None = None
 
     def build(self, df: pd.DataFrame) -> Data:
         data = {}
