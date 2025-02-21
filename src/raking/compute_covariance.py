@@ -6,6 +6,227 @@ import pandas as pd
 pd.options.mode.chained_assignment = None
 
 
+def compute_covariance(
+    df_obs: pd.DataFrame,
+    df_margins: list,
+    var_names: list = None,
+    draws: str = "draws",
+    use_case: str = None,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the sample covariance matrix.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county).
+        None if using special case.
+    draws: string
+        Name of the column that contains the samples.
+    use_case : string
+        Name of the use case if using special case.
+    rtol : float
+        Relative tolerance to check whether the caovariance matrix is symmetric.
+        See numpy.allclose documentation for details.
+    atol : float
+        Absolute tolerance to check whether the covariance matrix is symmetric.
+        See numpy.allclose documentation for details.
+    """
+    assert isinstance(draws, str), \
+        "The name of the column containing the draws must be a string."
+    if use_case == None:
+        assert isinstance(var_names, list), (
+            "The variables over which we rake must be entered as a list."
+        )
+        assert len(var_names) in [1, 2, 3], (
+            "The dimension of the raking problem must be 1, 2 or 3"
+        )
+        dim = len(var_names)
+    else:
+        assert use_case in ["USHD"], (
+            "Only the special use case 'USHD' is currently implemented."
+        )
+        dim = "USHD"
+        var_names = ["cause", "race", "county"]
+    if dim == 1:
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(df_obs, df_margins, var_names, draws)
+    elif dim == 2:
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(df_obs, df_margins, var_names, draws)
+    elif dim == 3:
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(df_obs, df_margins, var_names, draws)
+    elif dim == "USHD":
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_USHD(df_obs, df_margins, var_names, draws)
+    else:
+        pass
+    # Check if matrix is definite positive
+    (sigma_yy, sigma_ss, sigma_ys) = check_covariance(
+        sigma_yy, sigma_ss, sigma_ys, rtol, atol
+    )
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+def compute_covariance_1D(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 1D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+    """
+    df_margins = df_margins[0]
+    sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
+    sigma_ss = compute_covariance_margins_1D(df_margins, var_names, draws)
+    sigma_ys = compute_covariance_obs_margins_1D(
+        df_obs, df_margins, var_names, draws
+    )
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+
+def compute_covariance_2D(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 2D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+    """
+    df_margins_1 = df_margins[0]
+    df_margins_2 = df_margins[1]
+    sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
+    sigma_ss = compute_covariance_margins_2D(
+        df_margins_1, df_margins_2, var_names, draws
+    )
+    sigma_ys = compute_covariance_obs_margins_2D(
+        df_obs, df_margins_1, df_margins_2, var_names, draws
+    )
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+
+def compute_covariance_3D(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins in 3D.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (e.g. cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+    """
+    df_margins_1 = df_margins[0]
+    df_margins_2 = df_margins[1]
+    df_margins_3 = df_margins[2]
+    sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
+    sigma_ss = compute_covariance_margins_3D(
+        df_margins_1, df_margins_2, df_margins_3, var_names, draws
+    )
+    sigma_ys = compute_covariance_obs_margins_3D(
+        df_obs, df_margins_1, df_margins_2, df_margins_3, var_names, draws
+    )
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+
+def compute_covariance_USHD(
+    df_obs: pd.DataFrame,
+    df_margins: pd.DataFrame,
+    var_names: list,
+    draws: str,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the covariance matrix of observations and margins for the USHD case.
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    var_names : list of strings
+        Names of the variables over which we rake (cause, race, county)
+    draws: string
+        Name of the column that contains the samples.
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
+    """
+    df_margins = df_margins[0]
+    sigma_yy = compute_covariance_obs(df_obs, var_names, draws)
+    I = len(df_obs["cause"].unique()) - 1
+    J = len(df_obs["race"].unique()) - 1
+    K = len(df_obs["county"].unique())
+    sigma_ss = compute_covariance_margins_USHD(
+        df_margins, ["cause"], draws, I, J, K
+    )
+    sigma_ys = np.zeros((sigma_yy.shape[0], sigma_ss.shape[0]))
+    return (sigma_yy, sigma_ss, sigma_ys)
+
+
 def check_observations(
     df_obs: pd.DataFrame, var_names: list, draws: str
 ) -> None:
@@ -76,6 +297,8 @@ def check_observations(
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
         "There are missing combinations of variables and draws in the observations."
     )
+
+
 
 
 def compute_covariance_obs(

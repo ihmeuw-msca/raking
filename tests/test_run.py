@@ -130,61 +130,71 @@ def test_run_raking_USHD(example_USHD):
     ), "The sums over race and county must match the GBD values."
 
 
-# def test_run_raking_1D_draws(example_1D_draws):
-#    (df_obs, Dphi_y, Dphi_s, sigma) = run_raking(
-#        dim=1,
-#        df_obs=example_1D_draws.df_obs,
-#        df_margins=[example_1D_draws.df_margin],
-#        var_names=["var1"],
-#        draws="draws",
-#        cov_mat=True,
-#    )
-#    assert np.allclose(
-#        df_obs["raked_value"].sum(),
-#        example_1D_draws.df_margin["value_agg_over_var1"].mean(),
-#    ), "The raked values do not sum to the margin."
+def test_run_raking_1D_variance(example_1D_draws):
+    df_obs = example_1D_draws.df_obs
+    df_obs = df_obs.groupby(['var1']).agg({'value': ['mean', 'var']}).reset_index()
+    df_obs.columns = [" ".join(col).strip() for col in df_obs.columns.values]
+    df_obs.rename(columns={'value mean': 'value', 'value var': 'variance'}, inplace=True)
+    df_margin = example_1D_draws.df_margin
+    df_margin = pd.DataFrame(data={ \
+        'value_agg_over_var1': [np.mean(df_margin.value_agg_over_var1)], \
+        'variance': [np.var(df_margin.value_agg_over_var1)]})
+    data = RakingData(
+        df_obs=df_obs,
+        df_margins=[df_margin],
+        var_names=["var1"],
+    )
+    data.rake()
+    data.compute_variance("variance")
+    assert np.allclose(
+        data.df_obs["raked_value"].sum(),
+        df_margin["value_agg_over_var1"].iloc[0],
+    ), "The raked values do not sum to the margin."
 
-
-# def test_run_raking_2D_draws(example_2D_draws):
-#    (df_obs, Dphi_y, Dphi_s, sigma) = run_raking(
-#        dim=2,
-#        df_obs=example_2D_draws.df_obs,
-#        df_margins=[
-#            example_2D_draws.df_margins_1,
-#            example_2D_draws.df_margins_2,
-#        ],
-#        var_names=["var1", "var2"],
-#        draws="draws",
-#        cov_mat=True,
-#    )
-#    sum_over_var1 = (
-#        df_obs.groupby(["var2"])
-#        .agg({"raked_value": "sum"})
-#        .reset_index()
-#        .merge(
-#            example_2D_draws.df_margins_1.groupby(["var2"])
-#            .agg({"value_agg_over_var1": "mean"})
-#            .reset_index(),
-#            on="var2",
-#        )
-#    )
-#    assert np.allclose(
-#        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
-#    ), "The sums over the first variable must match the first margins."
-#    sum_over_var2 = (
-#        df_obs.groupby(["var1"])
-#        .agg({"raked_value": "sum"})
-#        .reset_index()
-#        .merge(
-#            example_2D_draws.df_margins_2.groupby(["var1"])
-#            .agg({"value_agg_over_var2": "mean"})
-#            .reset_index(),
-#            on="var1",
-#        )
-#    )
-#    assert np.allclose(
-#        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
-#    ), "The sums over the second variable must match the second margins."
+def test_run_raking_2D_draws(example_2D_draws):
+    df_obs = example_2D_draws.df_obs
+    df_obs = df_obs.groupby(['var1', 'var2']).agg({'value': ['mean', 'var']}).reset_index()
+    df_obs.columns = [" ".join(col).strip() for col in df_obs.columns.values]
+    df_obs.rename(columns={'value mean': 'value', 'value var': 'variance'}, inplace=True)
+    df_margins_1 = example_2D_draws.df_margins_1
+    df_margins_2 = example_2D_draws.df_margins_2
+    df_margins_1 = df_margins_1.groupby(['var2']).agg( \
+        {'value_agg_over_var1': ['mean', 'var']}).reset_index()
+    df_margins_1.columns = [" ".join(col).strip() for col in df_margins_1.columns.values]
+    df_margins_1.rename(columns={ \
+        'value_agg_over_var1 mean': 'value_agg_over_var1', \
+        'value_agg_over_var1 var': 'variance'}, inplace=True)
+    df_margins_2 = df_margins_2.groupby(['var1']).agg( \
+        {'value_agg_over_var2': ['mean', 'var']}).reset_index()
+    df_margins_2.columns = [" ".join(col).strip() for col in df_margins_2.columns.values]
+    df_margins_2.rename(columns={ \
+        'value_agg_over_var2 mean': 'value_agg_over_var2', \
+        'value_agg_over_var2 var': 'variance'}, inplace=True)
+    data = RakingData(
+        df_obs=df_obs,
+        df_margins=[df_margins_1, df_margins_2],
+        var_names=["var1", "var2"],
+    )
+    data.rake()
+    data.compute_variance("variance")
+    sum_over_var1 = (
+        data.df_obs.groupby(["var2"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_1, on="var2")
+    )
+    assert np.allclose(
+        sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    ), "The sums over the first variable must match the first margins."
+    sum_over_var2 = (
+        data.df_obs.groupby(["var1"])
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_2, on="var1")
+    )
+    assert np.allclose(
+        sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    ), "The sums over the second variable must match the second margins."
 
 
 # def test_run_raking_3D_draws(example_3D_draws):
