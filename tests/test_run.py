@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from raking.run_raking import RakingData
 
 
