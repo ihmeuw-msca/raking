@@ -36,6 +36,15 @@ def compute_covariance(
     atol : float
         Absolute tolerance to check whether the covariance matrix is symmetric.
         See numpy.allclose documentation for details.
+
+    Returns
+    -------
+    sigma_yy : np.ndarray
+        Covariance matrix of the observations
+    sigma_ss : np.ndarray
+        Covariance matrix of the margins
+    sigma_ys : np.ndarray
+        Covariance matrix of the observations and margins
     """
     assert isinstance(draws, str), (
         "The name of the column containing the draws must be a string."

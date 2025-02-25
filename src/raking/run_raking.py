@@ -323,8 +323,8 @@ class RakingData:
                 sigma_yy, sigma_ss, sigma_ys, rtol, atol
             )
             self.sigma_yy = sigma_yy
-            self.sigma_yy = sigma_yy
-            self.sigma_yy = sigma_yy
+            self.sigma_ss = sigma_ss
+            self.sigma_ys = sigma_ys
 
         # Compute the covariance matrix of the raked values
         (Dphi_y, Dphi_s) = compute_gradient(
