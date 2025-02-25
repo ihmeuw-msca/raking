@@ -50,4 +50,3 @@ def compute_mean(
             )
         df_margins_mean.append(df_margin_mean)
     return (df_obs_mean, df_margins_mean)
-

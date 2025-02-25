@@ -312,8 +312,11 @@ class RakingData:
             Absolute tolerance to check whether the covariance matrix is symmetric. See numpy.allclose documentation for details.
         """
         if isinstance(variance, str):
-            assert variance in self.df_obs.columns.tolist(), \
-                'The column for the variance ' + variance + ' is missing from the observations data frame.'
+            assert variance in self.df_obs.columns.tolist(), (
+                "The column for the variance "
+                + variance
+                + " is missing from the observations data frame."
+            )
             self.get_variance(variance)
         else:
             (sigma_yy, sigma_ss, sigma_ys) = check_covariance(
@@ -322,22 +325,28 @@ class RakingData:
             self.sigma_yy = sigma_yy
             self.sigma_yy = sigma_yy
             self.sigma_yy = sigma_yy
-        
+
         # Compute the covariance matrix of the raked values
         (Dphi_y, Dphi_s) = compute_gradient(
-            self.beta, self.lambda_k, self.y, self.A, self.method, self.alpha, self.l, self.h, self.q
+            self.beta,
+            self.lambda_k,
+            self.y,
+            self.A,
+            self.method,
+            self.alpha,
+            self.l,
+            self.h,
+            self.q,
         )
-        sigma = compute_covariance(Dphi_y, Dphi_s, self.sigma_yy, self.sigma_ss, self.sigma_ys)
-        self.df_obs["variance"] = np.diag(sigma)
+        sigma = compute_covariance(
+            Dphi_y, Dphi_s, self.sigma_yy, self.sigma_ss, self.sigma_ys
+        )
+        self.df_obs["raked_variance"] = np.diag(sigma)
         self.Dphi_y = Dphi_y
         self.Dphi_s = Dphi_s
         self.sigma = sigma
 
-
-    def get_variance(
-        self,
-        variance: str
-    ):
+    def get_variance(self, variance: str):
         """
         Get the variance columns of the observations and margins.
 
@@ -348,39 +357,81 @@ class RakingData:
         """
         sigma_yy = np.diag(self.df_obs[variance])
         for df_margin in self.df_margins:
-            assert variance in df_margin.columns.tolist(), \
-                'The column for the variance ' + variance + ' is missing from the margins data frame.'
+            assert variance in df_margin.columns.tolist(), (
+                "The column for the variance "
+                + variance
+                + " is missing from the margins data frame."
+            )
         if self.dim == 1:
             sigma_ss = np.array([[self.df_margins[0][variance].iloc[0]]])
         elif self.dim == 2:
-            variance1 = self.df_margins[0].sort_values( \
-                by=[self.var_names[1]])[variance].to_numpy()
-            variance2 = self.df_margins[1].sort_values( \
-                by=[self.var_names[0]])[variance].to_numpy()
-            sigma_ss = np.diag(np.concatenate([ \
-                variance1, variance2[0 : (self.I - 1)]]))
+            variance1 = (
+                self.df_margins[0]
+                .sort_values(by=[self.var_names[1]])[variance]
+                .to_numpy()
+            )
+            variance2 = (
+                self.df_margins[1]
+                .sort_values(by=[self.var_names[0]])[variance]
+                .to_numpy()
+            )
+            sigma_ss = np.diag(
+                np.concatenate([variance1, variance2[0 : (self.I - 1)]])
+            )
         elif self.dim == 3:
-            variance1 = self.df_margins[0].sort_values( \
-                by=[self.var_names[2], self.var_names[1]])[variance].to_numpy(). \
-                reshape([self.J, self.K], order="F")
-            variance2 = self.df_margins[1].sort_values( \
-                by=[self.var_names[2], self.var_names[0]])[variance].to_numpy(). \
-                reshape([self.I, self.K], order="F")
-            variance3 = self.df_margins[2].sort_values( \
-                by=[self.var_names[1], self.var_names[0]])[variance].to_numpy(). \
-                reshape([self.I, self.J], order="F")
-            sigma_ss = np.diag(np.concatenate([ \
-                variance1[0:(self.J - 1), 0:self.K].flatten(order='F'), \
-                np.array([variance1[self.J - 1, self.K - 1]]), \
-                variance2[0:self.I, 0:(self.K - 1)].flatten(order='C'), \
-                variance3[0:(self.I - 1), 0:self.J].flatten(order='F')]))
+            variance1 = (
+                self.df_margins[0]
+                .sort_values(by=[self.var_names[2], self.var_names[1]])[
+                    variance
+                ]
+                .to_numpy()
+                .reshape([self.J, self.K], order="F")
+            )
+            variance2 = (
+                self.df_margins[1]
+                .sort_values(by=[self.var_names[2], self.var_names[0]])[
+                    variance
+                ]
+                .to_numpy()
+                .reshape([self.I, self.K], order="F")
+            )
+            variance3 = (
+                self.df_margins[2]
+                .sort_values(by=[self.var_names[1], self.var_names[0]])[
+                    variance
+                ]
+                .to_numpy()
+                .reshape([self.I, self.J], order="F")
+            )
+            sigma_ss = np.diag(
+                np.concatenate(
+                    [
+                        variance1[0 : (self.J - 1), 0 : self.K].flatten(
+                            order="F"
+                        ),
+                        np.array([variance1[self.J - 1, self.K - 1]]),
+                        variance2[0 : self.I, 0 : (self.K - 1)].flatten(
+                            order="C"
+                        ),
+                        variance3[0 : (self.I - 1), 0 : self.J].flatten(
+                            order="F"
+                        ),
+                    ]
+                )
+            )
         elif self.dim == "USHD":
-            variance = self.df_margins[0].sort_values( \
-                by=["cause"])[variance].to_numpy()
-            sigma_ss = np.diag(np.concatenate([
-                variance, np.zeros((self.I + self.J + 1) * self.K)]))
+            variance = (
+                self.df_margins[0]
+                .loc[self.df_margins[0].cause != "_all"]
+                .sort_values(by=["cause"])[variance]
+                .to_numpy()
+            )
+            sigma_ss = np.diag(
+                np.concatenate(
+                    [variance, np.zeros((self.I + self.J + 1) * self.K)]
+                )
+            )
         sigma_ys = np.zeros((np.shape(sigma_yy)[0], np.shape(sigma_ss)[0]))
         self.sigma_yy = sigma_yy
         self.sigma_ss = sigma_ss
         self.sigma_ys = sigma_ys
-

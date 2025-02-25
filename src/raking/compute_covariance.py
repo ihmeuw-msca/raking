@@ -37,8 +37,9 @@ def compute_covariance(
         Absolute tolerance to check whether the covariance matrix is symmetric.
         See numpy.allclose documentation for details.
     """
-    assert isinstance(draws, str), \
+    assert isinstance(draws, str), (
         "The name of the column containing the draws must be a string."
+    )
     if use_case == None:
         assert isinstance(var_names, list), (
             "The variables over which we rake must be entered as a list."
@@ -54,13 +55,21 @@ def compute_covariance(
         dim = "USHD"
         var_names = ["cause", "race", "county"]
     if dim == 1:
-        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(df_obs, df_margins, var_names, draws)
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_1D(
+            df_obs, df_margins, var_names, draws
+        )
     elif dim == 2:
-        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(df_obs, df_margins, var_names, draws)
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_2D(
+            df_obs, df_margins, var_names, draws
+        )
     elif dim == 3:
-        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(df_obs, df_margins, var_names, draws)
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_3D(
+            df_obs, df_margins, var_names, draws
+        )
     elif dim == "USHD":
-        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_USHD(df_obs, df_margins, var_names, draws)
+        (sigma_yy, sigma_ss, sigma_ys) = compute_covariance_USHD(
+            df_obs, df_margins, var_names, draws
+        )
     else:
         pass
     # Check if matrix is definite positive
@@ -69,11 +78,9 @@ def compute_covariance(
     )
     return (sigma_yy, sigma_ss, sigma_ys)
 
+
 def compute_covariance_1D(
-    df_obs: pd.DataFrame,
-    df_margins: pd.DataFrame,
-    var_names: list,
-    draws: str
+    df_obs: pd.DataFrame, df_margins: pd.DataFrame, var_names: list, draws: str
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the covariance matrix of observations and margins in 1D.
 
@@ -107,10 +114,7 @@ def compute_covariance_1D(
 
 
 def compute_covariance_2D(
-    df_obs: pd.DataFrame,
-    df_margins: pd.DataFrame,
-    var_names: list,
-    draws: str
+    df_obs: pd.DataFrame, df_margins: pd.DataFrame, var_names: list, draws: str
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the covariance matrix of observations and margins in 2D.
 
@@ -297,8 +301,6 @@ def check_observations(
     assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
         "There are missing combinations of variables and draws in the observations."
     )
-
-
 
 
 def compute_covariance_obs(
