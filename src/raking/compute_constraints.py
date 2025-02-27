@@ -22,18 +22,18 @@ def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
     s : np.ndarray
         length 1 margins vector
     """
-    assert isinstance(
-        s, float
-    ), "The target sum of the observations must be a float."
-    assert (
-        s >= 0.0
-    ), "The target sum of the observations must be positive or null."
-    assert isinstance(
-        I, int
-    ), "The number of possible values taken by the categorical variable must be an integer."
-    assert (
-        I > 1
-    ), "The number of possible values taken by the categorical variable must be higher than 1."
+    assert isinstance(s, float), (
+        "The target sum of the observations must be a float."
+    )
+    assert s >= 0.0, (
+        "The target sum of the observations must be positive or null."
+    )
+    assert isinstance(I, int), (
+        "The number of possible values taken by the categorical variable must be an integer."
+    )
+    assert I > 1, (
+        "The number of possible values taken by the categorical variable must be higher than 1."
+    )
 
     A = np.ones((1, I))
     s = np.array([s])
@@ -75,45 +75,45 @@ def constraints_2D(
     s : np.ndarray
         length (I + J) margins vector
     """
-    assert isinstance(
-        I, int
-    ), "The number of possible values taken by the first categorical variable must be an integer."
-    assert (
-        I > 1
-    ), "The number of possible values taken by the first categorical variable must be higher than 1."
-    assert isinstance(
-        J, int
-    ), "The number of possible values taken by the second categorical variable must be an integer."
-    assert (
-        J > 1
-    ), "The number of possible values taken by the second categorical variable must be higher than 1."
-    assert isinstance(
-        s1, np.ndarray
-    ), "The target sums over rows of the observation table must be a Numpy array."
-    assert (
-        len(s1.shape) == 1
-    ), "The target sums over rows of the observation table must be a 1D Numpy array."
-    assert isinstance(
-        s2, np.ndarray
-    ), "The target sums over columns of the observation table must be a Numpy array."
-    assert (
-        len(s2.shape) == 1
-    ), "The target sums over rows of the observation table must be a 1D Numpy array."
-    assert np.all(
-        s1 >= 0.0
-    ), "The target sums over rows of the observation table must be positive or null."
-    assert np.all(
-        s2 >= 0.0
-    ), "The target sums over columns of the observation table must be positive or null."
-    assert (
-        len(s1) == J
-    ), "The target sums over rows must be equal to the number of columns in the observation table."
-    assert (
-        len(s2) == I
-    ), "The target sums over columns must be equal to the number of rows in the observation table."
-    assert np.allclose(
-        np.sum(s1), np.sum(s2), rtol, atol
-    ), "The sum of the row margins must be equal to the sum of the column margins."
+    assert isinstance(I, int), (
+        "The number of possible values taken by the first categorical variable must be an integer."
+    )
+    assert I > 1, (
+        "The number of possible values taken by the first categorical variable must be higher than 1."
+    )
+    assert isinstance(J, int), (
+        "The number of possible values taken by the second categorical variable must be an integer."
+    )
+    assert J > 1, (
+        "The number of possible values taken by the second categorical variable must be higher than 1."
+    )
+    assert isinstance(s1, np.ndarray), (
+        "The target sums over rows of the observation table must be a Numpy array."
+    )
+    assert len(s1.shape) == 1, (
+        "The target sums over rows of the observation table must be a 1D Numpy array."
+    )
+    assert isinstance(s2, np.ndarray), (
+        "The target sums over columns of the observation table must be a Numpy array."
+    )
+    assert len(s2.shape) == 1, (
+        "The target sums over rows of the observation table must be a 1D Numpy array."
+    )
+    assert np.all(s1 >= 0.0), (
+        "The target sums over rows of the observation table must be positive or null."
+    )
+    assert np.all(s2 >= 0.0), (
+        "The target sums over columns of the observation table must be positive or null."
+    )
+    assert len(s1) == J, (
+        "The target sums over rows must be equal to the number of columns in the observation table."
+    )
+    assert len(s2) == I, (
+        "The target sums over columns must be equal to the number of rows in the observation table."
+    )
+    assert np.allclose(np.sum(s1), np.sum(s2), rtol, atol), (
+        "The sum of the row margins must be equal to the sum of the column margins."
+    )
 
     A = np.zeros((J + I - 1, I * J))
     for j in range(0, J):
@@ -170,83 +170,83 @@ def constraints_3D(
     s : np.ndarray
         length (I J + I K + J K - I - J - K + 1) margins vector
     """
-    assert isinstance(
-        I, int
-    ), "The number of possible values taken by the first categorical variable must be an integer."
-    assert (
-        I > 1
-    ), "The number of possible values taken by the first categorical variable must be higher than 1."
-    assert isinstance(
-        J, int
-    ), "The number of possible values taken by the second categorical variable must be an integer."
-    assert (
-        J > 1
-    ), "The number of possible values taken by the second categorical variable must be higher than 1."
-    assert isinstance(
-        K, int
-    ), "The number of possible values taken by the third categorical variable must be an integer."
-    assert (
-        K > 1
-    ), "The number of possible values taken by the third categorical variable must be higher than 1."
+    assert isinstance(I, int), (
+        "The number of possible values taken by the first categorical variable must be an integer."
+    )
+    assert I > 1, (
+        "The number of possible values taken by the first categorical variable must be higher than 1."
+    )
+    assert isinstance(J, int), (
+        "The number of possible values taken by the second categorical variable must be an integer."
+    )
+    assert J > 1, (
+        "The number of possible values taken by the second categorical variable must be higher than 1."
+    )
+    assert isinstance(K, int), (
+        "The number of possible values taken by the third categorical variable must be an integer."
+    )
+    assert K > 1, (
+        "The number of possible values taken by the third categorical variable must be higher than 1."
+    )
 
-    assert isinstance(
-        s1, np.ndarray
-    ), "The target sums over dimension 1 of the observation array must be a Numpy array."
-    assert (
-        len(s1.shape) == 2
-    ), "The target sums over dimension 1 of the observation array must be a 2D Numpy array."
-    assert (
-        s1.shape[0] == J
-    ), "The target sums over dimension 1 must have {} rows.".format(J)
-    assert (
-        s1.shape[1] == K
-    ), "The target sums over dimension 1 must have {} columns.".format(K)
+    assert isinstance(s1, np.ndarray), (
+        "The target sums over dimension 1 of the observation array must be a Numpy array."
+    )
+    assert len(s1.shape) == 2, (
+        "The target sums over dimension 1 of the observation array must be a 2D Numpy array."
+    )
+    assert s1.shape[0] == J, (
+        "The target sums over dimension 1 must have {} rows.".format(J)
+    )
+    assert s1.shape[1] == K, (
+        "The target sums over dimension 1 must have {} columns.".format(K)
+    )
 
-    assert isinstance(
-        s2, np.ndarray
-    ), "The target sums over dimension 2 of the observation array must be a Numpy array."
-    assert (
-        len(s2.shape) == 2
-    ), "The target sums over dimension 2 of the observation array must be a 2D Numpy array."
-    assert (
-        s2.shape[0] == I
-    ), "The target sums over dimension 2 must have {} rows.".format(I)
-    assert (
-        s2.shape[1] == K
-    ), "The target sums over dimension 2 must have {} columns.".format(K)
+    assert isinstance(s2, np.ndarray), (
+        "The target sums over dimension 2 of the observation array must be a Numpy array."
+    )
+    assert len(s2.shape) == 2, (
+        "The target sums over dimension 2 of the observation array must be a 2D Numpy array."
+    )
+    assert s2.shape[0] == I, (
+        "The target sums over dimension 2 must have {} rows.".format(I)
+    )
+    assert s2.shape[1] == K, (
+        "The target sums over dimension 2 must have {} columns.".format(K)
+    )
 
-    assert isinstance(
-        s3, np.ndarray
-    ), "The target sums over dimension 3 of the observation array must be a Numpy array."
-    assert (
-        len(s3.shape) == 2
-    ), "The target sums over dimension 3 of the observation array must be a 2D Numpy array."
-    assert (
-        s3.shape[0] == I
-    ), "The target sums over dimension 3 must have {} rows.".format(I)
-    assert (
-        s3.shape[1] == J
-    ), "The target sums over dimension 3 must have {} columns.".format(J)
+    assert isinstance(s3, np.ndarray), (
+        "The target sums over dimension 3 of the observation array must be a Numpy array."
+    )
+    assert len(s3.shape) == 2, (
+        "The target sums over dimension 3 of the observation array must be a 2D Numpy array."
+    )
+    assert s3.shape[0] == I, (
+        "The target sums over dimension 3 must have {} rows.".format(I)
+    )
+    assert s3.shape[1] == J, (
+        "The target sums over dimension 3 must have {} columns.".format(J)
+    )
 
-    assert np.all(
-        s1 >= 0.0
-    ), "The target sums over dimension 1 of the observation array must be positive or null."
-    assert np.all(
-        s2 >= 0.0
-    ), "The target sums over dimension 2 of the observation array must be positive or null."
-    assert np.all(
-        s3 >= 0.0
-    ), "The target sums over dimension 3 of the observation array must be positive or null."
+    assert np.all(s1 >= 0.0), (
+        "The target sums over dimension 1 of the observation array must be positive or null."
+    )
+    assert np.all(s2 >= 0.0), (
+        "The target sums over dimension 2 of the observation array must be positive or null."
+    )
+    assert np.all(s3 >= 0.0), (
+        "The target sums over dimension 3 of the observation array must be positive or null."
+    )
 
-    assert np.allclose(
-        np.sum(s1, axis=0), np.sum(s2, axis=0), rtol, atol
-    ), "The sums of the targets for dimension 1 and 2 must be equal."
-    assert np.allclose(
-        np.sum(s2, axis=1), np.sum(s3, axis=1), rtol, atol
-    ), "The sums of the targets for dimension 2 and 3 must be equal."
-    assert np.allclose(
-        np.sum(s1, axis=1), np.sum(s3, axis=0), rtol, atol
-    ), "The sums of the targets for dimension 1 and 3 must be equal."
+    assert np.allclose(np.sum(s1, axis=0), np.sum(s2, axis=0), rtol, atol), (
+        "The sums of the targets for dimension 1 and 2 must be equal."
+    )
+    assert np.allclose(np.sum(s2, axis=1), np.sum(s3, axis=1), rtol, atol), (
+        "The sums of the targets for dimension 2 and 3 must be equal."
+    )
+    assert np.allclose(np.sum(s1, axis=1), np.sum(s3, axis=0), rtol, atol), (
+        "The sums of the targets for dimension 1 and 3 must be equal."
+    )
 
     A = np.zeros((I * J + I * K + J * K - I - J - K + 1, I * J * K))
     s = np.zeros(I * J + I * K + J * K - I - J - K + 1)
@@ -312,33 +312,33 @@ def constraints_USHD(
     s : np.ndarray
         length (I + 2 * K + J * K + (I - 1) * K) margins vector
     """
-    assert isinstance(
-        I, int
-    ), "The number of causes of deaths must be an integer."
+    assert isinstance(I, int), (
+        "The number of causes of deaths must be an integer."
+    )
     assert I > 1, "The number of causes of deaths must be higher than 1."
-    assert isinstance(
-        J, int
-    ), "The number of races and ethnicities must be an integer."
+    assert isinstance(J, int), (
+        "The number of races and ethnicities must be an integer."
+    )
     assert J > 1, "The number of races and ethnicities must be higher than 1."
     assert isinstance(K, int), "The number of counties must be an integer."
     assert K > 1, "The number of counties must be higher than 1."
 
-    assert isinstance(
-        s_cause, np.ndarray
-    ), "The margins vector for the causes of death must be a Numpy array."
-    assert (
-        len(s_cause.shape) == 1
-    ), "The margins vector for the causes of death must be a 1D Numpy array."
-    assert np.all(
-        s_cause >= 0.0
-    ), "The number of deaths for each cause must be positive or null."
-    assert (
-        len(s_cause) == I + 1
-    ), "The length of the margins vector for the causes of death must be equal to 1 + number of causes."
+    assert isinstance(s_cause, np.ndarray), (
+        "The margins vector for the causes of death must be a Numpy array."
+    )
+    assert len(s_cause.shape) == 1, (
+        "The margins vector for the causes of death must be a 1D Numpy array."
+    )
+    assert np.all(s_cause >= 0.0), (
+        "The number of deaths for each cause must be positive or null."
+    )
+    assert len(s_cause) == I + 1, (
+        "The length of the margins vector for the causes of death must be equal to 1 + number of causes."
+    )
 
-    assert np.allclose(
-        s_cause[0], np.sum(s_cause[1:]), rtol, atol
-    ), "The all-causes number of deaths must be equal to the sum of the numbers of deaths per cause."
+    assert np.allclose(s_cause[0], np.sum(s_cause[1:]), rtol, atol), (
+        "The all-causes number of deaths must be equal to the sum of the numbers of deaths per cause."
+    )
 
     A = np.zeros((I + 2 * K + J * K + (I - 1) * K, (I + 1) * (J + 1) * K))
     s = np.zeros(I + 2 * K + J * K + (I - 1) * K)

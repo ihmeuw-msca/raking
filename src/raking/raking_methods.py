@@ -33,38 +33,38 @@ def raking_chi2(
     lambda_k : np.ndarray
         Dual (needed for the uncertainty computation)
     """
-    assert isinstance(
-        y, np.ndarray
-    ), "The vector of observations should be a Numpy array."
-    assert (
-        len(y.shape) == 1
-    ), "The vector of observations should be a 1D Numpy array."
+    assert isinstance(y, np.ndarray), (
+        "The vector of observations should be a Numpy array."
+    )
+    assert len(y.shape) == 1, (
+        "The vector of observations should be a 1D Numpy array."
+    )
     if q is not None:
-        assert isinstance(
-            q, np.ndarray
-        ), "The vector of weights should be a Numpy array."
-        assert (
-            len(y.shape) == 1
-        ), "The vector of weights should be a 1D Numpy array."
-        assert len(y) == len(
-            q
-        ), "Observations and weights vectors should have the same length."
-    assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert isinstance(
-        s, np.ndarray
-    ), "The margins vector should be a Numpy array."
+        assert isinstance(q, np.ndarray), (
+            "The vector of weights should be a Numpy array."
+        )
+        assert len(y.shape) == 1, (
+            "The vector of weights should be a 1D Numpy array."
+        )
+        assert len(y) == len(q), (
+            "Observations and weights vectors should have the same length."
+        )
+    assert isinstance(A, np.ndarray), (
+        "The constraint matrix should be a Numpy array."
+    )
+    assert len(A.shape) == 2, (
+        "The constraints matrix should be a 2D Numpy array."
+    )
+    assert isinstance(s, np.ndarray), (
+        "The margins vector should be a Numpy array."
+    )
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
-    assert (
-        np.shape(A)[0] == len(s)
-    ), "The number of linear constraints should be equal to the number of margins."
-    assert (
-        np.shape(A)[1] == len(y)
-    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
+    assert np.shape(A)[0] == len(s), (
+        "The number of linear constraints should be equal to the number of margins."
+    )
+    assert np.shape(A)[1] == len(y), (
+        "The number of coefficients for the linear constraints should be equal to the number of observations."
+    )
 
     if q is None:
         q = np.ones(len(y))
@@ -112,38 +112,38 @@ def raking_entropic(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(
-        y, np.ndarray
-    ), "The vector of observations should be a Numpy array."
-    assert (
-        len(y.shape) == 1
-    ), "The vector of observations should be a 1D Numpy array."
+    assert isinstance(y, np.ndarray), (
+        "The vector of observations should be a Numpy array."
+    )
+    assert len(y.shape) == 1, (
+        "The vector of observations should be a 1D Numpy array."
+    )
     if q is not None:
-        assert isinstance(
-            q, np.ndarray
-        ), "The vector of weights should be a Numpy array."
-        assert (
-            len(q.shape) == 1
-        ), "The vector of weights should be a 1D Numpy array."
-        assert len(y) == len(
-            q
-        ), "Observations and weights vectors should have the same length."
-    assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert isinstance(
-        s, np.ndarray
-    ), "The margins vector should be a Numpy array."
+        assert isinstance(q, np.ndarray), (
+            "The vector of weights should be a Numpy array."
+        )
+        assert len(q.shape) == 1, (
+            "The vector of weights should be a 1D Numpy array."
+        )
+        assert len(y) == len(q), (
+            "Observations and weights vectors should have the same length."
+        )
+    assert isinstance(A, np.ndarray), (
+        "The constraint matrix should be a Numpy array."
+    )
+    assert len(A.shape) == 2, (
+        "The constraints matrix should be a 2D Numpy array."
+    )
+    assert isinstance(s, np.ndarray), (
+        "The margins vector should be a Numpy array."
+    )
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
-    assert (
-        np.shape(A)[0] == len(s)
-    ), "The number of linear constraints should be equal to the number of margins."
-    assert (
-        np.shape(A)[1] == len(y)
-    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
+    assert np.shape(A)[0] == len(s), (
+        "The number of linear constraints should be equal to the number of margins."
+    )
+    assert np.shape(A)[1] == len(y), (
+        "The number of coefficients for the linear constraints should be equal to the number of observations."
+    )
 
     if q is None:
         q = np.ones(len(y))
@@ -216,41 +216,41 @@ def raking_general(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(
-        y, np.ndarray
-    ), "The vector of observations should be a Numpy array."
-    assert (
-        len(y.shape) == 1
-    ), "The vector of observations should be a 1D Numpy array."
+    assert isinstance(y, np.ndarray), (
+        "The vector of observations should be a Numpy array."
+    )
+    assert len(y.shape) == 1, (
+        "The vector of observations should be a 1D Numpy array."
+    )
     if q is not None:
-        assert isinstance(
-            q, np.ndarray
-        ), "The vector of weights should be a Numpy array."
-        assert (
-            len(y.shape) == 1
-        ), "The vector of weights should be a 1D Numpy array."
-        assert len(y) == len(
-            q
-        ), "Observations and weights vectors should have the same length."
-    assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert isinstance(
-        s, np.ndarray
-    ), "The margins vector should be a Numpy array."
+        assert isinstance(q, np.ndarray), (
+            "The vector of weights should be a Numpy array."
+        )
+        assert len(y.shape) == 1, (
+            "The vector of weights should be a 1D Numpy array."
+        )
+        assert len(y) == len(q), (
+            "Observations and weights vectors should have the same length."
+        )
+    assert isinstance(A, np.ndarray), (
+        "The constraint matrix should be a Numpy array."
+    )
+    assert len(A.shape) == 2, (
+        "The constraints matrix should be a 2D Numpy array."
+    )
+    assert isinstance(s, np.ndarray), (
+        "The margins vector should be a Numpy array."
+    )
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
-    assert (
-        np.shape(A)[0] == len(s)
-    ), "The number of linear constraints should be equal to the number of margins."
-    assert (
-        np.shape(A)[1] == len(y)
-    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
-    assert isinstance(
-        alpha, (int, float)
-    ), "The parameter of the distance function should be an integer or a float."
+    assert np.shape(A)[0] == len(s), (
+        "The number of linear constraints should be equal to the number of margins."
+    )
+    assert np.shape(A)[1] == len(y), (
+        "The number of coefficients for the linear constraints should be equal to the number of observations."
+    )
+    assert isinstance(alpha, (int, float)), (
+        "The parameter of the distance function should be an integer or a float."
+    )
 
     if q is None:
         q = np.ones(len(y))
@@ -401,74 +401,74 @@ def raking_logit(
     iters_eps : int
         Number of iterations until convergence
     """
-    assert isinstance(
-        y, np.ndarray
-    ), "The vector of observations should be a Numpy array."
-    assert (
-        len(y.shape) == 1
-    ), "The vector of observations should be a 1D Numpy array."
+    assert isinstance(y, np.ndarray), (
+        "The vector of observations should be a Numpy array."
+    )
+    assert len(y.shape) == 1, (
+        "The vector of observations should be a 1D Numpy array."
+    )
     if q is not None:
-        assert isinstance(
-            q, np.ndarray
-        ), "The vector of weights should be a Numpy array."
-        assert (
-            len(y.shape) == 1
-        ), "The vector of weights should be a 1D Numpy array."
-        assert len(y) == len(
-            q
-        ), "Observations and weights vectors should have the same length."
-    assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert isinstance(
-        s, np.ndarray
-    ), "The margins vector should be a Numpy array."
+        assert isinstance(q, np.ndarray), (
+            "The vector of weights should be a Numpy array."
+        )
+        assert len(y.shape) == 1, (
+            "The vector of weights should be a 1D Numpy array."
+        )
+        assert len(y) == len(q), (
+            "Observations and weights vectors should have the same length."
+        )
+    assert isinstance(A, np.ndarray), (
+        "The constraint matrix should be a Numpy array."
+    )
+    assert len(A.shape) == 2, (
+        "The constraints matrix should be a 2D Numpy array."
+    )
+    assert isinstance(s, np.ndarray), (
+        "The margins vector should be a Numpy array."
+    )
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
-    assert (
-        np.shape(A)[0] == len(s)
-    ), "The number of linear constraints should be equal to the number of margins."
-    assert (
-        np.shape(A)[1] == len(y)
-    ), "The number of coefficients for the linear constraints should be equal to the number of observations."
+    assert np.shape(A)[0] == len(s), (
+        "The number of linear constraints should be equal to the number of margins."
+    )
+    assert np.shape(A)[1] == len(y), (
+        "The number of coefficients for the linear constraints should be equal to the number of observations."
+    )
 
     if l is None:
         l = np.zeros(len(y))
-    assert isinstance(
-        l, np.ndarray
-    ), "The vector of lower bounds should be a Numpy array."
-    assert (
-        len(l.shape) == 1
-    ), "The vector of lower bounds should be a 1D Numpy array."
-    assert len(y) == len(
-        l
-    ), "Observations and lower bounds vectors should have the same length."
+    assert isinstance(l, np.ndarray), (
+        "The vector of lower bounds should be a Numpy array."
+    )
+    assert len(l.shape) == 1, (
+        "The vector of lower bounds should be a 1D Numpy array."
+    )
+    assert len(y) == len(l), (
+        "Observations and lower bounds vectors should have the same length."
+    )
     assert np.all(l >= 0.0), "The lower bounds must be positive."
-    assert np.all(
-        l <= y
-    ), "The observations must be superior or equal to the corresponding lower bounds."
+    assert np.all(l <= y), (
+        "The observations must be superior or equal to the corresponding lower bounds."
+    )
 
     if h is None:
         h = np.ones(len(y))
-    assert isinstance(
-        h, np.ndarray
-    ), "The vector of upper bounds should be a Numpy array."
-    assert (
-        len(h.shape) == 1
-    ), "The vector of upper bounds should be a 1D Numpy array."
-    assert len(y) == len(
-        h
-    ), "Observations and upper bounds vectors should have the same length."
+    assert isinstance(h, np.ndarray), (
+        "The vector of upper bounds should be a Numpy array."
+    )
+    assert len(h.shape) == 1, (
+        "The vector of upper bounds should be a 1D Numpy array."
+    )
+    assert len(y) == len(h), (
+        "Observations and upper bounds vectors should have the same length."
+    )
     assert np.all(h > 0.0), "The upper bounds must be strictly positive."
-    assert np.all(
-        h >= y
-    ), "The observations must be inferior or equal to the correspondings upper bounds."
+    assert np.all(h >= y), (
+        "The observations must be inferior or equal to the correspondings upper bounds."
+    )
 
-    assert np.all(
-        l < h
-    ), "The lower bounds must be stricty inferior to the correspondings upper bounds."
+    assert np.all(l < h), (
+        "The lower bounds must be stricty inferior to the correspondings upper bounds."
+    )
 
     if q is None:
         q = np.ones(len(y))

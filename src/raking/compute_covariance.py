@@ -24,20 +24,20 @@ def check_observations(
     -------
     None
     """
-    assert isinstance(
-        df_obs, pd.DataFrame
-    ), "The observations should be a pandas data frame."
-    assert (
-        len(df_obs) >= 2
-    ), "There should be at least 2 data points for the observations."
+    assert isinstance(df_obs, pd.DataFrame), (
+        "The observations should be a pandas data frame."
+    )
+    assert len(df_obs) >= 2, (
+        "There should be at least 2 data points for the observations."
+    )
 
-    assert (
-        "value" in df_obs.columns.tolist()
-    ), "The observations data frame should contain a value column."
+    assert "value" in df_obs.columns.tolist(), (
+        "The observations data frame should contain a value column."
+    )
 
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     for var_name in var_names:
         assert isinstance(var_name, str), (
             "The name of the categorical variable "
@@ -50,32 +50,32 @@ def check_observations(
             + " is missing from the observations data frame."
         )
 
-    assert isinstance(
-        draws, str
-    ), "The name of the column containing the draws should be a string."
-    assert (
-        draws in df_obs.columns.tolist()
-    ), "The column containing the draws is missing from the observations data frame."
+    assert isinstance(draws, str), (
+        "The name of the column containing the draws should be a string."
+    )
+    assert draws in df_obs.columns.tolist(), (
+        "The column containing the draws is missing from the observations data frame."
+    )
 
-    assert (
-        df_obs.value.isna().sum() == 0
-    ), "There are missing values in the value column of the observations."
+    assert df_obs.value.isna().sum() == 0, (
+        "There are missing values in the value column of the observations."
+    )
     for var_name in var_names:
         assert df_obs[var_name].isna().sum() == 0, (
             "There are missing values in the "
             + var_name
             + " column of the observations."
         )
-    assert (
-        df_obs[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the observations."
-    assert (
-        len(df_obs[df_obs.duplicated(var_names + [draws])]) == 0
-    ), "There are duplicated rows in the observations."
+    assert df_obs[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the observations."
+    )
+    assert len(df_obs[df_obs.duplicated(var_names + [draws])]) == 0, (
+        "There are duplicated rows in the observations."
+    )
     count_obs = df_obs[var_names + [draws]].value_counts()
-    assert (
-        (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1)
-    ), "There are missing combinations of variables and draws in the observations."
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
+        "There are missing combinations of variables and draws in the observations."
+    )
 
 
 def compute_covariance_obs(
@@ -134,48 +134,48 @@ def check_margins_1D(
     -------
     None
     """
-    assert isinstance(
-        df_margins, pd.DataFrame
-    ), "The margins should be a pandas data frame."
-    assert (
-        len(df_margins) >= 1
-    ), "There should be at least 1 data point for the margins."
+    assert isinstance(df_margins, pd.DataFrame), (
+        "The margins should be a pandas data frame."
+    )
+    assert len(df_margins) >= 1, (
+        "There should be at least 1 data point for the margins."
+    )
 
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     assert len(var_names) == 1, "You should have 1 categorical variable."
-    assert isinstance(
-        var_names[0], str
-    ), "The name of the categorical variable should be a string."
+    assert isinstance(var_names[0], str), (
+        "The name of the categorical variable should be a string."
+    )
     assert "value_agg_over_" + var_names[0] in df_margins.columns.tolist(), (
         "The column for the aggregated value over "
         + var_names[0]
         + " is missing from the margins data frame."
     )
 
-    assert isinstance(
-        draws, str
-    ), "The name of the column containing the draws should be a string."
-    assert (
-        draws in df_margins.columns.tolist()
-    ), "The column containing the draws is missing from the margins data frame."
+    assert isinstance(draws, str), (
+        "The name of the column containing the draws should be a string."
+    )
+    assert draws in df_margins.columns.tolist(), (
+        "The column containing the draws is missing from the margins data frame."
+    )
 
     assert df_margins["value_agg_over_" + var_names[0]].isna().sum() == 0, (
         "There are missing values in the value_agg_over"
         + var_names[0]
         + " column of the margins."
     )
-    assert (
-        df_margins[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the margins."
-    assert (
-        len(df_margins[df_margins.duplicated([draws])]) == 0
-    ), "There are duplicated rows in the margins."
+    assert df_margins[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the margins."
+    )
+    assert len(df_margins[df_margins.duplicated([draws])]) == 0, (
+        "There are duplicated rows in the margins."
+    )
     count_obs = df_margins[[draws]].value_counts()
-    assert (len(count_obs.unique()) == 1) and (
-        count_obs.unique()[0] == 1
-    ), "There are missing draws in the margins."
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
+        "There are missing draws in the margins."
+    )
 
 
 def compute_covariance_margins_1D(
@@ -233,23 +233,23 @@ def check_margins_2D(
     -------
     None
     """
-    assert isinstance(
-        df_margins_1, pd.DataFrame
-    ), "The margins for the first variable should be a pandas data frame."
-    assert (
-        len(df_margins_1) >= 2
-    ), "There should be at least 2 data points for the first margins."
+    assert isinstance(df_margins_1, pd.DataFrame), (
+        "The margins for the first variable should be a pandas data frame."
+    )
+    assert len(df_margins_1) >= 2, (
+        "There should be at least 2 data points for the first margins."
+    )
 
-    assert isinstance(
-        df_margins_2, pd.DataFrame
-    ), "The margins for the second variable should be a pandas data frame."
-    assert (
-        len(df_margins_2) >= 2
-    ), "There should be at least 2 data points for the second margins."
+    assert isinstance(df_margins_2, pd.DataFrame), (
+        "The margins for the second variable should be a pandas data frame."
+    )
+    assert len(df_margins_2) >= 2, (
+        "There should be at least 2 data points for the second margins."
+    )
 
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     assert len(var_names) == 2, "You should have 2 categorical variables."
     for var_name in var_names:
         assert isinstance(var_name, str), (
@@ -280,15 +280,15 @@ def check_margins_2D(
         + " is missing from the second margins data frame."
     )
 
-    assert isinstance(
-        draws, str
-    ), "The name of the column containing the draws should be a string."
-    assert (
-        draws in df_margins_1.columns.tolist()
-    ), "The column containing the draws is missing from the first margins data frame."
-    assert (
-        draws in df_margins_2.columns.tolist()
-    ), "The column containing the draws is missing from the second margins data frame."
+    assert isinstance(draws, str), (
+        "The name of the column containing the draws should be a string."
+    )
+    assert draws in df_margins_1.columns.tolist(), (
+        "The column containing the draws is missing from the first margins data frame."
+    )
+    assert draws in df_margins_2.columns.tolist(), (
+        "The column containing the draws is missing from the second margins data frame."
+    )
 
     assert df_margins_1[var_names[1]].isna().sum() == 0, (
         "There are missing values in the "
@@ -300,9 +300,9 @@ def check_margins_2D(
         + var_names[0]
         + " column of the margins."
     )
-    assert (
-        df_margins_1[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the first margins."
+    assert df_margins_1[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the first margins."
+    )
     assert (
         len(df_margins_1[df_margins_1.duplicated([var_names[1], draws])]) == 0
     ), "There are duplicated rows in the first margins data frame."
@@ -323,9 +323,9 @@ def check_margins_2D(
         + var_names[1]
         + " column of the margins."
     )
-    assert (
-        df_margins_2[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the second margins."
+    assert df_margins_2[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the second margins."
+    )
     assert (
         len(df_margins_2[df_margins_2.duplicated([var_names[0], draws])]) == 0
     ), "There are duplicated rows in the second margins data frame."
@@ -408,30 +408,30 @@ def check_margins_3D(
     -------
     None
     """
-    assert isinstance(
-        df_margins_1, pd.DataFrame
-    ), "The margins for the first variable should be a pandas data frame."
-    assert (
-        len(df_margins_1) >= 4
-    ), "There should be at least 4 data points for the first margins."
+    assert isinstance(df_margins_1, pd.DataFrame), (
+        "The margins for the first variable should be a pandas data frame."
+    )
+    assert len(df_margins_1) >= 4, (
+        "There should be at least 4 data points for the first margins."
+    )
 
-    assert isinstance(
-        df_margins_2, pd.DataFrame
-    ), "The margins for the second variable should be a pandas data frame."
-    assert (
-        len(df_margins_2) >= 4
-    ), "There should be at least 4 data points for the second margins."
+    assert isinstance(df_margins_2, pd.DataFrame), (
+        "The margins for the second variable should be a pandas data frame."
+    )
+    assert len(df_margins_2) >= 4, (
+        "There should be at least 4 data points for the second margins."
+    )
 
-    assert isinstance(
-        df_margins_3, pd.DataFrame
-    ), "The margins for the second variable should be a pandas data frame."
-    assert (
-        len(df_margins_3) >= 4
-    ), "There should be at least 4 data points for the third margins."
+    assert isinstance(df_margins_3, pd.DataFrame), (
+        "The margins for the second variable should be a pandas data frame."
+    )
+    assert len(df_margins_3) >= 4, (
+        "There should be at least 4 data points for the third margins."
+    )
 
-    assert isinstance(
-        var_names, list
-    ), "Please enter the names of the columns containing the values of the categorical variables as a list."
+    assert isinstance(var_names, list), (
+        "Please enter the names of the columns containing the values of the categorical variables as a list."
+    )
     assert len(var_names) == 3, "You should have 3 categorical variables."
     for var_name in var_names:
         assert isinstance(var_name, str), (
@@ -488,18 +488,18 @@ def check_margins_3D(
         + " is missing from the third margins data frame."
     )
 
-    assert isinstance(
-        draws, str
-    ), "The name of the column containing the draws should be a string."
-    assert (
-        draws in df_margins_1.columns.tolist()
-    ), "The column containing the draws is missing from the first margins data frame."
-    assert (
-        draws in df_margins_2.columns.tolist()
-    ), "The column containing the draws is missing from the second margins data frame."
-    assert (
-        draws in df_margins_3.columns.tolist()
-    ), "The column containing the draws is missing from the third margins data frame."
+    assert isinstance(draws, str), (
+        "The name of the column containing the draws should be a string."
+    )
+    assert draws in df_margins_1.columns.tolist(), (
+        "The column containing the draws is missing from the first margins data frame."
+    )
+    assert draws in df_margins_2.columns.tolist(), (
+        "The column containing the draws is missing from the second margins data frame."
+    )
+    assert draws in df_margins_3.columns.tolist(), (
+        "The column containing the draws is missing from the third margins data frame."
+    )
 
     assert df_margins_1[var_names[1]].isna().sum() == 0, (
         "There are missing values in the "
@@ -516,9 +516,9 @@ def check_margins_3D(
         + var_names[0]
         + " column of the margins."
     )
-    assert (
-        df_margins_1[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the first margins."
+    assert df_margins_1[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the first margins."
+    )
     assert (
         len(
             df_margins_1[
@@ -551,9 +551,9 @@ def check_margins_3D(
         + var_names[1]
         + " column of the margins."
     )
-    assert (
-        df_margins_2[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the second margins."
+    assert df_margins_2[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the second margins."
+    )
     assert (
         len(
             df_margins_2[
@@ -586,9 +586,9 @@ def check_margins_3D(
         + var_names[2]
         + " column of the margins."
     )
-    assert (
-        df_margins_3[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the third margins."
+    assert df_margins_3[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the third margins."
+    )
     assert (
         len(
             df_margins_3[
@@ -693,36 +693,36 @@ def check_margins_USHD(
     -------
     None
     """
-    assert isinstance(
-        df_margins, pd.DataFrame
-    ), "The margins should be a pandas data frame."
-    assert (
-        len(df_margins) >= 2
-    ), "There should be at least 2 data points for the margins."
+    assert isinstance(df_margins, pd.DataFrame), (
+        "The margins should be a pandas data frame."
+    )
+    assert len(df_margins) >= 2, (
+        "There should be at least 2 data points for the margins."
+    )
 
-    assert (
-        "value_agg_over_race_county" in df_margins.columns.tolist()
-    ), "The column for the aggregated value over race and county is missing from the margins data frame."
-    assert (
-        df_margins["value_agg_over_race_county"].isna().sum() == 0
-    ), "There are missing values in the value_agg_over_race_county column of the margins."
+    assert "value_agg_over_race_county" in df_margins.columns.tolist(), (
+        "The column for the aggregated value over race and county is missing from the margins data frame."
+    )
+    assert df_margins["value_agg_over_race_county"].isna().sum() == 0, (
+        "There are missing values in the value_agg_over_race_county column of the margins."
+    )
 
-    assert isinstance(
-        draws, str
-    ), "The name of the column containing the draws should be a string."
-    assert (
-        draws in df_margins.columns.tolist()
-    ), "The column containing the draws is missing from the margins data frame."
-    assert (
-        df_margins[draws].isna().sum() == 0
-    ), "There are missing values in the draws column of the margins."
-    assert (
-        len(df_margins[df_margins.duplicated(["cause", draws])]) == 0
-    ), "There are duplicated rows in the margins."
+    assert isinstance(draws, str), (
+        "The name of the column containing the draws should be a string."
+    )
+    assert draws in df_margins.columns.tolist(), (
+        "The column containing the draws is missing from the margins data frame."
+    )
+    assert df_margins[draws].isna().sum() == 0, (
+        "There are missing values in the draws column of the margins."
+    )
+    assert len(df_margins[df_margins.duplicated(["cause", draws])]) == 0, (
+        "There are duplicated rows in the margins."
+    )
     count_obs = df_margins[["cause", draws]].value_counts()
-    assert (len(count_obs.unique()) == 1) and (
-        count_obs.unique()[0] == 1
-    ), "There are missing draws in the margins."
+    assert (len(count_obs.unique()) == 1) and (count_obs.unique()[0] == 1), (
+        "There are missing draws in the margins."
+    )
 
 
 def compute_covariance_margins_USHD(
@@ -799,10 +799,11 @@ def check_obs_margins_1D(
     -------
     None
     """
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins[draws].unique().tolist())
-    ), "The draws should be the same in the observations and margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and margins data frames."
+    )
 
 
 def compute_covariance_obs_margins_1D(
@@ -879,15 +880,17 @@ def check_obs_margins_2D(
     -------
     None
     """
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_1[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the first margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_1[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the first margins data frames."
+    )
 
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_2[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the second margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_2[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the second margins data frames."
+    )
 
     assert len(df_obs[var_names[0]].unique()) == len(
         df_margins_2[var_names[0]].unique()
@@ -1011,25 +1014,29 @@ def check_obs_margins_3D(
     -------
     None
     """
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_1[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the first margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_1[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the first margins data frames."
+    )
 
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_2[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the second margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_2[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the second margins data frames."
+    )
 
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_3[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the third margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_3[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the third margins data frames."
+    )
 
-    assert (
-        set(df_obs[draws].unique().tolist())
-        == set(df_margins_2[draws].unique().tolist())
-    ), "The draws should be the same in the observations and the second margins data frames."
+    assert set(df_obs[draws].unique().tolist()) == set(
+        df_margins_2[draws].unique().tolist()
+    ), (
+        "The draws should be the same in the observations and the second margins data frames."
+    )
 
     assert len(df_obs[var_names[1]].unique()) == len(
         df_margins_1[var_names[1]].unique()
@@ -1232,36 +1239,36 @@ def check_format_covariance(
     -------
     None
     """
-    assert isinstance(
-        sigma_yy, np.ndarray
-    ), "The covariance matrix of the observations should be a Numpy array."
-    assert (
-        len(sigma_yy.shape) == 2
-    ), "The covariance matrix of the observations should be a 2D Numpy array."
-    assert (
-        np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1]
-    ), "The covariance matrix of the observations should be a square matrix."
-    assert isinstance(
-        sigma_ss, np.ndarray
-    ), "The covariance matrix of the margins should be a Numpy array."
-    assert (
-        len(sigma_ss.shape) == 2
-    ), "The covariance matrix of the margins should be a 2D Numpy array."
-    assert (
-        np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1]
-    ), "The covariance matrix of the margins should be a square matrix."
-    assert isinstance(
-        sigma_ys, np.ndarray
-    ), "The covariance matrix of the observations and margins should be a Numpy array."
-    assert (
-        len(sigma_ys.shape) == 2
-    ), "The covariance matrix of the observations and margins should be a 2D Numpy array."
-    assert (
-        np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0]
-    ), "The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations."
-    assert (
-        np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1]
-    ), "The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins."
+    assert isinstance(sigma_yy, np.ndarray), (
+        "The covariance matrix of the observations should be a Numpy array."
+    )
+    assert len(sigma_yy.shape) == 2, (
+        "The covariance matrix of the observations should be a 2D Numpy array."
+    )
+    assert np.shape(sigma_yy)[0] == np.shape(sigma_yy)[1], (
+        "The covariance matrix of the observations should be a square matrix."
+    )
+    assert isinstance(sigma_ss, np.ndarray), (
+        "The covariance matrix of the margins should be a Numpy array."
+    )
+    assert len(sigma_ss.shape) == 2, (
+        "The covariance matrix of the margins should be a 2D Numpy array."
+    )
+    assert np.shape(sigma_ss)[0] == np.shape(sigma_ss)[1], (
+        "The covariance matrix of the margins should be a square matrix."
+    )
+    assert isinstance(sigma_ys, np.ndarray), (
+        "The covariance matrix of the observations and margins should be a Numpy array."
+    )
+    assert len(sigma_ys.shape) == 2, (
+        "The covariance matrix of the observations and margins should be a 2D Numpy array."
+    )
+    assert np.shape(sigma_ys)[0] == np.shape(sigma_yy)[0], (
+        "The covariance matrix of observations and margins should have the same number of rows as the covariance matrix of the observations."
+    )
+    assert np.shape(sigma_ys)[1] == np.shape(sigma_ss)[1], (
+        "The covariance matrix of observations and margins should have the same number of columns as the covariance matrix of the margins."
+    )
 
 
 def check_covariance(
