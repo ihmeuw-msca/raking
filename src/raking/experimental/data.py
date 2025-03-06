@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
 
@@ -317,7 +317,7 @@ def _agg_constr(
             df_work = pd.DataFrame(
                 columns=list(agged.names) + [value, "source"]
             )
-    for dim in toagg.dimensions:
+    for dim in itertools.chain(toagg.dimensions, agged.dimensions):
         df_work[dim.name] = dim.null
     return df_work
 
