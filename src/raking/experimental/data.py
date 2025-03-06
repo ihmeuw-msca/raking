@@ -292,8 +292,9 @@ def _agg_constr(
     if len(by) > 0:
         df_sel = df_work.groupby(by).agg({"included": ["sum", "count"]})
         df_sel.columns = ["num_included", "size"]
-        index = df_sel.query(f"(num_included > 0) & (size == {toagg.size})")
-        df_sel = df_sel[index].reset_index()
+        df_sel = df_sel.query(
+            f"(num_included > 0) & (size == {toagg.size})"
+        ).reset_index()
         df_work = df_work.merge(df_sel[by])
         df_work = df_work.groupby(by).agg(
             {
