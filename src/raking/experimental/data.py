@@ -139,6 +139,7 @@ class DataBuilder(BaseModel):
             .merge(df, how="outer")
         )
         df[self.weights] = df[self.weights].fillna(0.0)
+        df = self._sort_rows(df)
         return df.reset_index(drop=True)
 
     def _check_bounds(
