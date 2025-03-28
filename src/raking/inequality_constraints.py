@@ -29,9 +29,9 @@ def inequality_infant_mortality(
     Returns
     -------
     C : np.ndarray
-        I * 2I constraints matrix
+        I * 2I inequality constraints matrix
     c : np.ndarray
-        length I inequality vector vector
+        length I inequality constraints vector
     """
     assert isinstance(
         n1, np.ndarray
@@ -61,5 +61,50 @@ def inequality_infant_mortality(
     I = len(n1)
     C = np.concatenate((np.diag(t1 / n1), np.diag(- t2 / n2)), axis=1)
     c = np.zeros(I)
+    return (C, c)
+
+
+def inequality_time_trend(
+    y: list
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute the constraints matrix C and the inequality vector c for the time trend problem.
+
+    We need to define the inequality constraints C beta < c
+    when conserving the time trend throught the raking:
+    For years i and i+1 we have (beta_i - beta_i+1) (y_i - y_i+1) >= 0.
+
+    Parameters
+    ----------
+    y: list of np.ndarray
+       Observations (length p) for the n years of the dataset
+
+    Returns
+    -------
+    C : np.ndarray
+        (n-1)p * np inequality constraints matrix
+    c : np.ndarray
+        length np inequality constraints vector
+    """
+    assert isinstance(y, list), \
+        'The observations for all the years must be entered as a list.'
+    assert len(y) >= 2, \
+        'There must be at least 2 years of observations.'
+    n = len(y)
+    for i in range(0, n):
+        assert isinstance(y[i], np.ndarray), \
+            'The observations for year ' + str(i + 1) + ' must be a Numpy array.'
+        assert len(y[i].shape) == 1, \
+            'The observations for year ' + str(i + 1) + ' must be a 1D Numpy array.'
+    p = len(y[0])
+    for i in range(1, n):
+        assert len(y[i]) == p, \
+            'The observations for year ' + \
+            str(i + 1) + \
+            ' must have the same length as the observations for year 1.'
+    C = np.zeros((p * (n - 1), p * n))
+    for i in range(0, n - 1):
+        C[(i * p):((i + 1) * p), (i * p):((i + 1) * p)] = np.diag(y[i + 1] - y[i])
+        C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = np.diag(y[i] - y[i + 1])
+    c = np.zeros(p * (n - 1))
     return (C, c)
 

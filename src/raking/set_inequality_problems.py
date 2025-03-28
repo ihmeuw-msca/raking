@@ -5,6 +5,7 @@ import numpy as np
 from raking.compute_constraints import constraints_1D
 
 from inequality_constraints import inequality_infant_mortality
+from inequality_constraints import inequality_time_trend
 
 def set_infant_mortality(
     n1: np.ndarray,
@@ -66,6 +67,50 @@ def set_infant_mortality(
         l = None
     if (h1 is not None) and (h2 is not None):
         h = np.concatenate((h1, h2))
+    else:
+        h = None
+    return (y, A, s, C, c, q, l, h)
+
+
+def set_time_trend(
+    y: list,
+    s: list,
+    q: list,
+    l: list = None,
+    h: list = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Set up the optimization problem for the time trend problem.
+
+    We need to define the problem:
+        min_beta f(beta, y) s.t. A beta = s and C beta <= c
+
+    Parameters
+    ----------
+    y: list of np.ndarray
+       Observations (length p) for the n years of the dataset
+
+    Returns
+    -------
+    y
+    A
+    s
+    C
+    c
+    """
+    n = len(y)
+    p = len(y[0])
+    (A0, s0) = constraints_1D(s[0][0], p)
+    A = np.zeros((n * A0.shape[0], n * A0.shape[1]))
+    for i in range(0, n):
+        A[(i * A0.shape[0]):((i + 1) * A0.shape[0]), (i * A0.shape[1]):((i + 1) * A0.shape[1])] = A0
+    s = np.concatenate(s)
+    (C, c) = inequality_time_trend(y)
+    y = np.concatenate(y)
+    q = np.concatenate(q)
+    if l is not None:
+        l = np.concatenate(l)
+    if h is not None:
+        h = np.concatenate(h)
     else:
         h = None
     return (y, A, s, C, c, q, l, h)
