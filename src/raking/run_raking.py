@@ -152,6 +152,8 @@ def run_raking(
         "logit",
     ], "The distance function must be chi2, entropic, general or logit."
 
+    df_obs = df_obs.copy(deep=True)
+
     # Compute the covariance matrix
     if cov_mat:
         if dim == 1:
