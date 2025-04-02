@@ -33,6 +33,7 @@ df_raked = []
 # Loop on sex and age
 for sex in sexes:
     for age in ages:
+        print(sex, age)
 
         # Get the population data
         if sex == 3:
