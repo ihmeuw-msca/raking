@@ -65,7 +65,8 @@ def inequality_infant_mortality(
 
 
 def inequality_time_trend(
-    y: list
+    y: list,
+    pop: list
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute the constraints matrix C and the inequality vector c for the time trend problem.
 
@@ -77,6 +78,8 @@ def inequality_time_trend(
     ----------
     y: list of np.ndarray
        Observations (length p) for the n years of the dataset
+    pop: list of np.ndarray
+       Populations (length p) for the n years of the dataset
 
     Returns
     -------
@@ -103,8 +106,10 @@ def inequality_time_trend(
             ' must have the same length as the observations for year 1.'
     C = np.zeros((p * (n - 1), p * n))
     for i in range(0, n - 1):
-        C[(i * p):((i + 1) * p), (i * p):((i + 1) * p)] = np.diag(y[i + 1] - y[i])
-        C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = np.diag(y[i] - y[i + 1])
+        C[(i * p):((i + 1) * p), (i * p):((i + 1) * p)] = \
+            np.diag((y[i + 1] / pop[i + 1] - y[i] / pop[i]) / pop[i])
+        C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
+            np.diag((y[i] / pop[i] - y[i + 1] / pop[i +1]) / pop[i + 1])
     c = np.zeros(p * (n - 1))
     return (C, c)
 

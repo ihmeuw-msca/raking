@@ -74,6 +74,7 @@ def set_infant_mortality(
 
 def set_time_trend(
     y: list,
+    pop: list,
     s: list,
     q: list,
     l: list = None,
@@ -104,7 +105,7 @@ def set_time_trend(
     for i in range(0, n):
         A[(i * A0.shape[0]):((i + 1) * A0.shape[0]), (i * A0.shape[1]):((i + 1) * A0.shape[1])] = A0
     s = np.concatenate(s)
-    (C, c) = inequality_time_trend(y)
+    (C, c) = inequality_time_trend(y, pop)
     y = np.concatenate(y)
     q = np.concatenate(q)
     if l is not None:

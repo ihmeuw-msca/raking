@@ -88,22 +88,24 @@ for sex in sexes:
             df_GBD.append(df_tmp)
         df_GBD = pd.concat(df_GBD)
         df_GBD_mean = df_GBD.groupby( \
-            ['age_group_id', 'location_id', 'measure_id', 'modelable_entity_id', 'sex_id', 'year_id', 'metric_id', 'model_version_id']). \
+            ['age_group_id', 'location_id', 'measure_id', 'modelable_entity_id', 'sex_id', 'year_id', 'metric_id']). \
             agg({'obesity': 'mean'}).reset_index()
         df_GBD_mean = df_GBD_mean.merge(population_state, left_on=['year_id'], right_on=['year'])
         df_GBD_mean['value_agg_over_var1'] = df_GBD_mean['obesity'] * df_GBD_mean['pop']
 
         # Rake all years together
         y = []
+        pop = []
         s = []
         q = []
         for year in years:
             df_obs = df_county.loc[df_county.year==year].sort_values(by=['race', 'mcnty', 'area'])
             y.append(df_obs.value.to_numpy())
+            pop.append(df_obs['pop'].to_numpy())
             df_margin = df_GBD_mean.loc[df_GBD_mean.year==year][['value_agg_over_var1']]
             s.append(df_margin.value_agg_over_var1.to_numpy())
             q.append(np.ones(len(df_obs)))
-        (y, A, s, C, c, q, l, h) = set_time_trend(y, s, q)
+        (y, A, s, C, c, q, l, h) = set_time_trend(y, pop, s, q)
         res = raking_chi2_inequality(y, A, s, C, c, q)
         # Add results to data frame
         beta = res.x
@@ -115,5 +117,5 @@ for sex in sexes:
 
 # Save in output file
 df_raked = pd.concat(df_raked)
-df_raked.to_csv('/ihme/homes/ducela/stash/raking/scripts_dev/obesity/raked_inequality.csv', index=False)
+df_raked.to_csv('/ihme/homes/ducela/stash/raking/scripts_dev/obesity/raked_prev_inequality.csv', index=False)
 
