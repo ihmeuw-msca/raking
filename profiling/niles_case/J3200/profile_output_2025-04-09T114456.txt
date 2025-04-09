@@ -1,0 +1,37 @@
+Timer unit: 1e-09 s
+
+Total time: 17.1712 s
+File: /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_niles_case.py
+Function: rake_chi2 at line 30
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    30                                           @profile
+    31                                           def rake_chi2(df_obs, df_margins_1, df_margins_2):
+    32         2        2e+10    9e+09     99.9      (df_raked, dummy1, dummy2, dumm3) = run_raking(
+    33         1          0.0      0.0      0.0          dim=2,
+    34         1          0.0      0.0      0.0          df_obs=df_obs,
+    35         1       1000.0   1000.0      0.0          df_margins=[df_margins_1, df_margins_2],
+    36         1          0.0      0.0      0.0          var_names=["var1", "var2"],
+    37         1          0.0      0.0      0.0          cov_mat=False,
+    38                                               )
+    39         1          0.0      0.0      0.0      sum_over_var1 = (
+    40         1     533000.0 533000.0      0.0          df_raked.groupby(["var2"])
+    41         1    6924000.0    7e+06      0.0          .agg({"raked_value": "sum"})
+    42         1     446000.0 446000.0      0.0          .reset_index()
+    43         1    2688000.0    3e+06      0.0          .merge(df_margins_1, on="var2")
+    44                                               )
+    45         2     294000.0 147000.0      0.0      assert np.allclose(
+    46         1      74000.0  74000.0      0.0          sum_over_var1["raked_value"], sum_over_var1["value_agg_over_var1"]
+    47                                               ), "The sums over the first variable must match the first margins."
+    48         1          0.0      0.0      0.0      sum_over_var2 = (
+    49         1     165000.0 165000.0      0.0          df_raked.groupby(["var1"])
+    50         1    3802000.0    4e+06      0.0          .agg({"raked_value": "sum"})
+    51         1     289000.0 289000.0      0.0          .reset_index()
+    52         1     964000.0 964000.0      0.0          .merge(df_margins_2, on="var1")
+    53                                               )
+    54         2      75000.0  37500.0      0.0      assert np.allclose(
+    55         1      60000.0  60000.0      0.0          sum_over_var2["raked_value"], sum_over_var2["value_agg_over_var2"]
+    56                                               ), "The sums over the second variable must match the second margins."
+
+ 17.17 seconds - /Users/ducela/Documents/Raking/ihmeuw-msca/raking/profiling/profile_niles_case.py:30 - rake_chi2
