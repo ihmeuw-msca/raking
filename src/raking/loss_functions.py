@@ -16,7 +16,7 @@ def compute_loss(beta, C, c, loss):
         loss_hess = np.diag(np.exp(-x) / np.square(1.0 + np.exp(-x)))
     return (loss_val, loss_grad, loss_hess)
 
-def compute_dist(beta, y, method, q, l, h):
+def compute_dist(beta, y, q, method, l=None, h=None):
     """
     """
     if method == 'chi2':
@@ -53,7 +53,7 @@ def compute_dist(beta, y, method, q, l, h):
             (y[(beta != l) & (beta != h) & (y != l) & (y != h)] - l[(beta != l) & (beta != h) & (y != l) & (y != h)])) + \
             (h[(beta != l) & (beta != h) & (y != l) & (y != h)] - beta[(beta != l) & (beta != h) & (y != l) & (y != h)]) * \
             np.log((h[(beta != l) & (beta != h) & (y != l) & (y != h)] - beta[(beta != l) & (beta != h) & (y != l) & (y != h)]) / \
-            ([(beta != l) & (beta != h) & (y != l) & (y != h)]h - y[(beta != l) & (beta != h) & (y != l) & (y != h)]))))
+            (h[(beta != l) & (beta != h) & (y != l) & (y != h)] - y[(beta != l) & (beta != h) & (y != l) & (y != h)]))))
         dist_grad = np.zeros(len(beta))
         dist_grad = (1.0 / q[(beta != l) & (beta != h) & (y != l) & (y != h)]) * ( \
             np.log((beta[(beta != l) & (beta != h) & (y != l) & (y != h)] - l[(beta != l) & (beta != h) & (y != l) & (y != h)]) / \
