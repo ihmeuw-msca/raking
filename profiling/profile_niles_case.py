@@ -86,7 +86,7 @@ def rake_entropic(df_obs, df_margins_1, df_margins_2):
 
 def main():
     I = 36
-    J = 1600
+    J = 400
     (df_obs, df_margins_1, df_margins_2) = generate_data(I, J)
     rake_chi2(df_obs, df_margins_1, df_margins_2)
     rake_entropic(df_obs, df_margins_1, df_margins_2)
