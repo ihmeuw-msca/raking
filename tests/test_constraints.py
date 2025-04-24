@@ -5,6 +5,7 @@ from raking.compute_constraints import (
     constraints_2D,
     constraints_3D,
     constraints_USHD,
+    constraints_USHD_lower,
 )
 
 
