@@ -293,3 +293,43 @@ It leads to a $\left( I + \left( I + J + 1 \right) K \right) \times \left( (I + 
 & = \beta_{I0k}
 \end{align}
 
+## USHD problem (lower levels)
+
+There are $1 + K$ constraints for the margins:
+
+$$\sum_{i = 1}^I s_{cause,i} = \sum_{k = 1}^K s_{county,k}$$
+
+$$\sum_{j = 1}^J s_{all,jk} = s_{county,k} \quad \forall k = 1 , \cdots , K$$
+
+otherwise the raking problem cannot have a solution.  
+
+The chosen constraints are:
+
+$$\sum_{k = 1}^K \beta_{i0k} = s_{cause,i} \quad \forall i = 1 , \cdots , I$$
+
+$$\sum_{i = 1}^I \beta_{i0k} = s_{county,k} \quad \forall k = 1 , \cdots , K - 1$$
+
+$$\sum_{i = 1}^I \beta_{ijk} = s_{all,jk} \quad \forall j = 1 , \cdots , J \text{ and } k = 1 , \cdots , K$$
+
+$$\sum_{j = 1}^J \beta_{ijk} - \beta_{i0k} = 0 \quad \forall i = 1 , \cdots , I - 1 \text{ and } k = 1 , \cdots , K$$
+
+It leads to a $\left( I + K + I K + J K - K - 1 \right) \times \left( I (J + 1) K \right)$ constraint matrix $A$, which has rank $I + K + I K + J K - K - 1$.  
+
+1. We need to show that $\sum_{i = 1}^I \beta_{i0K} = s_{county,K}$.
+
+\begin{align}
+\sum_{i = 1}^I \beta_{i0K} &= \sum_{i = 1}^I s_{cause,i} - \sum_{k = 1}^{K - 1} \beta_{i0k} \\
+&= \sum_{k = 1}^K s_{county,k} - \sum_{i = 1}^I \sum_{k = 1}^{K - 1} \beta_{i0k} \\
+&= s_{county,K} + \sum_{k = 1}^{K - 1} s_{county,k} - \sum_{i = 1}^I\beta_{i0k} \\
+&= s_{county,K}
+\end{align}
+
+2. We need to show that $\sum_{j = 1}^J \beta_{Ijk} - \beta_{I0k} = 0 \forall k = 1 , \cdots , K$.
+
+\begin{align}
+\sum_{j = 1}^J \beta_{Ijk} &= \sum_{j = 1}^J s_{all,jk} - \sum_{i = 1}^{I - 1} \beta_{ijk} \\
+&= s_{county,k} - \sum_{i = 1}^{I - 1} \sum_{j = 1}^J \beta_{ijk} \\
+&= s_{county,k} - \sum_{i = 1}^{I - 1} \beta_{i0k} \\
+&= \beta_{I0k}
+\end{align}
+
