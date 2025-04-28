@@ -105,6 +105,7 @@ def test_constraints_USHD():
         )
     )
 
+
 def test_constraints_USHD_lower():
     # Generate balanced array
     I = 3
@@ -118,7 +119,7 @@ def test_constraints_USHD_lower():
     beta_i0k = np.sum(beta_ijk, axis=1)
     beta = np.concatenate((beta_i0k.reshape((I, 1, K)), beta_ijk), axis=1)
     beta = beta.flatten("F")
-        # Generate the constraints
+    # Generate the constraints
     (A, s) = constraints_USHD_lower(s_cause, s_county, s_all_causes, I, J, K)
     # Verify that the constraint A beta = s is respected
     assert np.allclose(np.matmul(A, beta), s), (
@@ -130,4 +131,3 @@ def test_constraints_USHD_lower():
             I + K + I * K + J * K - K - 1
         )
     )
-

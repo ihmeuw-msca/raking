@@ -382,6 +382,7 @@ def constraints_USHD(
             ] = -1
     return (A, s)
 
+
 def constraints_USHD_lower(
     s_cause: np.ndarray,
     s_county: np.ndarray,
@@ -410,7 +411,7 @@ def constraints_USHD_lower(
     s_county: np.ndarray
         Number of deaths for each county (all causes, all races)
     s_all_causes: np.ndarray
-        Number of deaths for each race and each county (all causes) 
+        Number of deaths for each race and each county (all causes)
     I : int
         Number of causes of deaths
     J : int
@@ -508,6 +509,9 @@ def constraints_USHD_lower(
     for k in range(0, K):
         for i in range(0, I - 1):
             for j in range(1, J + 1):
-                A[I + K - 1 + J * K + k * (I - 1) + i, k * I * (J + 1) + j * I + i] = 1
+                A[
+                    I + K - 1 + J * K + k * (I - 1) + i,
+                    k * I * (J + 1) + j * I + i,
+                ] = 1
             A[I + K - 1 + J * K + k * (I - 1) + i, k * I * (J + 1) + i] = -1
     return (A, s)
