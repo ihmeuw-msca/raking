@@ -121,7 +121,9 @@ def run_raking(
         3,
         "USHD",
         "USHD_lower",
-    ], "The dimension of the raking problem must be 1, 2, 3, USHD or USHD_lower."
+    ], (
+        "The dimension of the raking problem must be 1, 2, 3, USHD or USHD_lower."
+    )
     assert isinstance(cov_mat, bool), (
         "cov_mat indicates whether we compute the covariance matrix, must be True or False."
     )
@@ -592,16 +594,20 @@ def run_raking_USHD_lower(
     df_margins_cause = df_margins[0]
     df_margins_county = df_margins[1]
     df_margins_all_causes = df_margins[2]
-    (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = format_data_USHD_lower(
-        df_obs,
-        df_margins_cause,
-        df_margins_county,
-        df_margins_all_causes,
-        weights,
-        lower,
-        upper,
+    (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = (
+        format_data_USHD_lower(
+            df_obs,
+            df_margins_cause,
+            df_margins_county,
+            df_margins_all_causes,
+            weights,
+            lower,
+            upper,
+        )
     )
-    (A, s) = constraints_USHD_lower(s_cause, s_county, s_all_causes,, I, J, K, rtol, atol)
+    (A, s) = constraints_USHD_lower(
+        s_cause, s_county, s_all_causes, I, J, K, rtol, atol
+    )
     return (y, s, q, l, h, A)
 
 
