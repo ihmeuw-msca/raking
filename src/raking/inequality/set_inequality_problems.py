@@ -4,8 +4,8 @@ import numpy as np
 
 from raking.compute_constraints import constraints_1D
 
-from inequality_constraints import inequality_infant_mortality
-from inequality_constraints import inequality_time_trend
+from raking.inequality.inequality_constraints import inequality_infant_mortality
+from raking.inequality.inequality_constraints import inequality_time_trend
 
 def set_infant_mortality(
     n1: np.ndarray,

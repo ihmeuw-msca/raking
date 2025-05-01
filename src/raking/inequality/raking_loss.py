@@ -4,9 +4,9 @@ import numpy as np
 
 from scipy.sparse.linalg import cg
 
-from loss_functions import compute_loss, compute_dist
+from raking.inequality.loss_functions import compute_loss, compute_dist
 
-def raking_chi2_loss(
+def raking_loss(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
