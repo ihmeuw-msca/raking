@@ -3,13 +3,14 @@ import operator
 from collections.abc import Iterable
 from functools import cache, partial
 from itertools import accumulate, combinations, product, starmap
-from typing import Callable, Generator, Self
+from typing import Callable, Generator, Generic, Self, TypeVar
 
 import pandas as pd
 from pydantic import BaseModel, Field, computed_field
 
+T = TypeVar("T", bound=int)
 
-class Dimension[T: (int, str)](BaseModel):
+class Dimension(BaseModel, Generic[T]):
     name: str
     null: T
     grid: tuple[T, ...] = Field(repr=False)
