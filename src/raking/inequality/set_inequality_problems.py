@@ -2,10 +2,47 @@
 
 import numpy as np
 
-from raking.compute_constraints import constraints_1D
+from raking.compute_constraints import constraints_1D, constraints_2D, constraints_3D
 
+from raking.inequality.inequality_constraints import inequality_bounds
 from raking.inequality.inequality_constraints import inequality_infant_mortality
 from raking.inequality.inequality_constraints import inequality_time_trend
+
+
+def set_bounds(
+    y: np.ndarray,
+    s: list,
+    q: np.ndarray,
+    l: np.ndarray,
+    h: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Set up the optimization problem for the bounded problem.
+
+    We need to define the problem:
+        min_beta f(beta, y) s.t. A beta = s and C beta <= c
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    y
+    A
+    s
+    C
+    c
+    q
+    """
+    dim = len(s)
+    if dim == 1:
+        (A, s) = constraints_1D(s[0], len(y))
+    elif dim == 2:
+        (A, s) = constraints_2D(s[0], s[1], len(s[1]), len(s[0]))
+    elif dim == 3:
+        (A, s) = constraints_3D(s[0], s[1], s[2], s3.shape[0], s1.shape[0], s2.shape[1])
+    (C, c) = inequality_bounds(l, h)
+    return (y, A, s, C, c, q)
+
 
 def set_infant_mortality(
     n1: np.ndarray,

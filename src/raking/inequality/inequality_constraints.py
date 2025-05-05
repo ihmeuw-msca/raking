@@ -3,6 +3,51 @@
 import numpy as np
 
 
+def inequality_bounds(
+    l: np.ndarray,
+    h: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute the constraints matrix C and the inequality vector c for the bounded problem.
+
+    We need to define the inequality constraints C beta < c
+    for the bounded problem: l < beta < h.
+
+    Parameters
+    ----------
+    l: np.ndarray
+       Lower bounds for the raked values
+    h: np.ndarray
+       Upper bounds for the raked values
+
+    Returns
+    -------
+    C : np.ndarray
+        2N * N inequality constraints matrix
+    c : np.ndarray
+        length 2N inequality constraints vector
+    """
+    assert isinstance(
+        l, np.ndarray
+    ), "The lower bounds for the raked values must be a Numpy array."
+    assert (
+        len(l.shape) == 1
+    ), "The lower bounds for the raked values must be a 1D Numpy array."
+    assert isinstance(
+        h, np.ndarray
+    ), "The upper bounds for the raked values must be a Numpy array."
+    assert (
+        len(h.shape) == 1
+    ), "The upper bounds for the raked values must be a 1D Numpy array."
+    assert (
+        len(l) == len(h)
+    ), "The lower bounds and upper bounds must have the same length."
+
+    N = len(l)
+    C = np.concatenate((- np.identity(N), np.identity(N)), axis=0)
+    c = np.concatenate((-l, h))
+    return (C, c)
+
+
 def inequality_infant_mortality(
     n1: np.ndarray,
     n2: np.ndarray,
