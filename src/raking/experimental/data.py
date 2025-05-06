@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
 
-pd.set_option("future.no_silent_downcasting", True)
+#pd.set_option("future.no_silent_downcasting", True)
 
 
 class Data(TypedDict):
