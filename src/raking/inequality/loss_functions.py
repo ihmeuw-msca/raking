@@ -12,8 +12,8 @@ def compute_loss(beta, C, c, loss):
         loss_hess = np.diag(6.0 * np.maximum(0, -x))
     if loss == 'logit':
         loss_val = np.sum(np.log(1.0 + np.exp(-x)))
-        loss_grad = - np.exp(-x) / (1.0 + np.exp(-x))
-        loss_hess = np.diag(np.exp(-x) / np.square(1.0 + np.exp(-x)))
+        loss_grad = - 1.0 / (1.0 + np.exp(x))
+        loss_hess = np.diag(np.exp(x) / np.square(1.0 + np.exp(x)))
     return (loss_val, loss_grad, loss_hess)
 
 def compute_dist(beta, y, q, method, l=None, h=None):
