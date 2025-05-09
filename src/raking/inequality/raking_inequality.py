@@ -8,6 +8,7 @@ from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize
 
 from raking.inequality.loss_functions import compute_dist
+from raking.raking_methods import raking_chi2, raking_entropic, raking_logit
 
 def raking_inequality(
     y: np.ndarray,
@@ -26,8 +27,6 @@ def raking_inequality(
     inequality = LinearConstraint(C, np.repeat(-np.inf, len(c)), c)
     if with_bounds:
         bounds = Bounds(l, h)
-    else:
-        bounds = None
 
     def distance(beta):
         return compute_dist(beta, y, q, method, l, h)[0]
@@ -36,11 +35,18 @@ def raking_inequality(
     def hessian(beta):
         return compute_dist(beta, y, q, method, l, h)[2]
 
+    if method == 'chi2':
+        (beta, lambda_k) = raking_chi2(y, A, s, q)
+    elif method=='entropic':
+        (beta, lambda_k, iter_eps) = raking_entropic(y, A, s, q)
+    elif method == 'logit':
+        (beta, lambda_k, iter_eps) = raking_logit(y, A, s, l, h, q)
+
     if with_bounds:
-        res = minimize(fun=distance, x0=y, method='trust-constr', \
+        res = minimize(fun=distance, x0=beta, method='trust-constr', \
             jac=jacobian, hess=hessian, constraints=[equality, inequality], bounds=bounds)
     else:
-        res = minimize(fun=distance, x0=y, method='trust-constr', \
+        res = minimize(fun=distance, x0=beta, method='trust-constr', \
             jac=jacobian, hess=hessian, constraints=[equality, inequality])
     return res
 

@@ -45,6 +45,5 @@ def raking_loss(
         lambda_k = sol_k[A.shape[1]:(A.shape[0] + A.shape[1])]
         epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
-        print(iter_eps, epsilon, dist_val, loss_val)
     return (beta, lambda_k, iter_eps)
 
