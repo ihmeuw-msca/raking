@@ -4,7 +4,7 @@ from typing import Callable, Literal
 import numpy as np
 import numpy.typing as npt
 
-type UFunction = Callable[[npt.NDArray], npt.NDArray]
+UFunction = Callable[[npt.NDArray], npt.NDArray]
 
 
 class C2Function:
