@@ -5,6 +5,7 @@ import numpy as np
 from scipy.sparse.linalg import cg
 
 from raking.inequality.loss_functions import compute_loss, compute_dist
+from raking.raking_methods import raking_chi2, raking_entropic, raking_logit
 
 def raking_loss(
     y: np.ndarray,
@@ -16,13 +17,19 @@ def raking_loss(
     method: str = 'chi2',
     loss: str = 'logit',
     penalty: float = 1.0,
+    l: np.ndarray = None,
+    h: np.ndarray = None,
     gamma0: float = 1.0,
-    max_iter: int = 500,
+    max_iter: int = 500
 ):
     """
     """
-    beta = np.copy(y)
-    lambda_k = np.zeros(A.shape[0])
+    if method == 'chi2':
+        (beta, lambda_k) = raking_chi2(y, A, s, q)
+    elif method=='entropic':
+        (beta, lambda_k, iter_eps) = raking_entropic(y, A, s, q)
+    elif method == 'logit':
+        (beta, lambda_k, iter_eps) = raking_logit(y, A, s, l, h, q)
     sol_k = np.concatenate((beta, lambda_k))
     epsilon = 1.0
     iter_eps = 0
