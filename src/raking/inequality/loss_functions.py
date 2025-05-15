@@ -46,7 +46,8 @@ def compute_dist(beta, y, q, method, l=None, h=None):
 
     elif method == 'logit':
 
-        indices = ((q != 0) & (y != l) & (y != h) & ((beta - l) / (y - l) > 0) & ((h - beta) / (h - y) > 0))
+        indices = ((q != 0) & (y != l) & (y != h) & (beta != l) & (beta != h))
+#        indices = ((q != 0) & (y != l) & (y != h) & ((beta - l) / (y - l) > 0) & ((h - beta) / (h - y) > 0))
         dist_val = np.sum((1.0 / q[indices]) * ( \
             (beta[indices] - l[indices]) * np.log((beta[indices] - l[indices]) / (y[indices] - l[indices])) + \
             (h[indices] - beta[indices]) * np.log((h[indices] - beta[indices]) / (h[indices] - y[indices]))))
@@ -56,7 +57,7 @@ def compute_dist(beta, y, q, method, l=None, h=None):
             np.log((beta[indices] - l[indices]) / (y[indices] - l[indices])) - \
             np.log((h[indices] - beta[indices]) / (h[indices] - y[indices])))
 
-        indices = ((q != 0) & (beta != l) & (beta != h))
+#        indices = ((q != 0) & (beta != l) & (beta != h))
         dist_hess = np.zeros(len(beta))
         dist_hess = (1.0 / q[indices]) * (1.0 / (beta[indices] - l[indices]) + 1.0 / (h[indices] - beta[indices]))
         dist_hess = np.diag(dist_hess)
