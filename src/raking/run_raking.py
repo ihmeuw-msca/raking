@@ -143,9 +143,13 @@ def run_raking(
         assert dim == len(df_margins), (
             "The number of margins data frames must be equal to the dimension of the problem."
         )
-    else:
+    elif dim == "USHD":
         assert len(df_margins) == 1, (
             "There should be only one margins data frame in the list."
+        )
+    else:
+        assert len(df_margins) == 3, (
+            "There should be three margins data frames in the list."
         )
     assert isinstance(method, str), (
         "The name of the distance function used for the raking must be a string."

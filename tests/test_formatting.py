@@ -216,3 +216,4 @@ def test_format_data_USHD_lower():
     assert np.allclose(np.matmul(A, y), s), (
         "For the format_data_USHD_lower function, the constraint A y = s is not respected."
     )
+
