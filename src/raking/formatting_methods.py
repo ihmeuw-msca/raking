@@ -964,9 +964,9 @@ def format_data_USHD(
     if cause_all in cause_names:
         cause_names.remove(cause_all)
     if race_all in race_names:
-        race_name.remove(race_all)
+        race_names.remove(race_all)
     if county_all in county_names:
-        county_name.remove(county_all)
+        county_names.remove(county_all)
     cause_ordering = [cause_all] + cause_names
     race_ordering = [race_all] + race_names
     county_ordering = [county_all] + county_names
@@ -1270,9 +1270,9 @@ def format_data_USHD_lower(
     if cause_all in cause_names:
         cause_names.remove(cause_all)
     if race_all in race_names:
-        race_name.remove(race_all)
+        race_names.remove(race_all)
     if county_all in county_names:
-        county_name.remove(county_all)
+        county_names.remove(county_all)
     cause_ordering = [cause_all] + cause_names
     race_ordering = [race_all] + race_names
     county_ordering = [county_all] + county_names
