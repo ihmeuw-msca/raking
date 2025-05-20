@@ -155,7 +155,7 @@ def test_format_data_USHD():
         {"cause": cause, "value_agg_over_race_county": s_cause}
     )
     # Get the formatted data
-    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins, [0])
+    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins, [0, 0, 0])
     # Generate the constraints
     (A, s) = constraints_USHD(s, I, J, K)
     # Verify that the constraint A beta = s is respected
