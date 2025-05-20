@@ -155,7 +155,7 @@ def test_format_data_USHD():
         {"cause": cause, "value_agg_over_race_county": s_cause}
     )
     # Get the formatted data
-    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins)
+    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins, [0])
     # Generate the constraints
     (A, s) = constraints_USHD(s, I, J, K)
     # Verify that the constraint A beta = s is respected
@@ -207,7 +207,11 @@ def test_format_data_USHD_lower():
     # Get the formatted data
     (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = (
         format_data_USHD_lower(
-            df_obs, df_margins_cause, df_margins_county, df_margins_all_causes
+            df_obs,
+            df_margins_cause,
+            df_margins_county,
+            df_margins_all_causes,
+            [0, 0, 0],
         )
     )
     # Generate the constraints
@@ -216,4 +220,3 @@ def test_format_data_USHD_lower():
     assert np.allclose(np.matmul(A, y), s), (
         "For the format_data_USHD_lower function, the constraint A y = s is not respected."
     )
-

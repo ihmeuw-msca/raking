@@ -535,4 +535,3 @@ def test_logit_raking_USHD_lower():
     assert np.all(h - beta_star > -1.0e-5), (
         "For the USHD_lower raking with the logit distance, some raked values are higher than the upper bound."
     )
-

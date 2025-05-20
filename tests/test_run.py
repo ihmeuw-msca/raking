@@ -92,6 +92,7 @@ def test_run_raking_USHD(example_USHD):
         df_obs=example_USHD.df_obs,
         df_margins=[example_USHD.df_margins],
         var_names=None,
+        margin_names=["_all"],
         cov_mat=False,
     )
     sum_over_cause = (
@@ -252,6 +253,7 @@ def test_run_raking_USHD_draws(example_USHD_draws):
         df_obs=example_USHD_draws.df_obs,
         df_margins=[example_USHD_draws.df_margins],
         var_names=None,
+        margin_names=["_all"],
         cov_mat=True,
     )
     sum_over_cause = (
@@ -484,6 +486,7 @@ def test_run_raking_USHD_weights(example_USHD_draws):
         df_obs=df_obs,
         df_margins=[df_margins],
         var_names=None,
+        margin_names=["_all"],
         cov_mat=False,
         method="logit",
         weights="weight",

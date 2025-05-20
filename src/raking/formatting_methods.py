@@ -820,6 +820,7 @@ def format_data_3D(
 def format_data_USHD(
     df_obs: pd.DataFrame,
     df_margins: pd.DataFrame,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -953,9 +954,40 @@ def format_data_USHD(
         "The names of the categories for cause should be the same in the observations and margins data frames."
     )
 
-    # Create input variables for the raking functions
+    # Create the sorting orders for the categorical variables
+    cause_all = margins_name[0]
+    race_all = margins_name[1]
+    county_all = margins_name[2]
+    cause_names = df_obs["cause"].unique().tolist()
+    race_names = df_obs["race"].unique().tolist()
+    county_names = df_obs["county"].unique().tolist()
+    if cause_all in cause_names:
+        cause_names.remove(cause_all)
+    if race_all in race_names:
+        race_name.remove(race_all)
+    if county_all in county_names:
+        county_name.remove(county_all)
+    cause_ordering = [cause_all] + cause_names
+    race_ordering = [race_all] + race_names
+    county_ordering = [county_all] + county_names
+    df_obs["cause"] = df_obs["cause"].astype(
+        "category", categories=cause_ordering, ordered=True
+    )
+    df_obs["race"] = df_obs["race"].astype(
+        "category", categories=race_ordering, ordered=True
+    )
+    df_obs["county"] = df_obs["county"].astype(
+        "category", categories=county_ordering, ordered=True
+    )
+    df_margins["cause"] = df_margins["cause"].astype(
+        "category", categories=cause_ordering, ordered=True
+    )
+
+    # Sort input observations and margins
     df_obs.sort_values(by=["county", "race", "cause"], inplace=True)
     df_margins.sort_values(by=["cause"], inplace=True)
+
+    # Create input variables for the raking functions
     I = len(df_obs["cause"].unique()) - 1
     J = len(df_obs["race"].unique()) - 1
     K = len(df_obs["county"].unique())
@@ -981,6 +1013,7 @@ def format_data_USHD_lower(
     df_margins_cause: pd.DataFrame,
     df_margins_county: pd.DataFrame,
     df_margins_all_causes: pd.DataFrame,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -1227,11 +1260,51 @@ def format_data_USHD_lower(
         "The names of the categories for county should be the same in the observations and all_causes margins data frames."
     )
 
-    # Create input variables for the raking functions
+    # Create the sorting orders for the categorical variables
+    cause_all = margins_name[0]
+    race_all = margins_name[1]
+    county_all = margins_name[2]
+    cause_names = df_obs["cause"].unique().tolist()
+    race_names = df_obs["race"].unique().tolist()
+    county_names = df_obs["county"].unique().tolist()
+    if cause_all in cause_names:
+        cause_names.remove(cause_all)
+    if race_all in race_names:
+        race_name.remove(race_all)
+    if county_all in county_names:
+        county_name.remove(county_all)
+    cause_ordering = [cause_all] + cause_names
+    race_ordering = [race_all] + race_names
+    county_ordering = [county_all] + county_names
+    df_obs["cause"] = df_obs["cause"].astype(
+        "category", categories=cause_ordering, ordered=True
+    )
+    df_obs["race"] = df_obs["race"].astype(
+        "category", categories=race_ordering, ordered=True
+    )
+    df_obs["county"] = df_obs["county"].astype(
+        "category", categories=county_ordering, ordered=True
+    )
+    df_margins_cause["cause"] = df_margins_cause["cause"].astype(
+        "category", categories=cause_ordering, ordered=True
+    )
+    df_margins_county["county"] = df_margins_county["county"].astype(
+        "category", categories=county_ordering, ordered=True
+    )
+    df_margins_all_causes["race"] = df_margins_all_causes["race"].astype(
+        "category", categories=race_ordering, ordered=True
+    )
+    df_margins_all_causes["county"] = df_margins_all_causes["county"].astype(
+        "category", categories=county_ordering, ordered=True
+    )
+
+    # Sort input observations and margins
     df_obs.sort_values(by=["county", "race", "cause"], inplace=True)
     df_margins_cause.sort_values(by=["cause"], inplace=True)
     df_margins_county.sort_values(by=["county"], inplace=True)
     df_margins_all_causes.sort_values(by=["county", "race"], inplace=True)
+
+    # Create input variables for the raking functions
     I = len(df_obs["cause"].unique())
     J = len(df_obs["race"].unique()) - 1
     K = len(df_obs["county"].unique())

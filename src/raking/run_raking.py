@@ -46,6 +46,7 @@ def run_raking(
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list | None,
+    margin_names: list | None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
@@ -238,11 +239,11 @@ def run_raking(
         )
     elif dim == "USHD":
         (y, s, q, l, h, A) = run_raking_USHD(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
         )
     elif dim == "USHD_lower":
         (y, s, q, l, h, A) = run_raking_USHD_lower(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
         )
     else:
         pass
@@ -484,6 +485,7 @@ def run_raking_3D(
 def run_raking_USHD(
     df_obs: pd.DataFrame,
     df_margins: list,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -536,6 +538,7 @@ def run_raking_USHD(
     (y, s, I, J, K, q, l, h) = format_data_USHD(
         df_obs,
         df_margins,
+        margin_names,
         weights,
         lower,
         upper,
@@ -547,6 +550,7 @@ def run_raking_USHD(
 def run_raking_USHD_lower(
     df_obs: pd.DataFrame,
     df_margins: list,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -604,6 +608,7 @@ def run_raking_USHD_lower(
             df_margins_cause,
             df_margins_county,
             df_margins_all_causes,
+            margin_names,
             weights,
             lower,
             upper,
