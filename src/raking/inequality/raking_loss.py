@@ -35,7 +35,7 @@ def raking_loss(
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
         (loss_val, loss_grad, loss_hess) = compute_loss(beta, C, c, loss)
-        (dist_val, dist_grad, dist_hess) = compute_dist(beta, y, q, method)
+        (dist_val, dist_grad, dist_hess) = compute_dist(beta, y, q, method, l, h)
         F1 = dist_grad + np.matmul(np.transpose(A), lambda_k) \
             - penalty * np.matmul(np.transpose(C), loss_grad)
         F2 = np.matmul(A, beta) - s
