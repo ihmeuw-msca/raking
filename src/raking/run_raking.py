@@ -46,7 +46,7 @@ def run_raking(
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list | None,
-    margin_names: list | None,
+    margin_names: list = None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,

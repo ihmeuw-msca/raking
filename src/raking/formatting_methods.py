@@ -955,9 +955,9 @@ def format_data_USHD(
     )
 
     # Create the sorting orders for the categorical variables
-    cause_all = margins_name[0]
-    race_all = margins_name[1]
-    county_all = margins_name[2]
+    cause_all = margin_names[0]
+    race_all = margin_names[1]
+    county_all = margin_names[2]
     cause_names = df_obs["cause"].unique().tolist()
     race_names = df_obs["race"].unique().tolist()
     county_names = df_obs["county"].unique().tolist()
@@ -1261,9 +1261,9 @@ def format_data_USHD_lower(
     )
 
     # Create the sorting orders for the categorical variables
-    cause_all = margins_name[0]
-    race_all = margins_name[1]
-    county_all = margins_name[2]
+    cause_all = margin_names[0]
+    race_all = margin_names[1]
+    county_all = margin_names[2]
     cause_names = df_obs["cause"].unique().tolist()
     race_names = df_obs["race"].unique().tolist()
     county_names = df_obs["county"].unique().tolist()
