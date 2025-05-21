@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 
+from pandas.api.types import CategoricalDtype
+
 pd.options.mode.chained_assignment = None
 
 
@@ -971,16 +973,16 @@ def format_data_USHD(
     race_ordering = [race_all] + race_names
     county_ordering = [county_all] + county_names
     df_obs["cause"] = df_obs["cause"].astype(
-        "category", categories=cause_ordering, ordered=True
+        CategoricalDtype(categories=cause_ordering, ordered=True)
     )
     df_obs["race"] = df_obs["race"].astype(
-        "category", categories=race_ordering, ordered=True
+        CategoricalDtype(categories=race_ordering, ordered=True)
     )
     df_obs["county"] = df_obs["county"].astype(
-        "category", categories=county_ordering, ordered=True
+        CategoricalDtype(categories=county_ordering, ordered=True)
     )
     df_margins["cause"] = df_margins["cause"].astype(
-        "category", categories=cause_ordering, ordered=True
+        CategoricalDtype(categories=cause_ordering, ordered=True)
     )
 
     # Sort input observations and margins
@@ -1277,25 +1279,25 @@ def format_data_USHD_lower(
     race_ordering = [race_all] + race_names
     county_ordering = [county_all] + county_names
     df_obs["cause"] = df_obs["cause"].astype(
-        "category", categories=cause_ordering, ordered=True
+        CategoricalDtype(categories=cause_ordering, ordered=True)
     )
     df_obs["race"] = df_obs["race"].astype(
-        "category", categories=race_ordering, ordered=True
+        CategoricalDtype(categories=race_ordering, ordered=True)
     )
     df_obs["county"] = df_obs["county"].astype(
-        "category", categories=county_ordering, ordered=True
+        CategoricalDtype(categories=county_ordering, ordered=True)
     )
     df_margins_cause["cause"] = df_margins_cause["cause"].astype(
-        "category", categories=cause_ordering, ordered=True
+        CategoricalDtype(categories=cause_ordering, ordered=True)
     )
     df_margins_county["county"] = df_margins_county["county"].astype(
-        "category", categories=county_ordering, ordered=True
+        CategoricalDtype(categories=county_ordering, ordered=True)
     )
     df_margins_all_causes["race"] = df_margins_all_causes["race"].astype(
-        "category", categories=race_ordering, ordered=True
+        CategoricalDtype(categories=race_ordering, ordered=True)
     )
     df_margins_all_causes["county"] = df_margins_all_causes["county"].astype(
-        "category", categories=county_ordering, ordered=True
+        CategoricalDtype(categories=county_ordering, ordered=True)
     )
 
     # Sort input observations and margins

@@ -97,7 +97,7 @@ def test_run_raking_USHD(example_USHD):
     )
     sum_over_cause = (
         df_obs.loc[df_obs.cause != "_all"]
-        .groupby(["race", "county"])
+        .groupby(["race", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.cause == "_all"], on=["race", "county"])
@@ -109,7 +109,7 @@ def test_run_raking_USHD(example_USHD):
     ), "The sums over the cause must match the all causes deaths."
     sum_over_race = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause", "county"])
+        .groupby(["cause", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.race == 0], on=["cause", "county"])
@@ -121,10 +121,75 @@ def test_run_raking_USHD(example_USHD):
     ), "The sums over the race must match the all races deaths."
     sum_over_race_county = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause"])
+        .groupby(["cause"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(example_USHD.df_margins, on=["cause"])
+    )
+    assert np.allclose(
+        sum_over_race_county["raked_value"],
+        sum_over_race_county["value_agg_over_race_county"],
+        atol=1.0e-5,
+    ), "The sums over race and county must match the GBD values."
+
+
+def test_run_raking_USHD_lower(example_USHD_lower):
+    (df_obs, Dphi_y, Dphi_s, sigma) = run_raking(
+        dim="USHD_lower",
+        df_obs=example_USHD_lower.df_obs,
+        df_margins=[
+            example_USHD_lower.df_margins_cause,
+            example_USHD_lower.df_margins_county,
+            example_USHD_lower.df_margins_all_causes,
+        ],
+        var_names=None,
+        margin_names=["_inj", 0, 0],
+        cov_mat=False,
+    )
+    sum_over_cause = (
+        df_obs.loc[df_obs.race != 0]
+        .groupby(["race", "county"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_USHD_lower.df_margins_all_causes, on=["race", "county"])
+    )
+    assert np.allclose(
+        sum_over_cause["raked_value"],
+        sum_over_cause["value_agg_over_cause"],
+        atol=1.0e-4,
+    ), "The sums over the cause must match the all causes deaths."
+    sum_over_cause_race = (
+        df_obs.loc[df_obs.race == 0]
+        .groupby(["county"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_USHD_lower.df_margins_county, on=["county"])
+    )
+    assert np.allclose(
+        sum_over_cause_race["raked_value"],
+        sum_over_cause_race["value_agg_over_cause_race"],
+        atol=1.0e-4,
+    ), (
+        "The sums over the cause and race must match the all causes all races deaths."
+    )
+    sum_over_race = (
+        df_obs.loc[df_obs.race != 0]
+        .groupby(["cause", "county"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_obs.loc[df_obs.race == 0], on=["cause", "county"])
+    )
+    assert np.allclose(
+        sum_over_race["raked_value_x"],
+        sum_over_race["raked_value_y"],
+        atol=1.0e-4,
+    ), "The sums over the race must match the all races deaths."
+    sum_over_race_county = (
+        df_obs.loc[df_obs.race != 0]
+        .groupby(["cause"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(example_USHD_lower.df_margins_cause, on=["cause"])
     )
     assert np.allclose(
         sum_over_race_county["raked_value"],
@@ -258,7 +323,7 @@ def test_run_raking_USHD_draws(example_USHD_draws):
     )
     sum_over_cause = (
         df_obs.loc[df_obs.cause != "_all"]
-        .groupby(["race", "county"])
+        .groupby(["race", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.cause == "_all"], on=["race", "county"])
@@ -270,7 +335,7 @@ def test_run_raking_USHD_draws(example_USHD_draws):
     ), "The sums over the cause must match the all causes deaths."
     sum_over_race = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause", "county"])
+        .groupby(["cause", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.race == 0], on=["cause", "county"])
@@ -282,7 +347,7 @@ def test_run_raking_USHD_draws(example_USHD_draws):
     ), "The sums over the race must match the all races deaths."
     sum_over_race_county = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause"])
+        .groupby(["cause"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(
@@ -495,7 +560,7 @@ def test_run_raking_USHD_weights(example_USHD_draws):
     )
     sum_over_cause = (
         df_obs.loc[df_obs.cause != "_all"]
-        .groupby(["race", "county"])
+        .groupby(["race", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.cause == "_all"], on=["race", "county"])
@@ -507,7 +572,7 @@ def test_run_raking_USHD_weights(example_USHD_draws):
     ), "The sums over the cause must match the all causes deaths."
     sum_over_race = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause", "county"])
+        .groupby(["cause", "county"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_obs.loc[df_obs.race == 0], on=["cause", "county"])
@@ -519,7 +584,7 @@ def test_run_raking_USHD_weights(example_USHD_draws):
     ), "The sums over the race must match the all races deaths."
     sum_over_race_county = (
         df_obs.loc[df_obs.race != 0]
-        .groupby(["cause"])
+        .groupby(["cause"], observed=True)
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_margins, on=["cause"])
