@@ -6,12 +6,14 @@ from raking.compute_constraints import (
     constraints_2D,
     constraints_3D,
     constraints_USHD,
+    constraints_USHD_lower,
 )
 from raking.formatting_methods import (
     format_data_1D,
     format_data_2D,
     format_data_3D,
     format_data_USHD,
+    format_data_USHD_lower,
 )
 
 
@@ -153,10 +155,68 @@ def test_format_data_USHD():
         {"cause": cause, "value_agg_over_race_county": s_cause}
     )
     # Get the formatted data
-    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins)
+    (y, s, I, J, K, q, l, h) = format_data_USHD(df_obs, df_margins, [0, 0, 0])
     # Generate the constraints
     (A, s) = constraints_USHD(s, I, J, K)
     # Verify that the constraint A beta = s is respected
     assert np.allclose(np.matmul(A, y), s), (
         "For the format_data_USHD function, the constraint A y = s is not respected."
+    )
+
+
+def test_format_data_USHD_lower():
+    # Generate balanced array
+    I = 3
+    J = 4
+    K = 5
+    rng = np.random.default_rng(0)
+    y_ijk = rng.uniform(low=2.0, high=3.0, size=(I, J, K))
+    s_cause = np.sum(y_ijk, axis=(1, 2))
+    s_county = np.sum(y_ijk, axis=(0, 1))
+    s_all_causes = np.sum(y_ijk, axis=0)
+    y_i0k = np.sum(y_ijk, axis=1)
+    y = np.concatenate((y_i0k.reshape((I, 1, K)), y_ijk), axis=1)
+    y = y.flatten("F")
+    # Generate the observation data frame
+    cause = np.tile(np.arange(1, I + 1), (J + 1) * K)
+    race = np.tile(np.repeat(np.arange(0, J + 1), I), K)
+    county = np.repeat(np.arange(1, K + 1), I * (J + 1))
+    df_obs = pd.DataFrame(
+        {"value": y, "cause": cause, "race": race, "county": county}
+    )
+    # Generate the GBD margins data frame
+    cause = np.arange(1, I + 1)
+    df_margins_cause = pd.DataFrame(
+        {"cause": cause, "value_agg_over_race_county": s_cause}
+    )
+    # Generate the county margins data frame
+    county = np.arange(1, K + 1)
+    df_margins_county = pd.DataFrame(
+        {"county": county, "value_agg_over_cause_race": s_county}
+    )
+    # Generate the all causes margins data frame
+    race = np.tile(np.arange(1, J + 1), K)
+    county = np.repeat(np.arange(1, K + 1), J)
+    df_margins_all_causes = pd.DataFrame(
+        {
+            "race": race,
+            "county": county,
+            "value_agg_over_cause": s_all_causes.flatten("F"),
+        }
+    )
+    # Get the formatted data
+    (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = (
+        format_data_USHD_lower(
+            df_obs,
+            df_margins_cause,
+            df_margins_county,
+            df_margins_all_causes,
+            [0, 0, 0],
+        )
+    )
+    # Generate the constraints
+    (A, s) = constraints_USHD_lower(s_cause, s_county, s_all_causes, I, J, K)
+    # Verify that the constraint A beta = s is respected
+    assert np.allclose(np.matmul(A, y), s), (
+        "For the format_data_USHD_lower function, the constraint A y = s is not respected."
     )

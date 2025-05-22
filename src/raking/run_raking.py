@@ -8,6 +8,7 @@ from raking.compute_constraints import (
     constraints_2D,
     constraints_3D,
     constraints_USHD,
+    constraints_USHD_lower,
 )
 from raking.compute_covariance import compute_covariance_obs
 from raking.compute_covariance import (
@@ -27,6 +28,7 @@ from raking.formatting_methods import (
     format_data_2D,
     format_data_3D,
     format_data_USHD,
+    format_data_USHD_lower,
 )
 from raking.raking_methods import (
     raking_chi2,
@@ -44,6 +46,7 @@ def run_raking(
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list | None,
+    margin_names: list = None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
@@ -118,7 +121,10 @@ def run_raking(
         2,
         3,
         "USHD",
-    ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
+        "USHD_lower",
+    ], (
+        "The dimension of the raking problem must be 1, 2, 3, USHD or USHD_lower."
+    )
     assert isinstance(cov_mat, bool), (
         "cov_mat indicates whether we compute the covariance matrix, must be True or False."
     )
@@ -138,9 +144,13 @@ def run_raking(
         assert dim == len(df_margins), (
             "The number of margins data frames must be equal to the dimension of the problem."
         )
-    else:
+    elif dim == "USHD":
         assert len(df_margins) == 1, (
             "There should be only one margins data frame in the list."
+        )
+    else:
+        assert len(df_margins) == 3, (
+            "There should be three margins data frames in the list."
         )
     assert isinstance(method, str), (
         "The name of the distance function used for the raking must be a string."
@@ -229,7 +239,11 @@ def run_raking(
         )
     elif dim == "USHD":
         (y, s, q, l, h, A) = run_raking_USHD(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
+        )
+    elif dim == "USHD_lower":
+        (y, s, q, l, h, A) = run_raking_USHD_lower(
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
         )
     else:
         pass
@@ -471,6 +485,7 @@ def run_raking_3D(
 def run_raking_USHD(
     df_obs: pd.DataFrame,
     df_margins: list,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -523,11 +538,85 @@ def run_raking_USHD(
     (y, s, I, J, K, q, l, h) = format_data_USHD(
         df_obs,
         df_margins,
+        margin_names,
         weights,
         lower,
         upper,
     )
     (A, s) = constraints_USHD(s, I, J, K, rtol, atol)
+    return (y, s, q, l, h, A)
+
+
+def run_raking_USHD_lower(
+    df_obs: pd.DataFrame,
+    df_margins: list,
+    margin_names: list,
+    weights: str = None,
+    lower: str = None,
+    upper: str = None,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
+    """
+    This function prepares variables to run the raking problem for the USHD case (lower levels).
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    weights : string
+        Name of the column containing the raking weights
+    lower : string
+        Name of the column containing the lower boundaries (for logit raking)
+    upper : string
+        Name of the column containing the upper boundaries (for logit raking)
+    rtol : float
+        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    atol : float
+        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+
+    Returns
+    -------
+    y : np.ndarray
+        Vector of observations
+    s : np.ndarray
+        Margins vector
+    q : np.ndarray
+        Vector of weights
+    l : np.ndarray
+        Lower bounds for the observations
+    h : np.ndarray
+        Upper bounds for the observations
+    A : np.ndarray
+        Constraints matrix
+    """
+    df_margins_cause = df_margins[0]
+    df_margins_county = df_margins[1]
+    df_margins_all_causes = df_margins[2]
+    (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = (
+        format_data_USHD_lower(
+            df_obs,
+            df_margins_cause,
+            df_margins_county,
+            df_margins_all_causes,
+            margin_names,
+            weights,
+            lower,
+            upper,
+        )
+    )
+    (A, s) = constraints_USHD_lower(
+        s_cause, s_county, s_all_causes, I, J, K, rtol, atol
+    )
     return (y, s, q, l, h, A)
 
 
