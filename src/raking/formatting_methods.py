@@ -1250,7 +1250,7 @@ def format_data_USHD_lower(
         "The number of categories for county should be the same in the observations and all causes margins data frames."
     )
     set_race_obs = set(df_obs["race"].unique().tolist())
-    set_race_obs.remove(0)
+    set_race_obs.remove(margin_names[1])
     assert set_race_obs == set(
         df_margins_all_causes["race"].unique().tolist()
     ), (
