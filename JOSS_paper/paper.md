@@ -147,6 +147,8 @@ Table 1: Computation time of the solving methods used for the raking part.
 
 The conjugate gradient method has a smaller computation time and a smaller number of iterations than the other methods tested to solve the linear system. The default values of the parameters lead to the smallest computation time. We choose this method for the raking functions implemented in the package.
 
+TO DO: remake this part with modified entropic function and Niles case.
+
 ## Uncertainty part
 
 We test several Python functions to solve the linear system $A X = B$, where $X4 and $B$ are matrices instead of vectors:
