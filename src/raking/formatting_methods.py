@@ -844,6 +844,8 @@ def format_data_USHD(
         Observations data
     df_margins : pd.DataFrame
         Margins data (GBD)
+    margin_names : list
+        Names for the all causes, all races, all counties categories (length 3)
     weights : string
         Name of the column containing the raking weights
     lower : string
@@ -896,6 +898,13 @@ def format_data_USHD(
     )
     assert "value_agg_over_race_county" in df_margins.columns.tolist(), (
         "The column for the aggregated value over races and counties is missing from the margins data frame."
+    )
+
+    assert isinstance(margin_names, list), (
+        "Please enter the names of the all causes, all races, all counties categories as a list."
+    )
+    assert len(margin_names) == 3, (
+        "There should be a margin name for each of the three variables cause, race, and county."
     )
 
     if weights is not None:
@@ -1043,6 +1052,8 @@ def format_data_USHD_lower(
         Margins data from previous level raking (Number of deaths for each county, all causes with same parent, all races)
     df_margins_all_causes: pd.DataFrame
         Margins data from previous level raking (Number of deaths for each race and each county, all causes with same parent)
+    margin_names : list
+        Names for the all causes, all races, all counties categories (length 3)
     weights : string
         Name of the column containing the raking weights
     lower : string
@@ -1130,6 +1141,13 @@ def format_data_USHD_lower(
         )
     assert "value_agg_over_cause" in df_margins_all_causes.columns.tolist(), (
         "The column for the aggregated value over causes is missing from the all causes margins data frame."
+    )
+
+    assert isinstance(margin_names, list), (
+        "Please enter the names of the all causes, all races, all counties categories as a list."
+    )
+    assert len(margin_names) == 3, (
+        "There should be a margin name for each of the three variables cause, race, and county."
     )
 
     if weights is not None:

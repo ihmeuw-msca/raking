@@ -156,8 +156,8 @@ def raking_entropic(
         Phi = np.matmul(
             A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         )
-        D = np.diag(y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        D = y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+        J = np.matmul(A * D, np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
@@ -282,7 +282,7 @@ def raking_general(
                 )
             ),
         )
-        D = np.diag(
+        D = (
             y
             * q
             * np.power(
@@ -290,7 +290,7 @@ def raking_general(
                 1.0 / alpha - 1,
             )
         )
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        J = np.matmul(A * D, np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
@@ -490,7 +490,7 @@ def raking_logit(
                 + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
             ),
         )
-        D = np.diag(
+        D = (
             -q
             * ((y - l) * (h - y) * (h - l))
             / np.square(
@@ -498,7 +498,7 @@ def raking_logit(
                 + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
             )
         )
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        J = np.matmul(A * D, np.transpose(A))
         delta_lambda = cg(J, Phi - s)[0]
         gamma = gamma0
         iter_gam = 0
