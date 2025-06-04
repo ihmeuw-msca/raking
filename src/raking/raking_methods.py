@@ -80,7 +80,8 @@ def raking_entropic(
     A: np.ndarray,
     s: np.ndarray,
     q: np.ndarray = None,
-    gamma0: float = 1.0,
+    tol: float = 1.0e-11,
+    gamma: float = 1.0e-4,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
@@ -98,8 +99,10 @@ def raking_entropic(
         Margin vector (output of a function from the compute_constraints module)
     q : np.ndarray
         Vector of weights (default to all 1)
-    gamma0 : float
-        Initial value for line search
+    tol: float
+        Tolerance for the convergence
+    gamma : float
+        Parameter for Armijo rule
     max_iter : int
         Number of iterations for Newton's root finding method
 
@@ -150,27 +153,31 @@ def raking_entropic(
     s_hat = np.matmul(A, y)
     lambda_k = np.zeros(A.shape[0])
     beta = np.copy(y)
-    epsilon = 1.0
+    epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
     iter_eps = 0
-    while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+    while (epsilon > tol) & (iter_eps < max_iter):
         Phi = np.matmul(
             A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         )
         D = np.diag(y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         J = np.matmul(np.matmul(A, D), np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
-        gamma = gamma0
-        iter_gam = 0
-        lambda_k = lambda_k - gamma * delta_lambda
+        m = 0
+        F = np.sqrt(np.sum(np.square(Phi - s_hat + s)))
+        nextF = np.sqrt(np.sum(np.square(np.matmul(
+            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k + 2.0**(-m) * delta_lambda)))
+        ) - s_hat + s)))
+        armijo_rule = (nextF < (1 - gamma * 2**(-m)) * F)
+        iter_armijo = 0
+        while (armijo_rule==False) & (_iter_armijo < max_iter):
+            m = m + 1
+            nextF = np.sqrt(np.sum(np.square(np.matmul(
+                A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k + 2.0**(-m) * delta_lambda)))
+            ) - s_hat + s)))
+            armijo_rule = (nextF < (1 - gamma * 2**(-m)) * F)
+            iter_armijo = iter_armijo + 1 
+        lambda_k = lambda_k - 2**(-m) * delta_lambda
         beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-        if iter_eps > 0:
-            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
-                iter_gam < max_iter
-            ):
-                gamma = gamma / 2.0
-                iter_gam = iter_gam + 1
-                lambda_k = lambda_k - gamma * delta_lambda
-                beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)

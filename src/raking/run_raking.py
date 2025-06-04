@@ -237,7 +237,7 @@ def run_raking(
         (beta, lambda_k) = raking_chi2(y, A, s, q)
     elif method == "entropic":
         (beta, lambda_k, iter_eps) = raking_entropic(
-            y, A, s, q, gamma0, max_iter
+            y, A, s, q, 1.0e-11, 1.0e-4, max_iter
         )
     elif method == "general":
         (beta, lambda_k, iter_eps) = raking_general(
