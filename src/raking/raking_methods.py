@@ -169,7 +169,7 @@ def raking_entropic(
         ) - s_hat + s)))
         armijo_rule = (nextF < (1 - gamma * 2**(-m)) * F)
         iter_armijo = 0
-        while (armijo_rule==False) & (_iter_armijo < max_iter):
+        while (armijo_rule==False) & (iter_armijo < max_iter):
             m = m + 1
             nextF = np.sqrt(np.sum(np.square(np.matmul(
                 A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k + 2.0**(-m) * delta_lambda)))
