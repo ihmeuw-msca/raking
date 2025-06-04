@@ -56,6 +56,7 @@ class DualSolver:
         self,
         x0: npt.NDArray | None = None,
         method: str | None = None,
+        tol: float = 1.0e-11,
         options: dict | None = None,
     ) -> pd.DataFrame:
         if x0 is None:
@@ -75,7 +76,8 @@ class DualSolver:
             jac=self.gradient,
             hess=self.hessian,
             constraints=constraints,
-            options=options,
+            tol=tol,
+            options=options
         )
 
         soln = self.data["span"].copy()
