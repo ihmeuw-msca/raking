@@ -5,7 +5,13 @@ from scipy.sparse.linalg import cg
 
 from scipy.optimize import minimize
 
-def raking_chi2(y, A, s, q, tol):
+def raking_chi2(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    q: np.ndarray = None
+    tol: float = 1e-11
+) -> tuple[np.ndarray, np.ndarray]:
 
     lambda_0 = np.zeros(A.shape[0])
 
@@ -36,7 +42,15 @@ def raking_chi2(y, A, s, q, tol):
     return (beta, lambda_k)
 
 
-def raking_entropic(y, A, s, q, tol, gamma0, max_iter):
+def raking_entropic(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    q: np.ndarray = None,
+    tol: float = 1.0e-11,
+    gamma: float = 1.0e-4,
+    max_iter: int = 500,
+) -> tuple[np.ndarray, np.ndarray, int]:
 
     lambda_0 = np.zeros(A.shape[0])
 

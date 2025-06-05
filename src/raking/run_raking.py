@@ -56,7 +56,7 @@ def run_raking(
     upper: str = None,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-    tol = 1e-11,
+    tol: float = 1e-11,
     gamma0: float = 1.0,
     max_iter: int = 500,
 ) -> np.ndarray:
