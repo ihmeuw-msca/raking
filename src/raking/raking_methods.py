@@ -9,7 +9,7 @@ def raking_chi2(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
-    q: np.ndarray = None
+    q: np.ndarray = None,
     tol: float = 1e-11
 ) -> tuple[np.ndarray, np.ndarray]:
 
