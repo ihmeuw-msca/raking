@@ -14,6 +14,8 @@ def raking_chi2(
 ) -> tuple[np.ndarray, np.ndarray]:
 
     lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
 
     def conjugate_distance(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
@@ -53,6 +55,8 @@ def raking_entropic(
 ) -> tuple[np.ndarray, np.ndarray, int]:
 
     lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
 
     def conjugate_distance(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
