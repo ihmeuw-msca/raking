@@ -56,6 +56,7 @@ def run_raking(
     upper: str = None,
     rtol: float = 1e-05,
     atol: float = 1e-08,
+    tol = 1e-11,
     gamma0: float = 1.0,
     max_iter: int = 500,
 ) -> np.ndarray:
@@ -100,6 +101,8 @@ def run_raking(
         Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
     atol : float
         Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    tol: float
+        Tolerance for the termination of the minimization problem. See scipy.optimize.minimize documentation for details.
     gamma0 : float
         Initial value for line search
     max_iter : int
@@ -234,18 +237,18 @@ def run_raking(
 
     # Rake
     if method == "chi2":
-        (beta, lambda_k) = raking_chi2(y, A, s, q)
+        (beta, lambda_k) = raking_chi2(y, A, s, q, tol)
     elif method == "entropic":
         (beta, lambda_k, iter_eps) = raking_entropic(
-            y, A, s, q, 1.0e-11, 1.0e-4, max_iter
+            y, A, s, q, tol, gamma0, max_iter
         )
     elif method == "general":
         (beta, lambda_k, iter_eps) = raking_general(
-            y, A, s, alpha, q, gamma0, max_iter
+            y, A, s, alpha, q, tol, gamma0, max_iter
         )
     elif method == "logit":
         (beta, lambda_k, iter_eps) = raking_logit(
-            y, A, s, l, h, q, gamma0, max_iter
+            y, A, s, l, h, q, tol, gamma0, max_iter
         )
     else:
         pass

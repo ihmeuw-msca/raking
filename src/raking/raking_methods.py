@@ -3,8 +3,73 @@
 import numpy as np
 from scipy.sparse.linalg import cg
 
+from scipy.optimize import minimize
 
-def raking_chi2(
+def raking_chi2(y, A, s, q, tol):
+
+    lambda_0 = np.zeros(A.shape[0])
+
+    def conjugate_distance(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(y * z + q * y * np.square(z) / 2.0)
+        return f_star + np.dot(lambda_k , s)
+
+    def conjugate_jacobian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        fstar_grad = y * ( 1 + q * z)
+        return - np.matmul(np.transpose(A), f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(q * y)
+        return np.matmul(np.matmul(np.transpose(A), f_star_hess), A)
+
+    res = minimize( \
+        fun=conjugate_distance, \
+        x0=lambda_0, \
+        method='Newton-CG', \
+        jac=conjugate_jacobian, \
+        hess=conjugate_hessian,
+        tol=tol)
+    lambda_k = res.x
+    beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k)
+
+
+def raking_entropic(y, A, s, q, tol, gamma0, max_iter):
+
+    lambda_0 = np.zeros(A.shape[0])
+
+    def conjugate_distance(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(y * (np.exp(q * z) - 1) / q)
+        return f_star + np.dot(lambda_k , s)
+
+    def conjugate_jacobian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        fstar_grad = y * np.exp(q * z)
+        return - np.matmul(np.transpose(A), f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(q * np.exp(q * z))
+        return np.matmul(np.matmul(np.transpose(A), f_star_hess), A)
+
+    res = minimize( \
+        fun=conjugate_distance, \
+        x0=lambda_0, \
+        method='Newton-CG', \
+        jac=conjugate_jacobian, \
+        hess=conjugate_hessian,
+        tol=tol,
+        options={'maxiter': max_iter})
+    lambda_k = res.x
+    iter_eps = res.nit
+    beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, iter_eps)
+
+
+def raking_chi2_old(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -75,7 +140,7 @@ def raking_chi2(
     return (beta, lambda_k)
 
 
-def raking_entropic(
+def raking_entropic_old(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -189,6 +254,7 @@ def raking_general(
     s: np.ndarray,
     alpha: float = 1,
     q: np.ndarray = None,
+    tol: float = 1e-11,
     gamma0: float = 1.0,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
@@ -372,6 +438,7 @@ def raking_logit(
     l: np.ndarray = None,
     h: np.ndarray = None,
     q: np.ndarray = None,
+    tol: float = 1e-11,
     gamma0: float = 1.0,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
