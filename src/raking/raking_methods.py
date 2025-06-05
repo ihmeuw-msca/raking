@@ -25,12 +25,12 @@ def raking_chi2(
     def conjugate_jacobian(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
         f_star_grad = y * ( 1 + q * z)
-        return - np.matmul(np.transpose(A), f_star_grad) + s
+        return - np.matmul(A, f_star_grad) + s
 
     def conjugate_hessian(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
         f_star_hess = np.diag(q * y)
-        return np.matmul(np.matmul(np.transpose(A), f_star_hess), A)
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
 
     res = minimize( \
         fun=conjugate_distance, \
@@ -66,12 +66,12 @@ def raking_entropic(
     def conjugate_jacobian(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
         f_star_grad = y * np.exp(q * z)
-        return - np.matmul(np.transpose(A), f_star_grad) + s
+        return - np.matmul(A, f_star_grad) + s
 
     def conjugate_hessian(lambda_k):
         z = - np.matmul(np.transpose(A), lambda_k)
         f_star_hess = np.diag(q * np.exp(q * z))
-        return np.matmul(np.matmul(np.transpose(A), f_star_hess), A)
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
 
     res = minimize( \
         fun=conjugate_distance, \
