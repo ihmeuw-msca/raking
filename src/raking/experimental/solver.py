@@ -34,8 +34,8 @@ class DualSolver:
         return self.mat_o.T @ self.fun(self.mat_o @ x, order=1) + self.vec_o
 
     def hessian(self, x: npt.NDArray) -> sps.csc_matrix:
-        d2 = sps.diags(self.fun(self.mat_o @ x, order=2))
-        return self.mat_o.T @ d2 @ self.mat_o
+        d2 = self.fun(self.mat_o @ x, order=2)
+        return (self.mat_o.T.multiply(d2)) @ self.mat_o
 
     def dual_to_primal(self, z: npt.NDArray) -> npt.NDArray:
         size_p = self.data["vec_p"].sum()
@@ -120,8 +120,8 @@ class PrimalSolver:
         return self.mat_o.T @ self.fun(self.mat_o @ x, order=1)
 
     def hessian(self, x: npt.NDArray) -> sps.csc_matrix:
-        d2 = sps.diags(self.fun(self.mat_o @ x, order=2))
-        return self.mat_o.T @ d2 @ self.mat_o
+        d2 = self.fun(self.mat_o @ x, order=2)
+        return (self.mat_o.T.multiply(d2)) @ self.mat_o
 
     def solve(
         self,

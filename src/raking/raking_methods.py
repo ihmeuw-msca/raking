@@ -87,6 +87,50 @@ def raking_entropic(
     return (beta, lambda_k, iter_eps)
 
 
+def raking_general(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    alpha: float = 1,
+    q: np.ndarray = None,
+    tol: float = 1e-11,
+    gamma0: float = 1.0,
+    max_iter: int = 500,
+) -> tuple[np.ndarray, np.ndarray, int]:
+
+    lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
+
+    def conjugate_distance(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(y * np.power( 1 + alpha * q * z, 1.0 + 1.0 / alpha) / (q * (1.0 + alpha)))
+        return f_star + np.dot(lambda_k , s)
+
+    def conjugate_jacobian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star_grad = y * np.power(1 + alpha * q * z, 1.0 / alpha)
+        return - np.matmul(A, f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = - np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(q * y * np.power(1.0 + alpha * q * z, 1.0 / alpha - 1.0))
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
+
+    res = minimize( \
+        fun=conjugate_distance, \
+        x0=lambda_0, \
+        method='Newton-CG', \
+        jac=conjugate_jacobian, \
+        hess=conjugate_hessian,
+        tol=tol,
+        options={'maxiter': max_iter})
+    lambda_k = res.x
+    iter_eps = res.nit
+    beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, iter_eps)
+
+
 def raking_chi2_old(
     y: np.ndarray,
     A: np.ndarray,
@@ -266,7 +310,7 @@ def raking_entropic_old(
     return (beta, lambda_k, iter_eps)
 
 
-def raking_general(
+def raking_general_old(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
