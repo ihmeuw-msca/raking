@@ -87,7 +87,7 @@ def raking_entropic(
     return (beta, lambda_k, iter_eps)
 
 
-def raking_general(
+def raking_general_new(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -310,7 +310,7 @@ def raking_entropic_old(
     return (beta, lambda_k, iter_eps)
 
 
-def raking_general_old(
+def raking_general(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
