@@ -67,18 +67,29 @@ class DualSolver:
             constraints = [LinearConstraint(self.mat_c, self.vec_c, self.vec_c)]
 
         if method is None:
-            method = "Newton-CG" if self.vec_c.size == 0 else "trust-constr"
+            method = "L-BFGS-B" if self.vec_c.size == 0 else "trust-constr"
 
-        self.result = minimize(
-            self.objective,
-            x0,
-            method=method,
-            jac=self.gradient,
-            hess=self.hessian,
-            constraints=constraints,
-            tol=tol,
-            options=options
-        )
+        if method in ["Newton-CG", "dogleg", "trust-ncg", "trust-krylov", "trust-exact", "trust-constr"]:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                hess=self.hessian,
+                constraints=constraints,
+                tol=tol,
+                options=options
+            )
+        else:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                constraints=constraints,
+                tol=tol,
+                options=options
+            )
 
         soln = self.data["span"].copy()
         soln["soln"] = self.dual_to_primal(self.result.x)
@@ -137,17 +148,28 @@ class PrimalSolver:
             constraints = [LinearConstraint(self.mat_c, self.vec_c, self.vec_c)]
 
         if method is None:
-            method = "Newton-CG" if self.vec_c.size == 0 else "trust-constr"
+            method = "L-BFGS-B" if self.vec_c.size == 0 else "trust-constr"
 
-        self.result = minimize(
-            self.objective,
-            x0,
-            method=method,
-            jac=self.gradient,
-            hess=self.hessian,
-            constraints=constraints,
-            options=options,
-        )
+        if method in ["Newton-CG", "dogleg", "trust-ncg", "trust-krylov", "trust-exact", "trust-constr"]:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                hess=self.hessian,
+                constraints=constraints,
+                options=options,
+            )
+        else:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                constraints=constraints,
+                tol=tol,
+                options=options
+            )
 
         soln = self.data["span"].copy()
         soln["soln"] = self.result.x

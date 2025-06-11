@@ -5,7 +5,7 @@ from scipy.sparse.linalg import cg
 
 from scipy.optimize import minimize
 
-def raking_chi2(
+def raking_chi2_scipy(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -44,7 +44,7 @@ def raking_chi2(
     return (beta, lambda_k)
 
 
-def raking_entropic(
+def raking_entropic_scipy(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -87,7 +87,7 @@ def raking_entropic(
     return (beta, lambda_k, iter_eps)
 
 
-def raking_general_new(
+def raking_general_scipy(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -131,7 +131,7 @@ def raking_general_new(
     return (beta, lambda_k, iter_eps)
 
 
-def raking_chi2_old(
+def raking_chi2(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -202,7 +202,7 @@ def raking_chi2_old(
     return (beta, lambda_k)
 
 
-def raking_entropic_old(
+def raking_entropic(
     y: np.ndarray,
     A: np.ndarray,
     s: np.ndarray,
@@ -275,37 +275,51 @@ def raking_entropic_old(
         np.shape(A)[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
+    # Raking weights
     if q is None:
         q = np.ones(len(y))
+    # Tolerance
+    if tol > 0.001 * np.min(np.abs(s[s!=0])):
+        tol = 0.001 * np.min(np.abs(s[s!=0]))
+    # Initialization
     s_hat = np.matmul(A, y)
     lambda_k = np.zeros(A.shape[0])
     beta = np.copy(y)
-    epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+    Phi = np.matmul(
+        A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
+    )
+    epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
     iter_eps = 0
     while (epsilon > tol) & (iter_eps < max_iter):
         Phi = np.matmul(
             A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         )
-        D = np.diag(y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        D = y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+        J = np.matmul(A * D, np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         m = 0
-        F = np.sqrt(np.sum(np.square(Phi - s_hat + s)))
-        nextF = np.sqrt(np.sum(np.square(np.matmul(
-            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k + 2.0**(-m) * delta_lambda)))
-        ) - s_hat + s)))
-        armijo_rule = (nextF < (1 - gamma * 2**(-m)) * F)
         iter_armijo = 0
+        lambda_kn = lambda_k - 2**(-m) * delta_lambda
+        Phi_n = np.matmul(
+            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_kn)))
+        )
+        epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+        armijo_rule = (epsilon_n < (1 - gamma * 2**(-m)) * epsilon)
         while (armijo_rule==False) & (iter_armijo < max_iter):
             m = m + 1
-            nextF = np.sqrt(np.sum(np.square(np.matmul(
-                A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k + 2.0**(-m) * delta_lambda)))
-            ) - s_hat + s)))
-            armijo_rule = (nextF < (1 - gamma * 2**(-m)) * F)
+            lambda_kn = lambda_k - 2**(-m) * delta_lambda
+            Phi_n = np.matmul(
+                A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_kn)))
+            )
+            epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+            armijo_rule = (epsilon_n < (1 - gamma * 2**(-m)) * epsilon)
             iter_armijo = iter_armijo + 1 
         lambda_k = lambda_k - 2**(-m) * delta_lambda
+        Phi = np.matmul(
+            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
+        )
+        epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
         beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-        epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
 

@@ -56,8 +56,8 @@ def run_raking(
     upper: str = None,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-    tol: float = 1e-11,
-    gamma0: float = 1.0,
+    tol: float = 1.0e-11,
+    gamma: float = 1.0e-4,
     max_iter: int = 500,
 ) -> np.ndarray:
     """
@@ -102,9 +102,9 @@ def run_raking(
     atol : float
         Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
     tol: float
-        Tolerance for the termination of the minimization problem. See scipy.optimize.minimize documentation for details.
-    gamma0 : float
-        Initial value for line search
+        Tolerance for the convergence
+    gamma : float
+        Parameter for Armijo rule
     max_iter : int
         Number of iterations for Newton's root finding method
 
@@ -237,18 +237,18 @@ def run_raking(
 
     # Rake
     if method == "chi2":
-        (beta, lambda_k) = raking_chi2(y, A, s, q, tol)
+        (beta, lambda_k) = raking_chi2(y, A, s, q)
     elif method == "entropic":
         (beta, lambda_k, iter_eps) = raking_entropic(
-            y, A, s, q, tol, gamma0, max_iter
+            y, A, s, q, tol, gamma, max_iter
         )
     elif method == "general":
         (beta, lambda_k, iter_eps) = raking_general(
-            y, A, s, alpha, q, tol, gamma0, max_iter
+            y, A, s, alpha, q, tol, 1.0, max_iter
         )
     elif method == "logit":
         (beta, lambda_k, iter_eps) = raking_logit(
-            y, A, s, l, h, q, tol, gamma0, max_iter
+            y, A, s, l, h, q, tol, 1.0, max_iter
         )
     else:
         pass
