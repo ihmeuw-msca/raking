@@ -50,7 +50,6 @@ def raking_entropic_scipy(
     s: np.ndarray,
     q: np.ndarray = None,
     tol: float = 1.0e-11,
-    gamma: float = 1.0e-4,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
 
@@ -76,9 +75,10 @@ def raking_entropic_scipy(
     res = minimize( \
         fun=conjugate_distance, \
         x0=lambda_0, \
-        method='Newton-CG', \
+#        method='Newton-CG', \
+        method='L-BFGS-B',
         jac=conjugate_jacobian, \
-        hess=conjugate_hessian,
+#        hess=conjugate_hessian,
         tol=tol,
         options={'maxiter': max_iter})
     lambda_k = res.x
@@ -198,7 +198,7 @@ def raking_chi2(
     s_hat = np.matmul(A, y)
     Phi = np.matmul(A, np.transpose(A * y * q))
     lambda_k = cg(Phi, s_hat - s)[0]
-    beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+    beta = y * (1.0 - q * np.matmul(np.transpose(A), lambda_k))
     return (beta, lambda_k)
 
 
@@ -210,6 +210,7 @@ def raking_entropic(
     tol: float = 1.0e-11,
     gamma: float = 1.0e-4,
     max_iter: int = 500,
+    conditionner: float = None
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
 
@@ -284,43 +285,44 @@ def raking_entropic(
     # Initialization
     s_hat = np.matmul(A, y)
     lambda_k = np.zeros(A.shape[0])
-    beta = np.copy(y)
     Phi = np.matmul(
         A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
     )
     epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
     iter_eps = 0
     while (epsilon > tol) & (iter_eps < max_iter):
-        Phi = np.matmul(
-            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
-        )
+        print(iter_eps, epsilon)
         D = y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         J = np.matmul(A * D, np.transpose(A))
+        evals, evacs = np.linalg.eig(J)
+        if conditionner == None:
+            J = J + 0.001 * np.min(np.abs(evals[evals!=0.0])) * np.identity(A.shape[0])
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         m = 0
         iter_armijo = 0
-        lambda_kn = lambda_k - 2**(-m) * delta_lambda
+        lambda_kn = lambda_k - 2.0**(-m) * delta_lambda
         Phi_n = np.matmul(
             A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_kn)))
         )
         epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
-        armijo_rule = (epsilon_n < (1 - gamma * 2**(-m)) * epsilon)
+        armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
         while (armijo_rule==False) & (iter_armijo < max_iter):
+            print(iter_eps, epsilon, iter_armijo, m)
             m = m + 1
-            lambda_kn = lambda_k - 2**(-m) * delta_lambda
+            lambda_kn = lambda_k - 2.0**(-m) * delta_lambda
             Phi_n = np.matmul(
                 A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_kn)))
             )
             epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
-            armijo_rule = (epsilon_n < (1 - gamma * 2**(-m)) * epsilon)
+            armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
             iter_armijo = iter_armijo + 1 
-        lambda_k = lambda_k - 2**(-m) * delta_lambda
+        lambda_k = lambda_k - 2.0**(-m) * delta_lambda
         Phi = np.matmul(
             A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
         )
         epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
-        beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         iter_eps = iter_eps + 1
+    beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
     return (beta, lambda_k, iter_eps)
 
 
@@ -330,8 +332,8 @@ def raking_general(
     s: np.ndarray,
     alpha: float = 1,
     q: np.ndarray = None,
-    tol: float = 1e-11,
-    gamma0: float = 1.0,
+    tol: float = 1.0e-11,
+    gamma: float = 1.0e-4,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the general distance f(beta, y) = 1/alpha (y/alpha+1 (beta/y)^alpha+1 - beta + c(y)).
@@ -351,8 +353,10 @@ def raking_general(
         Parameter of the distance function, alpha=1 is the chi2 distance, alpha=0 is the entropic distance
     q : np.ndarray
         Vector of weights (default to all 1)
-    gamma0 : float
-        Initial value for line search
+    tol: float
+        Tolerance for the convergence
+    gamma : float
+        Parameter for Armijo rule
     max_iter : int
         Number of iterations for Newton's root finding method
 
@@ -401,108 +405,75 @@ def raking_general(
         alpha, (int, float)
     ), "The parameter of the distance function should be an integer or a float."
 
+    # Raking weights
     if q is None:
         q = np.ones(len(y))
-
+    # Special case (chi2)
     if alpha == 1:
         (beta, lambda_k) = raking_chi2(y, A, s, q)
         return (beta, lambda_k, 0)
-
+    # Special case (entropic)
     if alpha == 0:
-        (beta, lambda_k, iter_eps) = raking_entropic(
-            y, A, s, q, gamma0, max_iter
-        )
+        (beta, lambda_k, iter_eps) = raking_entropic(y, A, s, q, tol, gamma, max_iter)
         return (beta, lambda_k, iter_eps)
-
+    # Tolerance
+    if tol > 0.001 * np.min(np.abs(s[s!=0])):
+        tol = 0.001 * np.min(np.abs(s[s!=0]))
+    # Initialization
     s_hat = np.matmul(A, y)
     lambda_k = np.zeros(A.shape[0])
     beta = np.copy(y)
-    epsilon = 1.0
+    Phi = Phi = np.matmul(
+        A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha))
+    )
+    epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
     iter_eps = 0
-    while (epsilon > 1.0e-10) & (iter_eps < max_iter):
+    while (epsilon > tol) & (iter_eps < max_iter):
         Phi = np.matmul(
-            A,
-            y
-            * (
-                1.0
-                - np.power(
-                    1 - alpha * q * np.matmul(np.transpose(A), lambda_k),
-                    1.0 / alpha,
-                )
-            ),
+            A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha))
         )
-        D = np.diag(
-            y
-            * q
-            * np.power(
-                1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
-                1.0 / alpha - 1,
-            )
-        )
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        D = y * q * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha - 1.0)
+        J = np.matmul(A * D, np.transpose(A))
         delta_lambda = cg(J, Phi - s_hat + s)[0]
-        gamma = gamma0
-        iter_gam = 0
-        lambda_k = lambda_k - gamma * delta_lambda
-        beta = y * np.power(
-            1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha
+        m = 0
+        iter_armijo = 0
+        lambda_kn = lambda_k - 2**(-m) * delta_lambda
+        Phi_n = np.matmul(
+            A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_kn), 1.0 / alpha))
         )
-        if (alpha > 0.5) or (alpha < -1.0):
-            if iter_eps > 0:
-                while (
-                    (
-                        np.any(
-                            1
-                            - alpha
-                            * q
-                            * np.matmul(
-                                np.transpose(A), lambda_k - gamma * delta_lambda
-                            )
-                            <= 0.0
-                        )
-                    )
-                    & (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon)
-                    & (iter_gam < max_iter)
-                ):
-                    gamma = gamma / 2.0
-                    iter_gam = iter_gam + 1
-                    lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
-                        1.0 / alpha,
-                    )
-            else:
-                while (
-                    np.any(
-                        1
-                        - alpha
-                        * q
-                        * np.matmul(
-                            np.transpose(A), lambda_k - gamma * delta_lambda
-                        )
-                        <= 0.0
-                    )
-                ) & (iter_gam < max_iter):
-                    gamma = gamma / 2.0
-                    iter_gam = iter_gam + 1
-                    lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
-                        1.0 / alpha,
-                    )
+        epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+        armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
+        if (alpha > 0.5) or (alpha < -1.0):   
+            while( \
+                (armijo_rule==False) & \
+                (iter_armijo < max_iter) & \
+                np.any(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_kn) <= 0.0)):
+                m = m + 1
+                lambda_kn = lambda_k - 2.0**(-m) * delta_lambda
+                Phi_n = np.matmul(
+                    A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_kn), 1.0 / alpha))
+                )
+                epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+                armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
+                iter_armijo = iter_armijo + 1
         else:
-            if iter_eps > 0:
-                while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
-                    iter_gam < max_iter
-                ):
-                    gamma = gamma / 2.0
-                    iter_gam = iter_gam + 1
-                    lambda_k = lambda_k - gamma * delta_lambda
-                    beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
-                        1.0 / alpha,
-                    )
-        epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+            while( \
+                (armijo_rule==False) & \
+                (iter_armijo < max_iter)):
+                m = m + 1
+                lambda_kn = lambda_k - 2.0**(-m) * delta_lambda
+                Phi_n = np.matmul(
+                    A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_kn), 1.0 / alpha))
+                )
+                epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+                armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
+                iter_armijo = iter_armijo + 1
+        lambda_k = lambda_k - 2.0**(-m) * delta_lambda
+        Phi = np.matmul(
+            A, y * (1.0 - np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha))
+        )
+        epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
+        beta = y * np.power(1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha)
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
 
