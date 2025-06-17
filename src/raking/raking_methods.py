@@ -290,8 +290,8 @@ def raking_entropic(
     )
     epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
     iter_eps = 0
+    print(iter_eps, epsilon)
     while (epsilon > tol) & (iter_eps < max_iter):
-        print(iter_eps, epsilon)
         D = y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         J = np.matmul(A * D, np.transpose(A))
         evals, evacs = np.linalg.eig(J)
@@ -306,8 +306,7 @@ def raking_entropic(
         )
         epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
         armijo_rule = (epsilon_n < (1.0 - gamma * 2.0**(-m)) * epsilon)
-        while (armijo_rule==False) & (iter_armijo < max_iter):
-            print(iter_eps, epsilon, iter_armijo, m)
+        while (armijo_rule==False) & (iter_armijo < 500):
             m = m + 1
             lambda_kn = lambda_k - 2.0**(-m) * delta_lambda
             Phi_n = np.matmul(
@@ -322,6 +321,7 @@ def raking_entropic(
         )
         epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
         iter_eps = iter_eps + 1
+        print(iter_eps, iter_armijo, epsilon)
     beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
     return (beta, lambda_k, iter_eps)
 
