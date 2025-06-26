@@ -29,11 +29,11 @@ def raking_inequality(
         bounds = Bounds(l, h)
 
     def distance(beta):
-        return compute_dist(beta, y, q, method, l, h)[0]
+        return compute_dist(beta, y, q, method, 'objective', l, h)
     def jacobian(beta):
-        return compute_dist(beta, y, q, method, l, h)[1]
+        return compute_dist(beta, y, q, method, 'gradient', l, h)
     def hessian(beta):
-        return compute_dist(beta, y, q, method, l, h)[2]
+        return np.diag(compute_dist(beta, y, q, method, 'hessian', l, h))
 
     if method == 'chi2':
         (beta, lambda_k) = raking_chi2(y, A, s, q)
