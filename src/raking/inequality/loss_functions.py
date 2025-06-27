@@ -2,47 +2,47 @@
 
 import numpy as np
 
-def compute_loss(x, loss, order):
+def compute_loss(x, penalty, loss, order):
     """
     """
     if order == 'objective':
         if loss == 'hinge':
-            return np.sum(np.power(np.maximum(0.0, - x), 3.0))
+            return np.sum(np.power(np.maximum(0.0, - penalty * x), 3.0))
         if loss == 'logit':
-            return np.sum(np.log(1.0 + np.exp(- x)))
+            return np.sum(np.log(1.0 + np.exp(- penalty * x)))
 
     if order == 'gradient':
         if loss == 'hinge':
-            return - 3.0 * np.square(np.maximum(0.0, - x))
+            return - 3.0 * penalty * np.square(np.maximum(0.0, - penalty * x))
         if loss == 'logit':
-            return - 1.0 / (1.0 + np.exp(x))
+            return - penalty / (1.0 + np.exp(penalty * x))
 
     if order == 'hessian':
         if loss == 'hinge':
-            return 6.0 * np.maximum(0, - x)
+            return 6.0 * (penalty**2.0) * np.maximum(0, - penalty * x)
         if loss == 'logit':
-            return np.exp(x) / np.square(1.0 + np.exp(x))
+            return (penalty**2.0) * np.exp(penalty * x) / np.square(1.0 + np.exp(penalty * x))
 
-def compute_conjugate_loss(z, loss, order):
+def compute_conjugate_loss(z, penalty, loss, order):
     """
     """
     if order == 'objective':
         if loss == 'hinge':
-            return - 2.0 * z * np.sqrt(z / 3.0)
+            return - 2.0 * np.power(- z / (3.0 * penalty), 3.0 / 2.0)
         if loss == 'logit':
-            return (1.0 + z) * np.log(1.0 + z) - z * np.log(- z)
+            return (3.0 / penalty) * np.log(- (z + penalty) / z) - np.log(penalty / (penalty + z))
 
     if order == 'gradient':
         if loss == 'hinge':
-            return - np.sqrt(3.0 * z)
+            return np.sqrt(- z / (3.0 * penalty)) / penalty
         if loss == 'logit':
-            return np.log(- 1.0 - 1.0 / z)
+            return np.log(- (z + penalty) / z) / penalty
 
     if order == 'hessian':
         if loss == 'hinge':
-            return - np.sqrt(3.0 / z) / 2.0
+            return - np.sqrt(- 3.0 * penalty / z) / (6.0 * penalty)
         if loss == 'logit':
-            return - 1.0 / (z * (z + 1.0))
+            return - 1.0 / (z * (z + penalty))
 
 def compute_dist(beta, y, q, method, order, l=None, h=None):
     """
@@ -103,10 +103,12 @@ def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
         if method == 'chi2':
             return np.sum(z * y * (1.0 + q * z / 2.0))
         if method == 'entropic':
-            return np.sum(y * (np.exp(q * z) - 1.0))
+            indices = (q != 0)
+            return np.sum(y[indices] * (np.exp(q[indices] * z[indices]) - 1.0) / q[indices])
         if method == 'logit':
-            return np.sum(l * z + ((h - l) / q) * np.log( \
-                np.exp(q * z) * (y - l) / (h - l)  + (h - y) / (h - l)))
+            indices = ((q != 0) & ((h - y) + (y - l) * np.exp(q * z) != 0) & ((h - l) / ((h - y) + (y - l) * np.exp(q * z)) > 0))
+            return np.sum(l[indices] * z[indices] - ((h[indices] - l[indices]) / q[indices]) * np.log( \
+                (h[indices] - l[indices]) / ((h[indices] - y[indices]) + (y[indices] - l[indices]) * np.exp(q[indices] * z[indices]))))
 
     if order == 'gradient':
         if method == 'chi2':
@@ -114,8 +116,11 @@ def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
         if method == 'entropic':
             return y * np.exp(q * z)
         if method == 'logit':
-            return (l * (h - y) + h * (y - l) * np.exp(q * z)) / \
-                (h - y + (y - l) * np.exp(q * z))
+            indices = ((h - y) + (y - l) * np.exp(q * z) != 0)
+            gradient = np.zeros(z)
+            gradient[indices] = (l[indices] * (h[indices] - y[indices]) + h[indices] * (y[indices] - l[indices]) * np.exp(q[indices] * z[indices])) / \
+                ((h[indices] - y[indices]) + (y[indices] - l[indices]) * np.exp(q[indices] * z[indices]))
+            return gradient
 
     if order == 'hessian':
         if method == 'chi2':
@@ -123,6 +128,9 @@ def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
         if method == 'entropic':
             return q * y * np.exp(q * z)
         if method == 'logit':
-            return (q * (y - l) * (h - y) * (h - l) * np.exp(q * z)) / \
-                np.square(h - y + (y - l) * np.exp(q * z))
+            indices = ((h - y) + (y - l) * np.exp(q * z) != 0)
+            hessian = np.zeros(z)
+            hessian[indices] = (q[indices] * (y[indices] - l[indices]) * (h[indices] - y[indices]) * (h[indices] - l[indices]) * np.exp(q[indices] * z[indices])) / \
+                np.square((h[indices] - y[indices]) + (y[indices] - l[indices]) * np.exp(q[indices] * z[indices]))
+            return hessian
 
