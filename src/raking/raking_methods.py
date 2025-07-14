@@ -41,7 +41,7 @@ def raking_chi2_scipy(
         tol=tol)
     lambda_k = res.x
     beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
-    return (beta, lambda_k)
+    return (beta, lambda_k, res)
 
 
 def raking_entropic_scipy(
@@ -75,16 +75,14 @@ def raking_entropic_scipy(
     res = minimize( \
         fun=conjugate_distance, \
         x0=lambda_0, \
-#        method='Newton-CG', \
         method='L-BFGS-B',
         jac=conjugate_jacobian, \
-#        hess=conjugate_hessian,
         tol=tol,
         options={'maxiter': max_iter})
     lambda_k = res.x
     iter_eps = res.nit
     beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-    return (beta, lambda_k, iter_eps)
+    return (beta, lambda_k, res)
 
 
 def raking_general_scipy(
@@ -128,7 +126,7 @@ def raking_general_scipy(
     lambda_k = res.x
     iter_eps = res.nit
     beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-    return (beta, lambda_k, iter_eps)
+    return (beta, lambda_k, res)
 
 
 def raking_chi2(
@@ -294,9 +292,6 @@ def raking_entropic(
     while (epsilon > tol) & (iter_eps < max_iter):
         D = y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
         J = np.matmul(A * D, np.transpose(A))
-        evals, evacs = np.linalg.eig(J)
-        if conditionner == None:
-            J = J + 0.001 * np.min(np.abs(evals[evals!=0.0])) * np.identity(A.shape[0])
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         m = 0
         iter_armijo = 0
