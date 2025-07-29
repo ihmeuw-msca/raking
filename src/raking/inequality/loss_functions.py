@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from math import sqrt
+
 def compute_loss(x, penalty, loss, order):
     """
     """
@@ -28,19 +30,19 @@ def compute_conjugate_loss(z, penalty, loss, order):
     """
     if order == 'objective':
         if loss == 'hinge':
-            return - 2.0 * np.power(- z / (3.0 * penalty), 3.0 / 2.0)
+            return (2.0 / sqrt(3.0)) * np.power(- z / penalty, 3.0 / 2.0)
         if loss == 'logit':
             return (3.0 / penalty) * np.log(- (z + penalty) / z) - np.log(penalty / (penalty + z))
 
     if order == 'gradient':
         if loss == 'hinge':
-            return np.sqrt(- z / (3.0 * penalty)) / penalty
+            return - (sqrt(3.0) / penalty) * np.sqrt(- z / penalty)
         if loss == 'logit':
             return np.log(- (z + penalty) / z) / penalty
 
     if order == 'hessian':
         if loss == 'hinge':
-            return - np.sqrt(- 3.0 * penalty / z) / (6.0 * penalty)
+            return (sqrt(3.0) / (2.0 * (penalty**2.0))) * np.sqrt(- penalty / z)
         if loss == 'logit':
             return - 1.0 / (z * (z + penalty))
 
@@ -96,6 +98,24 @@ def compute_dist(beta, y, q, method, order, l=None, h=None):
             hessian[indices] = (1.0 / q[indices]) * (1.0 / (beta[indices] - l[indices]) + 1.0 / (h[indices] - beta[indices]))
             return hessian
 
+    if order == "both":
+        if method == 'chi2':
+            indices = ((q != 0) & (y != 0))
+            hessian = np.zeros(len(beta))
+            hessian[indices] = - beta[indices] / (q[indices] * np.square(y[indices]))
+            return hessian
+        if method == 'entropic':
+            indices = ((q != 0) & (y != 0))
+            hessian = np.zeros(len(beta))
+            hessian[indices] = - 1.0 / (q[indices] * y[indices])
+            return hessian
+        if method == 'logit':
+            indices = ((q != 0) & (y != l) & (y != h))
+            hessian = np.zeros(len(beta))
+            hessian[indices] = (1.0 / q[indices]) * \
+            ( - 1.0 / (y[indices] - l[indices]) - 1.0 / (h[indices] - y[indices]))
+            return hessian
+
 def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
     """
     """
@@ -117,7 +137,7 @@ def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
             return y * np.exp(q * z)
         if method == 'logit':
             indices = ((h - y) + (y - l) * np.exp(q * z) != 0)
-            gradient = np.zeros(z)
+            gradient = np.zeros(len(z))
             gradient[indices] = (l[indices] * (h[indices] - y[indices]) + h[indices] * (y[indices] - l[indices]) * np.exp(q[indices] * z[indices])) / \
                 ((h[indices] - y[indices]) + (y[indices] - l[indices]) * np.exp(q[indices] * z[indices]))
             return gradient
@@ -129,7 +149,7 @@ def compute_conjugate_dist(z, y, q, method, order, l=None, h=None):
             return q * y * np.exp(q * z)
         if method == 'logit':
             indices = ((h - y) + (y - l) * np.exp(q * z) != 0)
-            hessian = np.zeros(z)
+            hessian = np.zeros(len(z))
             hessian[indices] = (q[indices] * (y[indices] - l[indices]) * (h[indices] - y[indices]) * (h[indices] - l[indices]) * np.exp(q[indices] * z[indices])) / \
                 np.square((h[indices] - y[indices]) + (y[indices] - l[indices]) * np.exp(q[indices] * z[indices]))
             return hessian
