@@ -98,7 +98,7 @@ def compute_dist(beta, y, q, method, order, l=None, h=None):
             hessian[indices] = (1.0 / q[indices]) * (1.0 / (beta[indices] - l[indices]) + 1.0 / (h[indices] - beta[indices]))
             return hessian
 
-    if order == "both":
+    if order == 'both':
         if method == 'chi2':
             indices = ((q != 0) & (y != 0))
             hessian = np.zeros(len(beta))

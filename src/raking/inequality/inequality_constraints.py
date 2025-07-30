@@ -112,12 +112,13 @@ def inequality_infant_mortality(
 def inequality_time_trend(
     y: list,
     pop: list
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the constraints matrix C and the inequality vector c for the time trend problem.
 
     We need to define the inequality constraints C beta < c
     when conserving the time trend throught the raking:
-    For years i and i+1 we have (beta_i - beta_i+1) (y_i - y_i+1) >= 0.
+    For years i and i+1 we have (beta_i/pop_i - beta_i+1/pop_i+1) (y_i/pop_i - y_i+1/pop_i+1) >= 0.
+    We also compute the partial derivatives of C with respect to y.
 
     Parameters
     ----------
@@ -132,6 +133,8 @@ def inequality_time_trend(
         (n-1)p * np inequality constraints matrix
     c : np.ndarray
         length np inequality constraints vector
+    DyC : np.ndarray
+        (n-1)p * np * np derivatives of inequality constraints with respect to y
     """
     assert isinstance(y, list), \
         'The observations for all the years must be entered as a list.'
@@ -150,11 +153,20 @@ def inequality_time_trend(
             str(i + 1) + \
             ' must have the same length as the observations for year 1.'
     C = np.zeros((p * (n - 1), p * n))
+    DyC = np.zeros((p * (n - 1), p * n, p * n))
     for i in range(0, n - 1):
         C[(i * p):((i + 1) * p), (i * p):((i + 1) * p)] = \
             np.diag((y[i + 1] / pop[i + 1] - y[i] / pop[i]) / pop[i])
         C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
-            np.diag((y[i] / pop[i] - y[i + 1] / pop[i +1]) / pop[i + 1])
+            np.diag((y[i] / pop[i] - y[i + 1] / pop[i + 1]) / pop[i + 1])
+        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), (i * p):((i + 1) * p)] = \
+            np.fill_diagonal(np.zeros((p, p, p)), - 1.0 / np.square(pop[i]))
+        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), (i * p):((i + 1) * p)] = \
+            np.fill_diagonal(np.zeros((p, p, p)), 1.0 / (pop[i] * pop[i + 1]))
+        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
+            np.fill_diagonal(np.zeros((p, p, p)), 1.0 / (pop[i] * pop[i + 1]))
+        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), ((i + 1) * p):((i + 2) * p)] = \
+            np.fill_diagonal(np.zeros((p, p, p)), - 1.0 / np.square(pop[i + 1]))
     c = np.zeros(p * (n - 1))
-    return (C, c)
+    return (C, c, DyC)
 

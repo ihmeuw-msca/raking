@@ -116,7 +116,7 @@ def set_time_trend(
     q: list,
     l: list = None,
     h: list = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Set up the optimization problem for the time trend problem.
 
     We need to define the problem:
@@ -134,6 +134,10 @@ def set_time_trend(
     s
     C
     c
+    DyC
+    q
+    l
+    h
     """
     n = len(y)
     p = len(y[0])
@@ -142,7 +146,7 @@ def set_time_trend(
     for i in range(0, n):
         A[(i * A0.shape[0]):((i + 1) * A0.shape[0]), (i * A0.shape[1]):((i + 1) * A0.shape[1])] = A0
     s = np.concatenate(s)
-    (C, c) = inequality_time_trend(y, pop)
+    (C, c, DyC) = inequality_time_trend(y, pop)
     y = np.concatenate(y)
     q = np.concatenate(q)
     if l is not None:
@@ -151,5 +155,5 @@ def set_time_trend(
         h = np.concatenate(h)
     else:
         h = None
-    return (y, A, s, C, c, q, l, h)
+    return (y, A, s, C, c, DyC, q, l, h)
 

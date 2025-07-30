@@ -8,8 +8,10 @@ from raking.inequality.loss_functions import compute_loss, compute_dist
 
 def compute_covariance(
     Dphi_y: np.ndarray,
+    Dphi_c: np.adrray,
     Dphi_s: np.ndarray,
     y_var: np.ndarray,
+    c_var: np.ndarray,
     s_var: np.ndarray,
 ) -> np.ndarray:
     """Compute the covariance matrix of the raked values.
@@ -20,12 +22,16 @@ def compute_covariance(
 
     Parameters
     ----------
-    dPhi_y : np.ndarray
+    Dphi_y : np.ndarray
         Derivatives with respect to the observations
+    Dphi_c : np.ndarray
+        Derivatives with respect to the bounds
     Dphi_s : np.ndarray
         Derivatives with respect to the margins
     y_var : np.ndarray
         Variances of the observations
+    c_var : np.ndarray
+        Variances of the bounds
     s_var : np.ndarray
         Variances of the margins
 
@@ -35,8 +41,8 @@ def compute_covariance(
         Covariance matrix of the raked values
     """
 
-    Dphi = np.concatenate((Dphi_y, Dphi_s), axis=1)
-    sigma = np.concatenate((y_var, s_var))
+    Dphi = np.concatenate((Dphi_y, Dphi_c, Dphi_s), axis=1)
+    sigma = np.concatenate((y_var, c_var, s_var))
     covariance = np.matmul(Dphi * sigma, np.transpose(Dphi))
     return covariance
     
@@ -48,6 +54,7 @@ def compute_gradient(
     s: np.ndarray,
     C: np.ndarray,
     c: np.ndarray,
+    DyC: np.ndarray,
     q: np.ndarray,
     method: str = 'chi2',
     loss: str = 'logit',
@@ -74,28 +81,33 @@ def compute_gradient(
 
     # Gradient with respect to y and s
     dist_both = compute_dist(beta_0, y, q, method, 'both', l, h)
-    DF1_y = np.diag(dist_both)
+    loss_gradient = compute_loss(c - np.matmul(C, beta_0), penalty, loss, 'gradient')
+    DF1_y = np.diag(dist_both) - \
+        np.transpose(np.transpose(DyC, (0, 2, 1)) * loss_gradient, (2, 0, 1)).sum(axis=0) + \
+        np.matmul(np.transpose * loss_hessian, \
+            np.transpose(np.transpose(DyC, (0, 2, 1)) * beta_0, (0, 2, 1)).sum(axis=1))
+    DF1_c = - np.transpose(C) * loss_hessian
     DF1_s = np.zeros((np.shape(A)[1], np.shape(A)[0]))
     DF2_y = np.zeros((np.shape(A)[0], np.shape(A)[1]))
-    DF2_s = -np.identity(np.shape(A)[0])
-    DF_y_s = np.concatenate(
+    DF2_c = np.zeros(((np.shape(C)[1], np.shape(C)[0]))
+    DF2_s = - np.identity(np.shape(A)[0])
+    DF_y_c_s = np.concatenate(
         (
-            np.concatenate((DF1_y, DF1_s), axis=1),
-            np.concatenate((DF2_y, DF2_s), axis=1),
+            np.concatenate((DF1_y, DF1_c, DF1_s), axis=1),
+            np.concatenate((DF2_y, DF2_c, DF2_s), axis=1),
         ),
         axis=0,
     )
 
     # Solve system DF_beta_lambda Dphi_y_s = - DF_y_s
-    Dphi_y_s = np.zeros_like(DF_y_s)
+    Dphi_y_c_s = np.zeros_like(DF_y_c_s)
     lu, piv = lu_factor(DF_beta_lambda)
-    for i in range(0, np.shape(DF_y_s)[1]):
-        Dphi_y_s[:, i] = -lu_solve((lu, piv), DF_y_s[:, i])
+    for i in range(0, np.shape(DF_y_c_s)[1]):
+        Dphi_y_c_s[:, i] = -lu_solve((lu, piv), DF_y_c_s[:, i])
 
     # Return gradient of beta and lambda with respect to y and s
-    Dphi_y = Dphi_y_s[0 : np.shape(A)[1], 0 : np.shape(A)[1]]
-    Dphi_s = Dphi_y_s[
-        0 : np.shape(A)[1], np.shape(A)[1] : (np.shape(A)[0] + np.shape(A)[1])
-    ]
-    return (Dphi_y, Dphi_s)
-    
+    Dphi_y = Dphi_y_c_s[0 : np.shape(A)[1], 0 : np.shape(A)[1]]
+    Dphi_c = Dphi_y_c_s[0 : np.shape(A)[1], np.shape(A)[1] : (np.shape(A)[1] + np.shape(C)[0])]
+    Dphi_s = Dphi_y_c_s[0 : np.shape(A)[1], (np.shape(A)[1] + np.shape(C)[0]) : (np.shape(A)[0] + np.shape(A)[1] + np.shape(C)[0])]
+    return (Dphi_y, Dphi_c, Dphi_s)
+
