@@ -159,14 +159,22 @@ def inequality_time_trend(
             np.diag((y[i + 1] / pop[i + 1] - y[i] / pop[i]) / pop[i])
         C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
             np.diag((y[i] / pop[i] - y[i + 1] / pop[i + 1]) / pop[i + 1])
-        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), (i * p):((i + 1) * p)] = \
-            np.fill_diagonal(np.zeros((p, p, p)), - 1.0 / np.square(pop[i]))
-        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), (i * p):((i + 1) * p)] = \
-            np.fill_diagonal(np.zeros((p, p, p)), 1.0 / (pop[i] * pop[i + 1]))
-        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
-            np.fill_diagonal(np.zeros((p, p, p)), 1.0 / (pop[i] * pop[i + 1]))
-        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), ((i + 1) * p):((i + 2) * p)] = \
-            np.fill_diagonal(np.zeros((p, p, p)), - 1.0 / np.square(pop[i + 1]))
+        # Bloc - y_i / n_i^2
+        bloc_1 = np.zeros((p, p, p))
+        np.fill_diagonal(bloc_1, - 1.0 / np.square(pop[i]))
+        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), (i * p):((i + 1) * p)] = bloc_1
+        # Bloc y_i / n_i n_i+1
+        bloc_2 = np.zeros((p, p, p))
+        np.fill_diagonal(bloc_2, 1.0 / (pop[i] * pop[i + 1]))
+        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), (i * p):((i + 1) * p)] = bloc_2
+        # Bloc y_i+1 / n_i n_i+1
+        bloc_3 = np.zeros((p, p, p))
+        np.fill_diagonal(bloc_3, 1.0 / (pop[i] * pop[i + 1]))
+        DyC[(i * p):((i + 1) * p), (i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = bloc_3
+        # Bloc - y_i+1 / n_i+1^2
+        bloc_4 = np.zeros((p, p, p))
+        np.fill_diagonal(bloc_4, - 1.0 / np.square(pop[i + 1]))
+        DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), ((i + 1) * p):((i + 2) * p)] = bloc_4
     c = np.zeros(p * (n - 1))
     return (C, c, DyC)
 

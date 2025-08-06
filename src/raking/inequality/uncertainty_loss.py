@@ -8,7 +8,7 @@ from raking.inequality.loss_functions import compute_loss, compute_dist
 
 def compute_covariance(
     Dphi_y: np.ndarray,
-    Dphi_c: np.adrray,
+    Dphi_c: np.ndarray,
     Dphi_s: np.ndarray,
     y_var: np.ndarray,
     c_var: np.ndarray,
@@ -83,13 +83,13 @@ def compute_gradient(
     dist_both = compute_dist(beta_0, y, q, method, 'both', l, h)
     loss_gradient = compute_loss(c - np.matmul(C, beta_0), penalty, loss, 'gradient')
     DF1_y = np.diag(dist_both) - \
-        np.transpose(np.transpose(DyC, (0, 2, 1)) * loss_gradient, (2, 0, 1)).sum(axis=0) + \
-        np.matmul(np.transpose * loss_hessian, \
-            np.transpose(np.transpose(DyC, (0, 2, 1)) * beta_0, (0, 2, 1)).sum(axis=1))
+        (np.transpose(DyC, (1, 2, 0)) * loss_gradient).sum(axis=2) + \
+        np.matmul(np.transpose(C) * loss_hessian, \
+            (np.transpose(DyC, (0, 2, 1)) * beta_0).sum(axis=1))
     DF1_c = - np.transpose(C) * loss_hessian
     DF1_s = np.zeros((np.shape(A)[1], np.shape(A)[0]))
     DF2_y = np.zeros((np.shape(A)[0], np.shape(A)[1]))
-    DF2_c = np.zeros(((np.shape(C)[1], np.shape(C)[0]))
+    DF2_c = np.zeros((np.shape(A)[0], np.shape(C)[0]))
     DF2_s = - np.identity(np.shape(A)[0])
     DF_y_c_s = np.concatenate(
         (
