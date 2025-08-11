@@ -46,6 +46,7 @@ def run_raking(
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list | None,
+    margin_names: list = None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
@@ -75,6 +76,8 @@ def run_raking(
         list of data frames contatining the margins data
     var_names : list of strings
         Names of the variables over which we rake (e.g. cause, race, county). None if using special case.
+    margin_names : list
+        Names for the all causes, all races, all counties categories (length 3). None if using 1D, 2D or 3D raking.
     draws: string
         Name of the column that contains the samples.
     cov_mat : boolean
@@ -123,7 +126,10 @@ def run_raking(
         2,
         3,
         "USHD",
-    ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
+        "USHD_lower",
+    ], (
+        "The dimension of the raking problem must be 1, 2, 3, USHD or USHD_lower."
+    )
     assert isinstance(cov_mat, bool), (
         "cov_mat indicates whether we compute the covariance matrix, must be True or False."
     )
@@ -136,6 +142,15 @@ def run_raking(
         )
     else:
         var_names = ["cause", "race", "county"]
+    if dim in ["USHD", "USHD_lower"]:
+        assert isinstance(margin_names, list), (
+            "Please enter the names of the all causes, all races, all counties categories as a list."
+        )
+        assert len(margin_names) == 3, (
+            "There should be a margin name for each of the three variables cause, race, and county."
+        )
+    else:
+        margin_names = None
     assert isinstance(df_margins, list), (
         "The margins data frames must be entered as a list."
     )
@@ -143,9 +158,13 @@ def run_raking(
         assert dim == len(df_margins), (
             "The number of margins data frames must be equal to the dimension of the problem."
         )
-    else:
+    elif dim == "USHD":
         assert len(df_margins) == 1, (
             "There should be only one margins data frame in the list."
+        )
+    else:
+        assert len(df_margins) == 3, (
+            "There should be three margins data frames in the list."
         )
     assert isinstance(method, str), (
         "The name of the distance function used for the raking must be a string."
@@ -156,6 +175,8 @@ def run_raking(
         "general",
         "logit",
     ], "The distance function must be chi2, entropic, general or logit."
+
+    df_obs = df_obs.copy(deep=True)
 
     # Compute the covariance matrix
     if cov_mat:
@@ -246,7 +267,7 @@ def run_raking(
         )
     elif method == "general":
         (beta, lambda_k, iter_eps) = raking_general(
-            y, A, s, alpha, q, tol, 1.0, max_iter
+            y, A, s, alpha, q, tol, gamma, max_iter
         )
     elif method == "logit":
         (beta, lambda_k, iter_eps) = raking_logit(
