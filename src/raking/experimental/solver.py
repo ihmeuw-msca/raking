@@ -69,35 +69,33 @@ class DualSolver:
         if method is None:
             method = "L-BFGS-B" if self.vec_c.size == 0 else "trust-constr"
 
-        if method not in ["CG", "BFGS", "Newton-CG", "L-BFGS-B", "TNC", \
-            "SLSQP", "dogleg", "trust-ncg", "trust-krylov", "trust-exact", \
-            "trust-constr"]:
-            jac = None
-
-        if method not in ["Newton-CG", "dogleg", "trust-ncg", "trust-krylov", \
-            "trust-exact", "trust-constr"]:
-            hess = None
-
         if options == None:
             if method == "L-BFGS-B":
                 options={'ftol': 1.0e-11, 'gtol': 1.0e-11}
             if method == "trust-constr":
                 options={'gtol': 1.0e-11, 'xtol': 1.0e-11}
 
-        if constraints not in ["COBYLA", "COBYQA", "SLSQP", "trust-constr"]:
-            constraints = None
-
-        self.result = minimize(
-            self.objective,
-            x0,
-            method=method,
-            jac=self.gradient,
-            hess=self.hessian,
-            constraints=constraints,
-            tol=tol,
-            options=options
-        )
-
+        if method == "L-BFGS-B":
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                tol=tol,
+                options=options
+            )
+        else:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                hess=self.hessian,
+                constraints=constraints,
+                tol=tol,
+                options=options
+            )
+        
         soln = self.data["span"].copy()
         soln["soln"] = self.dual_to_primal(self.result.x)
         return soln
@@ -157,34 +155,32 @@ class PrimalSolver:
         if method is None:
             method = "L-BFGS-B" if self.vec_c.size == 0 else "trust-constr"
 
-        if method not in ["CG", "BFGS", "Newton-CG", "L-BFGS-B", "TNC", \
-            "SLSQP", "dogleg", "trust-ncg", "trust-krylov", "trust-exact", \
-            "trust-constr"]:
-            jac = None
-
-        if method not in ["Newton-CG", "dogleg", "trust-ncg", "trust-krylov", \
-            "trust-exact", "trust-constr"]:
-            hess = None
-
         if options == None:
             if method == "L-BFGS-B":
                 options={'ftol': 1.0e-11, 'gtol': 1.0e-11}
             if method == "trust-constr":
                 options={'gtol': 1.0e-11, 'xtol': 1.0e-11}
 
-        if constraints not in ["COBYLA", "COBYQA", "SLSQP", "trust-constr"]:
-            constraints = None
-            
-        self.result = minimize(
-            self.objective,
-            x0,
-            method=method,
-            jac=self.gradient,
-            hess=self.hessian,
-            constraints=constraints,
-            tol=tol,
-            options=options,
-        )
+        if method == "L-BFGS-B":
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                tol=tol,
+                options=options
+            )
+        else:
+            self.result = minimize(
+                self.objective,
+                x0,
+                method=method,
+                jac=self.gradient,
+                hess=self.hessian,
+                constraints=constraints,
+                tol=tol,
+                options=options
+            )
 
         soln = self.data["span"].copy()
         soln["soln"] = self.result.x
