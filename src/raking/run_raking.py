@@ -253,7 +253,7 @@ def run_raking(
         )
     elif dim == "USHD":
         (y, s, q, l, h, A) = run_raking_USHD(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
         )
     elif dim == "USHD_lower":
         (y, s, q, l, h, A) = run_raking_USHD_lower(
