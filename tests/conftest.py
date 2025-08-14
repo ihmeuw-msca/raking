@@ -94,6 +94,38 @@ class ExampleUSHD_draws:
         )
 
 
+class ExampleUSHD_lower:
+    def __init__(self):
+        self.df_obs = pd.read_csv(
+            EXAMPLES / "example_USHD_lower" / "observations.csv"
+        )
+        self.df_margins_cause = pd.read_csv(
+            EXAMPLES / "example_USHD_lower" / "margins_cause.csv"
+        )
+        self.df_margins_county = pd.read_csv(
+            EXAMPLES / "example_USHD_lower" / "margins_county.csv"
+        )
+        self.df_margins_all_causes = pd.read_csv(
+            EXAMPLES / "example_USHD_lower" / "margins_all_causes.csv"
+        )
+
+
+class ExampleUSHD_lower_draws:
+    def __init__(self):
+        self.df_obs = pd.read_csv(
+            EXAMPLES / "example_USHD_lower_draws" / "observations.csv"
+        )
+        self.df_margins_cause = pd.read_csv(
+            EXAMPLES / "example_USHD_lower_draws" / "margins_cause.csv"
+        )
+        self.df_margins_county = pd.read_csv(
+            EXAMPLES / "example_USHD_lower_draws" / "margins_county.csv"
+        )
+        self.df_margins_all_causes = pd.read_csv(
+            EXAMPLES / "example_USHD_lower_draws" / "margins_all_causes.csv"
+        )
+
+
 @pytest.fixture
 def example_1D():
     return Example1D()
@@ -132,3 +164,13 @@ def example_USHD():
 @pytest.fixture
 def example_USHD_draws():
     return ExampleUSHD_draws()
+
+
+@pytest.fixture
+def example_USHD_lower():
+    return ExampleUSHD_lower()
+
+
+@pytest.fixture
+def example_USHD_lower_draws():
+    return ExampleUSHD_lower_draws()

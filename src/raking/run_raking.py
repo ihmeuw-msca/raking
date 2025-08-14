@@ -8,6 +8,7 @@ from raking.compute_constraints import (
     constraints_2D,
     constraints_3D,
     constraints_USHD,
+    constraints_USHD_lower,
 )
 from raking.compute_covariance import compute_covariance_obs
 from raking.compute_covariance import (
@@ -27,6 +28,7 @@ from raking.formatting_methods import (
     format_data_2D,
     format_data_3D,
     format_data_USHD,
+    format_data_USHD_lower,
 )
 from raking.raking_methods import (
     raking_chi2,
@@ -44,6 +46,7 @@ def run_raking(
     df_obs: pd.DataFrame,
     df_margins: list,
     var_names: list | None,
+    margin_names: list = None,
     draws: str = "draws",
     cov_mat: bool = True,
     sigma_yy: np.ndarray = None,
@@ -73,6 +76,8 @@ def run_raking(
         list of data frames contatining the margins data
     var_names : list of strings
         Names of the variables over which we rake (e.g. cause, race, county). None if using special case.
+    margin_names : list
+        Names for the all causes, all races, all counties categories (length 3). None if using 1D, 2D or 3D raking.
     draws: string
         Name of the column that contains the samples.
     cov_mat : boolean
@@ -113,47 +118,65 @@ def run_raking(
     df_obs : pd.DataFrame
         The initial observations data frame with an additional column for the raked values
     """
-    assert isinstance(dim, int) or isinstance(
-        dim, str
-    ), "The dimension of the raking problem must be an integer or string."
+    assert isinstance(dim, int) or isinstance(dim, str), (
+        "The dimension of the raking problem must be an integer or string."
+    )
     assert dim in [
         1,
         2,
         3,
         "USHD",
-    ], "The dimension of the raking problem must be 1, 2, 3 or USHD."
-    assert isinstance(
-        cov_mat, bool
-    ), "cov_mat indicates whether we compute the covariance matrix, must be True or False."
+        "USHD_lower",
+    ], (
+        "The dimension of the raking problem must be 1, 2, 3, USHD or USHD_lower."
+    )
+    assert isinstance(cov_mat, bool), (
+        "cov_mat indicates whether we compute the covariance matrix, must be True or False."
+    )
     if dim in [1, 2, 3]:
-        assert isinstance(
-            var_names, list
-        ), "The variables over which we rake must be entered as a list."
-        assert (
-            dim == len(var_names)
-        ), "The number of variables over which we rake must be equal to the dimension of the problem."
+        assert isinstance(var_names, list), (
+            "The variables over which we rake must be entered as a list."
+        )
+        assert dim == len(var_names), (
+            "The number of variables over which we rake must be equal to the dimension of the problem."
+        )
     else:
         var_names = ["cause", "race", "county"]
-    assert isinstance(
-        df_margins, list
-    ), "The margins data frames must be entered as a list."
-    if dim in [1, 2, 3]:
-        assert (
-            dim == len(df_margins)
-        ), "The number of margins data frames must be equal to the dimension of the problem."
+    if dim in ["USHD", "USHD_lower"]:
+        assert isinstance(margin_names, list), (
+            "Please enter the names of the all causes, all races, all counties categories as a list."
+        )
+        assert len(margin_names) == 3, (
+            "There should be a margin name for each of the three variables cause, race, and county."
+        )
     else:
-        assert (
-            len(df_margins) == 1
-        ), "There should be only one margins data frame in the list."
-    assert isinstance(
-        method, str
-    ), "The name of the distance function used for the raking must be a string."
+        margin_names = None
+    assert isinstance(df_margins, list), (
+        "The margins data frames must be entered as a list."
+    )
+    if dim in [1, 2, 3]:
+        assert dim == len(df_margins), (
+            "The number of margins data frames must be equal to the dimension of the problem."
+        )
+    elif dim == "USHD":
+        assert len(df_margins) == 1, (
+            "There should be only one margins data frame in the list."
+        )
+    else:
+        assert len(df_margins) == 3, (
+            "There should be three margins data frames in the list."
+        )
+    assert isinstance(method, str), (
+        "The name of the distance function used for the raking must be a string."
+    )
     assert method in [
         "chi2",
         "entropic",
         "general",
         "logit",
     ], "The distance function must be chi2, entropic, general or logit."
+
+    df_obs = df_obs.copy(deep=True)
 
     # Compute the covariance matrix
     if cov_mat:
@@ -230,7 +253,11 @@ def run_raking(
         )
     elif dim == "USHD":
         (y, s, q, l, h, A) = run_raking_USHD(
-            df_obs, df_margins, weights, lower, upper, rtol, atol
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
+        )
+    elif dim == "USHD_lower":
+        (y, s, q, l, h, A) = run_raking_USHD_lower(
+            df_obs, df_margins, margin_names, weights, lower, upper, rtol, atol
         )
     else:
         pass
@@ -244,7 +271,7 @@ def run_raking(
         )
     elif method == "general":
         (beta, lambda_k, iter_eps) = raking_general(
-            y, A, s, alpha, q, tol, 1.0, max_iter
+            y, A, s, alpha, q, tol, gamma, max_iter
         )
     elif method == "logit":
         (beta, lambda_k, iter_eps) = raking_logit(
@@ -472,6 +499,7 @@ def run_raking_3D(
 def run_raking_USHD(
     df_obs: pd.DataFrame,
     df_margins: list,
+    margin_names: list,
     weights: str = None,
     lower: str = None,
     upper: str = None,
@@ -524,11 +552,85 @@ def run_raking_USHD(
     (y, s, I, J, K, q, l, h) = format_data_USHD(
         df_obs,
         df_margins,
+        margin_names,
         weights,
         lower,
         upper,
     )
     (A, s) = constraints_USHD(s, I, J, K, rtol, atol)
+    return (y, s, q, l, h, A)
+
+
+def run_raking_USHD_lower(
+    df_obs: pd.DataFrame,
+    df_margins: list,
+    margin_names: list,
+    weights: str = None,
+    lower: str = None,
+    upper: str = None,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray | None,
+    np.ndarray,
+]:
+    """
+    This function prepares variables to run the raking problem for the USHD case (lower levels).
+
+    Parameters
+    ----------
+    df_obs : pd.DataFrame
+        Observations data
+    df_margins : list of pd.DataFrame
+        list of data frames contatining the margins data
+    weights : string
+        Name of the column containing the raking weights
+    lower : string
+        Name of the column containing the lower boundaries (for logit raking)
+    upper : string
+        Name of the column containing the upper boundaries (for logit raking)
+    rtol : float
+        Relative tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+    atol : float
+        Absolute tolerance to check whether the margins are consistant. See numpy.allclose documentation for details.
+
+    Returns
+    -------
+    y : np.ndarray
+        Vector of observations
+    s : np.ndarray
+        Margins vector
+    q : np.ndarray
+        Vector of weights
+    l : np.ndarray
+        Lower bounds for the observations
+    h : np.ndarray
+        Upper bounds for the observations
+    A : np.ndarray
+        Constraints matrix
+    """
+    df_margins_cause = df_margins[0]
+    df_margins_county = df_margins[1]
+    df_margins_all_causes = df_margins[2]
+    (y, s_cause, s_county, s_all_causes, I, J, K, q, l, h) = (
+        format_data_USHD_lower(
+            df_obs,
+            df_margins_cause,
+            df_margins_county,
+            df_margins_all_causes,
+            margin_names,
+            weights,
+            lower,
+            upper,
+        )
+    )
+    (A, s) = constraints_USHD_lower(
+        s_cause, s_county, s_all_causes, I, J, K, rtol, atol
+    )
     return (y, s, q, l, h, A)
 
 

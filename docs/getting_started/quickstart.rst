@@ -50,6 +50,32 @@ This is how to use the raking package when we do not have draws and we do not wa
         cov_mat=False
     )
 
+    # USHD example (level 1 to level 0)
+    df_obs = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD/observations.csv')
+    df_margin = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD/margins.csv')
+    (df_raked, dummy1, dummy2, dummy3) = run_raking(
+        'USHD',
+        df_obs,
+        [df_margin],
+        None,
+        ['_all', 1, 0],
+        cov_mat=False,
+    )
+
+    # USHD example (level 2 to level 1)
+    df_obs = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_lower/observations.csv')
+    df_margin_cause = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_lower/margins_cause.csv')
+    df_margin_county = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_lower/margins_county.csv')
+    df_margin_all_causes = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_lower/margins_all_causes.csv')
+    (df_raked, dummy1, dummy2, dummy3) = run_raking(
+        'USHD_lower',
+        df_obs,
+        [df_margin_cause, df_margin_county, df_margin_all_causes],
+        None,
+        ['_inj', 1, 0],
+        cov_mat=False,
+    )
+
 This is how to use the raking package when we have draws and we want the covariance matrix of the raked values.
 
 .. code-block:: python
@@ -94,6 +120,19 @@ This is how to use the raking package when we have draws and we want the covaria
         df_obs,
         [df_margins_1, df_margins_2, df_margins_3],
         ['var1', 'var2', 'var3'],
+        draws='draws',
+        cov_mat=True,
+    )
+
+    # USHD example (level 1 to level 0)
+    df_obs = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_draws/observations.csv')
+    df_margin = pd.read_csv(YOUR_PATH + 'tests/examples/example_USHD_draws/margins.csv')
+    (df_raked, dummy1, dummy2, sigma) = run_raking(
+        'USHD',
+        df_obs,
+        [df_margin],
+        None,
+        ['_all', 1, 0],
         draws='draws',
         cov_mat=True,
     )

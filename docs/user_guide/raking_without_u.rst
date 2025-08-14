@@ -125,6 +125,7 @@ The main function called to launch the raking is the function run_raking. The ma
 * df_obs: Enter the pandas data frame containing the observations. It must be formatted as explained above.
 * df_margins: Enter a list of pandas data frames containing the margins. There will be 1, 2 or 3 margins data frames, depending on the dimension you have chosen for the raking.
 * var_names: Enter a list of strings giving the names of the columns contataining the categorical variables over which you do the raking (e.g. cause, race, county). The number of categorical variables is equal to the dimension of the raking.
+* margin_names: Enter None. This is only used for special cases.
 * cov_mat: Enter False, if you do not have draws and do not compute the covariance matrix of the raked values. Enter True otherwise.
 * method: Enter the raking method that you which to use. Default use the chi square distance ("chi2"). You can also use the entropic distance ("entropic") and a general distance ("general"). If you want to do logit raking, enter "logit".
 * alpha: This is a parameter for the general distance.

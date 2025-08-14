@@ -1,0 +1,31 @@
+name: env_raking
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - altair
+  - dash
+  - dash-bootstrap-components
+  - ipykernel
+  - jupyterlab
+  - line_profiler
+  - matplotlib
+  - notebook
+  - numpy
+  - openpyxl
+  - pandas
+  - pip
+  - plotly
+  - pydantic
+  - pyreadr
+  - pytest
+  - ruff
+  - scipy
+  - seaborn
+  - vegafusion>=1.5.0
+  - vegafusion-python-embed>=1.5.0
+  - vl-convert-python
+  - pip:
+    - dash-vega-components
+
