@@ -207,8 +207,7 @@ def raking_entropic(
     q: np.ndarray = None,
     tol: float = 1.0e-11,
     gamma: float = 1.0e-4,
-    max_iter: int = 500,
-    conditionner: float = None
+    max_iter: int = 500
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
 
