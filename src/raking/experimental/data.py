@@ -1,3 +1,5 @@
+"""Data classes."""
+
 import itertools
 import operator
 from typing import TypedDict
@@ -14,6 +16,23 @@ from raking.experimental.dimension import Dimension, Space
 
 
 class Data(TypedDict):
+    """Observations and constraints for the optimization problem.
+
+    Parameters
+    ----------
+    vec_p : numpy.typing.NDArray
+    vec_y : numpy.typing.NDArray
+    vec_w : numpy.typing.NDArray
+    vec_b : numpy.typing.NDArray
+    vec_l : numpy.typing.NDArray
+    vec_u : numpy.typing.NDArray
+    mat_m : scipy.sparse.csc_matrix
+    mat_c : scipy.sparse.csc_matrix
+    mat_mc1 : scipy.sparse.csr_matrix
+    mat_mc2 : scipy.sparse.csr_matrix
+    mat_q : numpy.typing.NDArray
+    span : pandas.DataFrame
+    """
     vec_p: npt.NDArray
     vec_y: npt.NDArray
     vec_w: npt.NDArray
@@ -31,6 +50,21 @@ class Data(TypedDict):
 
 
 class DataBuilder(BaseModel):
+    """Specify observations and constraints for the optimization problem.
+
+    Parameters
+    ----------
+    dim_specs : dict
+        Keys = Categorical variables. Values = Code corresponding to the aggregate all categories.
+        Example: If we rake each cause to all causes (encoded by -1): dim_specs={'cause': -1}
+    value : str
+        Name of the column containing the initial observations in the initial data frame.
+    weights : str
+        Name of the column containing the weights in the initial data frame.
+    bounds : tuple[str, str]
+        Names of the columns containing the lower and upper bounds (if using logistic distance).
+    space : raking.experimental.dimension.Space
+    """
     dim_specs: dict[str, int | str]
     value: str
     weights: str
@@ -38,6 +72,20 @@ class DataBuilder(BaseModel):
     space: Space | None = None
 
     def build(self, df: pd.DataFrame) -> Data:
+        """Build the observations and constraints for the optimization problem.
+
+        Parameters
+        ----------
+        df : pandas DataFrame
+            Contains one column for each of the keys in self.dim_specs,
+            one column for the 'value', one column for the 'weights'
+            and optionally two columns for the 'bounds'.
+
+        Returns
+        -------
+        data : raking.experimental.data.Data
+            Contains observations data and constraints for the optimization problem.
+        """
         data = {}
         self._build_space(df)
         df = (
@@ -99,17 +147,20 @@ class DataBuilder(BaseModel):
         return df[columns].copy()
 
     def _check_duplication(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check for duplicated rows in the initial observations data frame."""
         if df.duplicated(subset=self.space.names).any():
             raise ValueError("There are duplicated observations or constraints")
         return df
 
     def _check_weights(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check for negative weights in the initial observations data frame."""
         column = self.weights
         if (df[column] < 0).any():
             raise ValueError(f"Column '{column}' contains negative values")
         return df
 
     def _check_value(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check for missing values in the initial observations data frame."""
         if df.query(f"{self.weights} > 0")[self.value].isna().any():
             raise ValueError(f"Column '{self.value}' contains missing values")
         return df

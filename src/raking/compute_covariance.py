@@ -109,7 +109,7 @@ def compute_covariance_obs(
     df = df_obs[["value"] + var_names + [draws]]
     df.sort_values(by=var_names_reverse + [draws], inplace=True)
     value = df["value"].to_numpy()
-    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    X = np.reshape(value, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Xc = X - Xmean
     sigma_yy = np.matmul(np.transpose(Xc), Xc) / nsamples
@@ -203,7 +203,7 @@ def compute_covariance_margins_1D(
     df = df_margins[["value_agg_over_" + var_names[0]] + [draws]]
     df.sort_values(by=[draws], inplace=True)
     value = df["value_agg_over_" + var_names[0]].to_numpy()
-    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    X = np.reshape(value, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Xc = X - Xmean
     sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
@@ -374,7 +374,7 @@ def compute_covariance_margins_2D(
     value1 = df1["value_agg_over_" + var_names[0]].to_numpy()
     value2 = df2["value_agg_over_" + var_names[1]].to_numpy()
     value = np.concatenate((value1, value2))
-    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    X = np.reshape(value, (nsamples, -1), "F")
     X = X[:, 0:-1]
     Xmean = np.mean(X, axis=0)
     Xc = X - Xmean
@@ -668,7 +668,7 @@ def compute_covariance_margins_3D(
     value2 = df2["value_agg_over_" + var_names[1]].to_numpy()
     value3 = df3["value_agg_over_" + var_names[2]].to_numpy()
     value = np.concatenate((value1, value2, value3))
-    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    X = np.reshape(value, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Xc = X - Xmean
     sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
@@ -763,7 +763,7 @@ def compute_covariance_margins_USHD(
     ]
     df.sort_values(by=["cause", draws], inplace=True)
     value = df["value_agg_over_race_county"].to_numpy()
-    X = np.reshape(value, shape=(nsamples, -1), order="F")
+    X = np.reshape(value, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Xc = X - Xmean
     sigma_ss = np.matmul(np.transpose(Xc), Xc) / nsamples
@@ -843,9 +843,9 @@ def compute_covariance_obs_margins_1D(
     df_margins = df_margins[["value_agg_over_" + var_names[0]] + [draws]]
     df_margins.sort_values(by=[draws], inplace=True)
     value_obs = df_obs["value"].to_numpy()
-    X = np.reshape(value_obs, shape=(nsamples, -1), order="F")
+    X = np.reshape(value_obs, (nsamples, -1), "F")
     value_margins = df_margins["value_agg_over_" + var_names[0]].to_numpy()
-    Y = np.reshape(value_margins, shape=(nsamples, -1), order="F")
+    Y = np.reshape(value_margins, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Ymean = np.mean(Y, axis=0)
     Xc = X - Xmean
@@ -971,11 +971,11 @@ def compute_covariance_obs_margins_2D(
     ]
     df_margins_2.sort_values(by=[var_names[0], draws], inplace=True)
     value_obs = df_obs["value"].to_numpy()
-    X = np.reshape(value_obs, shape=(nsamples, -1), order="F")
+    X = np.reshape(value_obs, (nsamples, -1), "F")
     value_margins_1 = df_margins_1["value_agg_over_" + var_names[0]].to_numpy()
     value_margins_2 = df_margins_2["value_agg_over_" + var_names[1]].to_numpy()
     value_margins = np.concatenate((value_margins_1, value_margins_2))
-    Y = np.reshape(value_margins, shape=(nsamples, -1), order="F")
+    Y = np.reshape(value_margins, (nsamples, -1), "F")
     Y = Y[:, 0:-1]
     Xmean = np.mean(X, axis=0)
     Ymean = np.mean(Y, axis=0)
@@ -1205,14 +1205,14 @@ def compute_covariance_obs_margins_3D(
         by=[var_names[1], var_names[0], draws], inplace=True
     )
     value_obs = df_obs["value"].to_numpy()
-    X = np.reshape(value_obs, shape=(nsamples, -1), order="F")
+    X = np.reshape(value_obs, (nsamples, -1), "F")
     value_margins_1 = df_margins_1["value_agg_over_" + var_names[0]].to_numpy()
     value_margins_2 = df_margins_2["value_agg_over_" + var_names[1]].to_numpy()
     value_margins_3 = df_margins_3["value_agg_over_" + var_names[2]].to_numpy()
     value_margins = np.concatenate(
         (value_margins_1, value_margins_2, value_margins_3)
     )
-    Y = np.reshape(value_margins, shape=(nsamples, -1), order="F")
+    Y = np.reshape(value_margins, (nsamples, -1), "F")
     Xmean = np.mean(X, axis=0)
     Ymean = np.mean(Y, axis=0)
     Xc = X - Xmean

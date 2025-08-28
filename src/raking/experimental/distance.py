@@ -1,3 +1,5 @@
+"""Distance classes."""
+
 from abc import ABC, abstractmethod
 from typing import Callable, Literal
 
@@ -30,6 +32,23 @@ class C2Function:
 
 
 class Distance(ABC):
+    """Distance between observations and raked values.
+
+    Parameters
+    ----------
+    y : numpy.typing.NDArray
+        Initial observations.
+    w : numpy.typing.NDArray
+        Weights (the bigger they are, the more certain the corresponding observation is).
+    l : numpy.typing.NDArray
+        Lower bounds for the observations and raked values.
+    u : numpy.typing.NDArray
+        Upper bound for the observations and raked values.
+    fun : raking.experimental.distance.C2Function
+        Distance function with its gradient and Hessian.
+    conjugate_fun : raking.experimental.distance.C2Function
+        Convex conjugate of the distance function with its gradient and Hessian.
+    """
     def __init__(
         self,
         y: npt.NDArray,
@@ -37,6 +56,24 @@ class Distance(ABC):
         l: npt.NDArray | None = None,
         u: npt.NDArray | None = None,
     ) -> None:
+        """Create Distance instance.
+
+        Parameters
+        ----------
+        y : numpy.typing.NDArray
+            Initial observations.
+        w : numpy.typing.NDArray
+            Weights (the bigger they are, the more certain the corresponding observation is).
+        l : numpy.typing.NDArray
+            Lower bounds for the observations and raked values.
+        u : numpy.typing.NDArray
+            Upper bound for the observations and raked values.
+
+        Returns
+        -------
+        Distance
+            Distance instance.
+        """
         self.y, self.w, self.l, self.u = y, w, l, u
 
         self.fun = C2Function(
@@ -76,6 +113,8 @@ class Distance(ABC):
 
 
 class EntropicDistance(Distance):
+    """Entropic distance (preserve the sign of the observations).
+    """
     def _fun(self, x: npt.NDArray) -> npt.NDArray:
         return x * np.log(x / self.y) - (x - self.y)
 
@@ -96,6 +135,8 @@ class EntropicDistance(Distance):
 
 
 class Chi2Distance(Distance):
+    """Chi2 distance (usually faster).
+    """
     def _fun(self, x: npt.NDArray) -> npt.NDArray:
         return 0.5 / self.y * (x - self.y) ** 2
 
@@ -116,6 +157,8 @@ class Chi2Distance(Distance):
 
 
 class LogisticDistance(Distance):
+    """Logistic distance (ensures that the raked values are bounded).
+    """
     def __init__(
         self,
         y: npt.NDArray,

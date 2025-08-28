@@ -1,3 +1,5 @@
+"""Solver classes."""
+
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -9,7 +11,38 @@ from raking.experimental.distance import distance_map
 
 
 class DualSolver:
+    """Solver for the dual problem.
+
+    Parameters
+    ----------
+    data : raking.experimental.data.Data
+        Contains observations data and constraints for the optimization problem.
+    fun : raking.experimental.distance.Distance
+        Convex conjugate of the distance between observations and raked values.
+    mat_o : scipy.sparse.csr_matrix
+    mat_c : scipy.sparse.csr_matrix
+    vec_o : np.array
+    vec_c : np.array
+    result : scipy.optimize.OptimizeResult
+        Contains info on the solution and the convergence of the optimization problem.
+    """
+
     def __init__(self, distance: str, data: Data) -> None:
+        """Create DualSolver instance.
+
+        Parameters
+        ----------
+        distance : str
+            Distance between observations and raked values.
+            Currently, only chi2, entropic and logistic are implemented.
+        data: raking.experimental.data.Data
+            Contains observations data and constraints for the optimization problem.
+
+        Returns
+        -------
+        DualSolver
+            DualSolver instance.
+        """
         self.fun = distance_map[distance](
             y=data["vec_y"],
             w=data["vec_w"],
@@ -28,16 +61,61 @@ class DualSolver:
         self.result = None
 
     def objective(self, x: npt.NDArray) -> float:
+        """Objective function for the dual optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the dual.
+
+        Returns
+        -------
+        Objective function (float).
+        """
         return self.fun(self.mat_o @ x, order=0).sum() + self.vec_o @ x
 
     def gradient(self, x: npt.NDArray) -> npt.NDArray:
+        """Gradient of the objective function for the dual optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the dual.
+
+        Returns
+        -------
+        Gradient of the objective function (numpy.typing.NDArray).
+        """
         return self.mat_o.T @ self.fun(self.mat_o @ x, order=1) + self.vec_o
 
     def hessian(self, x: npt.NDArray) -> sps.csc_matrix:
+        """Hessian of the objective function for the dual optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the dual.
+
+        Returns
+        -------
+        Hessian of the objective function (scipy.sparse.csc_matrix).
+        """
         d2 = self.fun(self.mat_o @ x, order=2)
         return (self.mat_o.T.multiply(d2)) @ self.mat_o
 
     def dual_to_primal(self, z: npt.NDArray) -> npt.NDArray:
+        """Transforms dual solution into primal solution.
+
+        Parameters
+        ----------
+        z : numpy.typing.NDArray
+            Solution of the dual problem.
+
+        Returns
+        -------
+        x : numpy.typing.NDArray
+            Solution of the primal problem.
+        """
         size_p = self.data["vec_p"].sum()
 
         vec_g = self.fun(self.mat_o @ z, order=1)
@@ -53,6 +131,25 @@ class DualSolver:
         return x
 
     def solve(
+        """Solve the dual problem using scipy.optimize.minimize.
+
+        Parameters
+        ----------
+        x0 : numpy.typing.NDArray
+            Initial guess for the dual.
+        method: str
+            Optimization method. See scipy.optimize.minimize documentation for possible options.
+        tol: float
+            Tolerance for termination. See scipy.optimize.minimize documentation for details.
+        options : dict
+            Additional parameters for the algorithm. See scipy.optimize.minimize documentation for details.
+
+        Returns
+        -------
+        soln : pandas.DataFrame
+            Columns contain the categorical variables in the initial dataset (without the margins).
+            The soln column contains the value of the raked observations.
+        """
         self,
         x0: npt.NDArray | None = None,
         method: str | None = None,
@@ -102,7 +199,37 @@ class DualSolver:
 
 
 class PrimalSolver:
+    """Solver for the primal problem.
+
+    Parameters
+    ----------
+    data : raking.experimental.data.Data
+        Contains observations data and constraints for the optimization problem.
+    fun : raking.experimental.distance.Distance
+        Distance between observations and raked values.
+    mat_o : scipy.sparse.csr_matrix
+    mat_c : scipy.sparse.csr_matrix
+    vec_c : np.array
+    result : scipy.optimize.OptimizeResult
+        Contains info on the solution and the convergence of the optimization problem.
+    """
+
     def __init__(self, distance: str, data: Data) -> None:
+        """Create PrimalSolver instance.
+
+        Parameters
+        ----------
+        distance : str
+            Distance between observations and raked values.
+            Currently, only chi2, entropic and logistic are implemented.
+        data: raking.experimental.data.Data
+            Contains observations data and constraints for the optimization problem.
+
+        Returns
+        -------
+        PrimalSolver
+            PrimalSolver instance.
+        """
         self.fun = distance_map[distance](
             y=data["vec_y"],
             w=data["vec_w"],
@@ -130,19 +257,72 @@ class PrimalSolver:
         self.result = None
 
     def objective(self, x: npt.NDArray) -> float:
+        """Objective function for the primal optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the raked observations.
+
+        Returns
+        -------
+        Objective function (float).
+        """
         return self.fun(self.mat_o @ x, order=0).sum()
 
     def gradient(self, x: npt.NDArray) -> npt.NDArray:
+        """Gradient of the objective function for the primal optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the raked observations.
+
+        Returns
+        -------
+        Gradient of the objective function (numpy.typing.NDArray).
+        """
         return self.mat_o.T @ self.fun(self.mat_o @ x, order=1)
 
     def hessian(self, x: npt.NDArray) -> sps.csc_matrix:
+        """Hessian of the objective function for the primal optimization problem.
+
+        Parameters
+        ----------
+        x : numpy.typing.NDArray
+            Current value of the raked observations.
+
+        Returns
+        -------
+        Hessian of the objective function (scipy.sparse.csc_matrix).
+        """
         d2 = self.fun(self.mat_o @ x, order=2)
         return (self.mat_o.T.multiply(d2)) @ self.mat_o
 
     def solve(
+        """Solve the primal problem using scipy.optimize.minimize.
+
+        Parameters
+        ----------
+        x0 : numpy.typing.NDArray
+            Initial guess for the raked observations.
+        method: str
+            Optimization method. See scipy.optimize.minimize documentation for possible options.
+        tol: float
+            Tolerance for termination. See scipy.optimize.minimize documentation for details.
+        options : dict
+            Additional parameters for the algorithm. See scipy.optimize.minimize documentation for details.
+
+        Returns
+        -------
+        soln : pandas.DataFrame
+            Columns contain the categorical variables in the initial dataset (without the margins).
+            The soln column contains the value of the raked observations.
+        """
         self,
         x0: npt.NDArray | None = None,
         method: str | None = None,
+        tol: float = 1.0e-11,
         options: dict | None = None,
     ) -> pd.DataFrame:
         if x0 is None:
