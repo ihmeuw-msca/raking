@@ -21,17 +21,28 @@ class Data(TypedDict):
     Parameters
     ----------
     vec_p : numpy.typing.NDArray
+        Indicates whether observations that are not constraints nor margins are missing.
     vec_y : numpy.typing.NDArray
+        Vector containing the values of the observations that are not constraints and not missing.
     vec_w : numpy.typing.NDArray
+        Vector containing the weights corresponding to the observations in vec_y. Must be > 0 and < np.inf.
     vec_b : numpy.typing.NDArray
+        Vector containing the values of the constraints.
     vec_l : numpy.typing.NDArray
+        Lower bounds for the observations that are not constraints (including aggregates).
     vec_u : numpy.typing.NDArray
+        Upper bounds for the observations that are not constraints (including aggregates).
     mat_m : scipy.sparse.csc_matrix
+        Matrix indicating how to sum the observations to get the margins that are not constraints.
     mat_c : scipy.sparse.csc_matrix
+        Matrix indicating how to sum the observations to get the constraints.
     mat_mc1 : scipy.sparse.csr_matrix
+        Matrix indicating how to sum the observations that are not missing to get margins and constraints.
     mat_mc2 : scipy.sparse.csr_matrix
+        Matrix indicating how to sum the observations that are missing to get margins and constraints.
     mat_q : numpy.typing.NDArray
     span : pandas.DataFrame
+        Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
     vec_p: npt.NDArray
     vec_y: npt.NDArray
@@ -133,6 +144,7 @@ class DataBuilder(BaseModel):
         return data
 
     def _build_space(self, df: pd.DataFrame) -> None:
+        """Look for categorical variables and create the raking space."""
         dims = [
             Dimension.from_pandas_series(df[name], null)
             for name, null in self.dim_specs.items()
@@ -141,6 +153,7 @@ class DataBuilder(BaseModel):
         self.space = Space(dimensions=dims)
 
     def _subset_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Keep only the columns in the data frame that are used for the raking."""
         columns = list(self.space.names) + [self.value, self.weights]
         if self.bounds is not None:
             columns.extend(self.bounds)
@@ -166,15 +179,18 @@ class DataBuilder(BaseModel):
         return df
 
     def _assign_level(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check if an observation is an aggregate and how many categorical variables are aggregated."""
         df["level"] = df.eval(" + ".join(("0", *self.space.isnull)))
         return df
 
     def _assign_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check if an observation is a constraint and/or a margin."""
         df["is_constr"] = np.isinf(df[self.weights])
         df["is_margin"] = df.eval(" | ".join(self.space.isnull))
         return df
 
     def _sort_rows(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Sort the rows of the data frame by constraint status, margin status and categorical variable."""
         columns = [f"{name}_order" for name in self.space.names]
         for column, dim in zip(columns, self.space.dimensions):
             df[column] = df[dim.name].map(dim.order)
@@ -183,6 +199,7 @@ class DataBuilder(BaseModel):
         return df
 
     def _expand_observ(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Expand the observations to the missing values (that are not aggregates)."""
         df = (
             self.space.span()
             .copy()
@@ -201,6 +218,7 @@ class DataBuilder(BaseModel):
         mat_c: sps.csc_matrix,
         vec_b: npt.NDArray,
     ) -> tuple[npt.NDArray, npt.NDArray]:
+        """Check if the given observations are within the bounds."""
         lb, ub = self.bounds
         df_observ[lb] = df_observ[lb].fillna(-np.inf)
         df_observ[ub] = df_observ[ub].fillna(np.inf)
@@ -238,6 +256,7 @@ class DataBuilder(BaseModel):
         return vec_l, vec_u
 
     def _check_constr(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Check if the constraints are consistent."""
         df = df.copy()
         df["index"] = df.index
         df["source"] = [(i,) for i in df["index"]]
@@ -267,6 +286,7 @@ class DataBuilder(BaseModel):
         return df
 
     def _check_sufficiency(self, mat: sps.csc_matrix) -> npt.NDArray:
+        """Check if we can extract the missing values form the other information."""
         _, mat_q, _, _ = _extract_independent_rows(mat.T)
         if mat_q.shape[0] < mat.shape[1]:
             raise ValueError(
@@ -374,6 +394,7 @@ def _agg_constr(
 
 
 def _build_design_mat(df: pd.DataFrame, space: Space) -> sps.csc_matrix:
+    """Returns a matrix indicating how to sum the observations to get the aggregates."""
     df = df.reset_index(drop=True)
     mat_shape = (len(df), space.size)
 
