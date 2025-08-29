@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
 
-#pd.set_option("future.no_silent_downcasting", True)
+# pd.set_option("future.no_silent_downcasting", True)
 
 
 class Data(TypedDict):
@@ -44,6 +44,7 @@ class Data(TypedDict):
     span : pandas.DataFrame
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
+
     vec_p: npt.NDArray
     vec_y: npt.NDArray
     vec_w: npt.NDArray
@@ -76,6 +77,7 @@ class DataBuilder(BaseModel):
         Names of the columns containing the lower and upper bounds (if using logistic distance).
     space : raking.experimental.dimension.Space
     """
+
     dim_specs: dict[str, int | str]
     value: str
     weights: str

@@ -168,9 +168,9 @@ class DualSolver:
 
         if options == None:
             if method == "L-BFGS-B":
-                options={'ftol': 1.0e-11, 'gtol': 1.0e-11}
+                options = {"ftol": 1.0e-11, "gtol": 1.0e-11}
             if method == "trust-constr":
-                options={'gtol': 1.0e-11, 'xtol': 1.0e-11}
+                options = {"gtol": 1.0e-11, "xtol": 1.0e-11}
 
         if method == "L-BFGS-B":
             self.result = minimize(
@@ -179,7 +179,7 @@ class DualSolver:
                 method=method,
                 jac=self.gradient,
                 tol=tol,
-                options=options
+                options=options,
             )
         else:
             self.result = minimize(
@@ -190,9 +190,9 @@ class DualSolver:
                 hess=self.hessian,
                 constraints=constraints,
                 tol=tol,
-                options=options
+                options=options,
             )
-        
+
         soln = self.data["span"].copy()
         soln["soln"] = self.dual_to_primal(self.result.x)
         return soln
@@ -337,9 +337,9 @@ class PrimalSolver:
 
         if options == None:
             if method == "L-BFGS-B":
-                options={'ftol': 1.0e-11, 'gtol': 1.0e-11}
+                options = {"ftol": 1.0e-11, "gtol": 1.0e-11}
             if method == "trust-constr":
-                options={'gtol': 1.0e-11, 'xtol': 1.0e-11}
+                options = {"gtol": 1.0e-11, "xtol": 1.0e-11}
 
         if method == "L-BFGS-B":
             self.result = minimize(
@@ -348,7 +348,7 @@ class PrimalSolver:
                 method=method,
                 jac=self.gradient,
                 tol=tol,
-                options=options
+                options=options,
             )
         else:
             self.result = minimize(
@@ -359,7 +359,7 @@ class PrimalSolver:
                 hess=self.hessian,
                 constraints=constraints,
                 tol=tol,
-                options=options
+                options=options,
             )
 
         soln = self.data["span"].copy()

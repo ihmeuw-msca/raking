@@ -49,6 +49,7 @@ class Distance(ABC):
     conjugate_fun : raking.experimental.distance.C2Function
         Convex conjugate of the distance function with its gradient and Hessian.
     """
+
     def __init__(
         self,
         y: npt.NDArray,
@@ -113,8 +114,8 @@ class Distance(ABC):
 
 
 class EntropicDistance(Distance):
-    """Entropic distance (preserve the sign of the observations).
-    """
+    """Entropic distance (preserve the sign of the observations)."""
+
     def _fun(self, x: npt.NDArray) -> npt.NDArray:
         return x * np.log(x / self.y) - (x - self.y)
 
@@ -135,8 +136,8 @@ class EntropicDistance(Distance):
 
 
 class Chi2Distance(Distance):
-    """Chi2 distance (usually faster).
-    """
+    """Chi2 distance (usually faster)."""
+
     def _fun(self, x: npt.NDArray) -> npt.NDArray:
         return 0.5 / self.y * (x - self.y) ** 2
 
@@ -157,8 +158,8 @@ class Chi2Distance(Distance):
 
 
 class LogisticDistance(Distance):
-    """Logistic distance (ensures that the raked values are bounded).
-    """
+    """Logistic distance (ensures that the raked values are bounded)."""
+
     def __init__(
         self,
         y: npt.NDArray,

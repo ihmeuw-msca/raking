@@ -8,7 +8,8 @@ from typing import Callable, Generator, Generic, Self, TypeVar
 import pandas as pd
 from pydantic import BaseModel, Field, computed_field
 
-T = TypeVar('T', int, str)
+T = TypeVar("T", int, str)
+
 
 class Dimension(BaseModel, Generic[T]):
     name: str
