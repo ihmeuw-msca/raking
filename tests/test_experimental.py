@@ -425,16 +425,16 @@ def test_exp_raking_USHD_weights(example_USHD_draws):
     )
     df_obs.replace({"cause": "_all", "race": 1}, -1, inplace=True)
     df_obs.replace({"cause": {"_comm": 1, "_inj": 2, "_ncd": 3}}, inplace=True)
-    df_margin["race"] = -1
-    df_margin["county"] = -1
-    df_margin["weight"] = np.inf
-    df_margin.rename(
+    df_margins["race"] = -1
+    df_margins["county"] = -1
+    df_margins["weight"] = np.inf
+    df_margins.rename(
         columns={"value_agg_over_race_county": "value"}, inplace=True
     )
-    df_margin.replace(
+    df_margins.replace(
         {"cause": {"_all": -1, "_comm": 1, "_inj": 2, "_ncd": 3}}, inplace=True
     )
-    df = pd.concat([df_obs, df_margin])
+    df = pd.concat([df_obs, df_margins])
     df = df.astype({"cause": "int64"})
     data_builder = DataBuilder(
         dim_specs={"cause": -1, "race": -1, "county": -1},
@@ -449,7 +449,7 @@ def test_exp_raking_USHD_weights(example_USHD_draws):
         df_raked.groupby(["cause"], observed=True)
         .agg({"soln": "sum"})
         .reset_index()
-        .merge(df_margin, on=["cause"])
+        .merge(df_margins, on=["cause"])
     )
     assert np.allclose(
         sum_over_race_county["soln"],
@@ -492,28 +492,28 @@ def test_exp_raking_USHD_lower_weights(example_USHD_lower_draws):
     df_obs.replace(
         {"cause": {"_intent": 1, "_unintent": 2, "inj_trans": 3}}, inplace=True
     )
-    df_margin_cause["race"] = -1
-    df_margin_cause["county"] = -1
-    df_margin_cause["weight"] = np.inf
-    df_margin_cause.rename(
+    df_margins_cause["race"] = -1
+    df_margins_cause["county"] = -1
+    df_margins_cause["weight"] = np.inf
+    df_margins_cause.rename(
         columns={"value_agg_over_race_county": "value"}, inplace=True
     )
-    df_margin_cause.replace(
+    df_margins_cause.replace(
         {"cause": {"_intent": 1, "_unintent": 2, "inj_trans": 3}}, inplace=True
     )
-    df_margin_county["cause"] = -1
-    df_margin_county["race"] = -1
-    df_margin_county["weight"] = np.inf
-    df_margin_county.rename(
+    df_margins_county["cause"] = -1
+    df_margins_county["race"] = -1
+    df_margins_county["weight"] = np.inf
+    df_margins_county.rename(
         columns={"value_agg_over_cause_race": "value"}, inplace=True
     )
-    df_margin_all_causes["cause"] = -1
-    df_margin_all_causes["weight"] = np.inf
-    df_margin_all_causes.rename(
+    df_margins_all_causes["cause"] = -1
+    df_margins_all_causes["weight"] = np.inf
+    df_margins_all_causes.rename(
         columns={"value_agg_over_cause": "value"}, inplace=True
     )
     df = pd.concat(
-        [df_obs, df_margin_cause, df_margin_county, df_margin_all_causes]
+        [df_obs, df_margins_cause, df_margins_county, df_margins_all_causes]
     )
     df = df.astype({"cause": "int64"})
     data_builder = DataBuilder(
@@ -529,7 +529,7 @@ def test_exp_raking_USHD_lower_weights(example_USHD_lower_draws):
         df_raked.groupby(["race", "county"], observed=True)
         .agg({"soln": "sum"})
         .reset_index()
-        .merge(df_margin_all_causes, on=["race", "county"])
+        .merge(df_margins_all_causes, on=["race", "county"])
     )
     assert np.allclose(
         sum_over_cause["soln"],
@@ -540,7 +540,7 @@ def test_exp_raking_USHD_lower_weights(example_USHD_lower_draws):
         df_raked.groupby(["county"], observed=True)
         .agg({"soln": "sum"})
         .reset_index()
-        .merge(df_margin_county, on=["county"])
+        .merge(df_margins_county, on=["county"])
     )
     assert np.allclose(
         sum_over_cause_race["soln"],
@@ -553,7 +553,7 @@ def test_exp_raking_USHD_lower_weights(example_USHD_lower_draws):
         df_raked.groupby(["cause"], observed=True)
         .agg({"soln": "sum"})
         .reset_index()
-        .merge(df_margin_cause, on=["cause"])
+        .merge(df_margins_cause, on=["cause"])
     )
     assert np.allclose(
         sum_over_race_county["soln"],
