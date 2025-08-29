@@ -6,6 +6,7 @@ User guide
    :numbered:
 
    what_is_raking
+   using_experimental
    raking_without_u
    raking_with_u
    special_cases

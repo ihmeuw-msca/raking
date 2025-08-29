@@ -3,6 +3,138 @@
 import numpy as np
 from scipy.sparse.linalg import cg
 
+from scipy.optimize import minimize
+
+
+def raking_chi2_scipy(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    q: np.ndarray = None,
+    tol: float = 1e-11,
+) -> tuple[np.ndarray, np.ndarray]:
+    lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
+
+    def conjugate_distance(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(y * z + q * y * np.square(z) / 2.0)
+        return f_star + np.dot(lambda_k, s)
+
+    def conjugate_jacobian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_grad = y * (1 + q * z)
+        return -np.matmul(A, f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(q * y)
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
+
+    res = minimize(
+        fun=conjugate_distance,
+        x0=lambda_0,
+        method="Newton-CG",
+        jac=conjugate_jacobian,
+        hess=conjugate_hessian,
+        tol=tol,
+    )
+    lambda_k = res.x
+    beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, res)
+
+
+def raking_entropic_scipy(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    q: np.ndarray = None,
+    tol: float = 1.0e-11,
+    max_iter: int = 500,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
+
+    def conjugate_distance(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(y * (np.exp(q * z) - 1) / q)
+        return f_star + np.dot(lambda_k, s)
+
+    def conjugate_jacobian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_grad = y * np.exp(q * z)
+        return -np.matmul(A, f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(q * np.exp(q * z))
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
+
+    res = minimize(
+        fun=conjugate_distance,
+        x0=lambda_0,
+        method="L-BFGS-B",
+        jac=conjugate_jacobian,
+        tol=tol,
+        options={"maxiter": max_iter},
+    )
+    lambda_k = res.x
+    iter_eps = res.nit
+    beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, res)
+
+
+def raking_general_scipy(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    alpha: float = 1,
+    q: np.ndarray = None,
+    tol: float = 1e-11,
+    gamma0: float = 1.0,
+    max_iter: int = 500,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    lambda_0 = np.zeros(A.shape[0])
+    if q is None:
+        q = np.ones(len(y))
+
+    def conjugate_distance(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star = np.sum(
+            y
+            * np.power(1 + alpha * q * z, 1.0 + 1.0 / alpha)
+            / (q * (1.0 + alpha))
+        )
+        return f_star + np.dot(lambda_k, s)
+
+    def conjugate_jacobian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_grad = y * np.power(1 + alpha * q * z, 1.0 / alpha)
+        return -np.matmul(A, f_star_grad) + s
+
+    def conjugate_hessian(lambda_k):
+        z = -np.matmul(np.transpose(A), lambda_k)
+        f_star_hess = np.diag(
+            q * y * np.power(1.0 + alpha * q * z, 1.0 / alpha - 1.0)
+        )
+        return np.matmul(np.matmul(A, f_star_hess), np.transpose(A))
+
+    res = minimize(
+        fun=conjugate_distance,
+        x0=lambda_0,
+        method="Newton-CG",
+        jac=conjugate_jacobian,
+        hess=conjugate_hessian,
+        tol=tol,
+        options={"maxiter": max_iter},
+    )
+    lambda_k = res.x
+    iter_eps = res.nit
+    beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, res)
+
 
 def raking_chi2(
     y: np.ndarray,
@@ -71,7 +203,7 @@ def raking_chi2(
     s_hat = np.matmul(A, y)
     Phi = np.matmul(A, np.transpose(A * y * q))
     lambda_k = cg(Phi, s_hat - s)[0]
-    beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+    beta = y * (1.0 - q * np.matmul(np.transpose(A), lambda_k))
     return (beta, lambda_k)
 
 
