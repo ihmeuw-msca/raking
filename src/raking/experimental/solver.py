@@ -131,6 +131,12 @@ class DualSolver:
         return x
 
     def solve(
+        self,
+        x0: npt.NDArray | None = None,
+        method: str | None = None,
+        tol: float = 1.0e-11,
+        options: dict | None = None,
+    ) -> pd.DataFrame:
         """Solve the dual problem using scipy.optimize.minimize.
 
         Parameters
@@ -150,12 +156,6 @@ class DualSolver:
             Columns contain the categorical variables in the initial dataset (without the margins).
             The soln column contains the value of the raked observations.
         """
-        self,
-        x0: npt.NDArray | None = None,
-        method: str | None = None,
-        tol: float = 1.0e-11,
-        options: dict | None = None,
-    ) -> pd.DataFrame:
         if x0 is None:
             x0 = np.zeros(self.mat_o.shape[1])
 
@@ -300,6 +300,12 @@ class PrimalSolver:
         return (self.mat_o.T.multiply(d2)) @ self.mat_o
 
     def solve(
+        self,
+        x0: npt.NDArray | None = None,
+        method: str | None = None,
+        tol: float = 1.0e-11,
+        options: dict | None = None,
+    ) -> pd.DataFrame:
         """Solve the primal problem using scipy.optimize.minimize.
 
         Parameters
@@ -319,12 +325,6 @@ class PrimalSolver:
             Columns contain the categorical variables in the initial dataset (without the margins).
             The soln column contains the value of the raked observations.
         """
-        self,
-        x0: npt.NDArray | None = None,
-        method: str | None = None,
-        tol: float = 1.0e-11,
-        options: dict | None = None,
-    ) -> pd.DataFrame:
         if x0 is None:
             x0 = np.zeros(self.mat_o.shape[1])
 
