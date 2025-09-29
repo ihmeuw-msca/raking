@@ -875,8 +875,11 @@ def format_data_USHD(
     assert isinstance(df_obs, pd.DataFrame), (
         "The observations should be a pandas data frame."
     )
-    assert len(df_obs) >= 18, (
-        "There should be at least 18 data points for the observations."
+#    assert len(df_obs) >= 18, (
+#        "There should be at least 18 data points for the observations."
+#    )
+    assert len(df_obs) >= 9, (
+        "There should be at least 9 data points for the observations."
     )
 
     assert isinstance(df_margins, pd.DataFrame), (
@@ -1087,8 +1090,11 @@ def format_data_USHD_lower(
     assert isinstance(df_obs, pd.DataFrame), (
         "The observations should be a pandas data frame."
     )
-    assert len(df_obs) >= 12, (
-        "There should be at least 12 data points for the observations."
+#    assert len(df_obs) >= 12, (
+#        "There should be at least 12 data points for the observations."
+#    )
+    assert len(df_obs) >= 6, (
+        "There should be at least 6 data points for the observations."
     )
 
     assert isinstance(df_margins_cause, pd.DataFrame), (
@@ -1101,15 +1107,21 @@ def format_data_USHD_lower(
     assert isinstance(df_margins_county, pd.DataFrame), (
         "The county margins should be a pandas data frame."
     )
-    assert len(df_margins_county) >= 2, (
-        "There should be at least 2 data points for the county margins."
+#    assert len(df_margins_county) >= 2, (
+#        "There should be at least 2 data points for the county margins."
+#    )
+    assert len(df_margins_county) >= 1, (
+        "There should be at least 1 data point for the county margins."
     )
 
     assert isinstance(df_margins_all_causes, pd.DataFrame), (
         "The all causes margins should be a pandas data frame."
     )
-    assert len(df_margins_all_causes) >= 4, (
-        "There should be at least 4 data points for the all causes margins."
+#    assert len(df_margins_all_causes) >= 4, (
+#        "There should be at least 4 data points for the all causes margins."
+#    )
+    assert len(df_margins_all_causes) >= 2, (
+        "There should be at least 2 data points for the all causes margins."
     )
 
     for var_name in ["value", "cause", "race", "county"]:

@@ -321,7 +321,8 @@ def constraints_USHD(
     )
     assert J > 1, "The number of races and ethnicities must be higher than 1."
     assert isinstance(K, int), "The number of counties must be an integer."
-    assert K > 1, "The number of counties must be higher than 1."
+#    assert K > 1, "The number of counties must be higher than 1."
+    assert K > 0, "The number of counties must be higher than 0."
 
     assert isinstance(s_cause, np.ndarray), (
         "The margins vector for the causes of death must be a Numpy array."
@@ -439,7 +440,8 @@ def constraints_USHD_lower(
     )
     assert J > 1, "The number of races and ethnicities must be higher than 1."
     assert isinstance(K, int), "The number of counties must be an integer."
-    assert K > 1, "The number of counties must be higher than 1."
+#    assert K > 1, "The number of counties must be higher than 1."
+    assert K > 0, "The number of counties must be higher than 0."
 
     assert isinstance(s_cause, np.ndarray), (
         "The margins vector for the causes of death must be a Numpy array."
