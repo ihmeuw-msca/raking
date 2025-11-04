@@ -384,6 +384,21 @@ def constraints_USHD(
     return (A, s)
 
 
+def constraints_USHD_parallel(
+    s_cause: np.ndarray,
+    I: int,
+    J: int,
+    K: int,
+    N: int,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[np.ndarray, np.ndarray]:
+    (A_loc, s_loc) = constraints_USHD(s_cause, I, J, K, rtol, atol)
+    A = np.kron(np.eye(N, dtype=int), A_loc)
+    s = np.tile(s_loc, N)
+    return (A, s)
+
+
 def constraints_USHD_lower(
     s_cause: np.ndarray,
     s_county: np.ndarray,
