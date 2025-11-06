@@ -1,7 +1,7 @@
 """Module with methods to compute the constraint matrix in 1D, 2D, 3D"""
 
 import numpy as np
-
+import scipy.sparse as sps
 
 def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 1D.
@@ -392,11 +392,16 @@ def constraints_USHD_parallel(
     N: int,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-) -> tuple[np.ndarray, np.ndarray]:
-    (A_loc, s_loc) = constraints_USHD(s_cause, I, J, K, rtol, atol)
-    A = np.kron(np.eye(N, dtype=int), A_loc)
-    s = np.tile(s_loc, N)
-    return (A, s)
+) -> tuple[sps.csr_matrix, np.ndarray]:
+    (A_loc, s_loc) = constraints_USHD(s_cause[0: I + 1], I, J, K, rtol, atol)
+    # Transform to sparse
+    A_loc = sps.csr_matrix(A_loc)
+    I_N = sps.csr_matrix(np.eye(N, dtype=int))
+    A = sps.kron(I_N, A_loc)
+    s_cause = s_cause.reshape(N, I + 1, order='C')
+    s_cause = np.concatenate([s_cause[:, 1:], np.zeros((N, (I + J + 1) * K))], axis=1)
+    s_cause = s_cause.flatten()
+    return (A, s_cause)
 
 
 def constraints_USHD_lower(
