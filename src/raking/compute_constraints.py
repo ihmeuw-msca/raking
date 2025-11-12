@@ -537,3 +537,33 @@ def constraints_USHD_lower(
                 ] = 1
             A[I + K - 1 + J * K + k * (I - 1) + i, k * I * (J + 1) + i] = -1
     return (A, s)
+
+
+def constraints_USHD_lower_parallel(
+    s_cause: np.ndarray,
+    s_county: np.ndarray,
+    s_all_causes: np.ndarray,
+    I: int,
+    J: int,
+    K: int,
+    N: int,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> tuple[sps.csr_matrix, np.ndarray]:
+    s_cause_0 = s_cause[0: I]
+    s_county_0_K = s_cause_0.sum() - s_county[0: K - 1].sum()
+    s_county_0 = np.concatenate((s_county[0: K - 1], np.array([s_county_0_K])), 0)
+    s_all_causes_0 = np.reshape(s_all_causes[0: (J * K)], (J, K), 'F')
+    (A_loc, s_loc) = constraints_USHD_lower( \
+        s_cause_0, s_county_0, s_all_causes_0, I, J, K, rtol, atol)
+    # Transform to sparse
+    A_loc = sps.csr_matrix(A_loc)
+    I_N = sps.csr_matrix(np.eye(N, dtype=int))
+    A = sps.kron(I_N, A_loc)
+    s_cause = s_cause.reshape(N, I, order='C')
+    s_county = s_county.reshape(N, K - 1, order='C')
+    s_all_causes = s_all_causes.reshape(N, J * K, order='C')
+    s = np.concatenate([s_cause, s_county, s_all_causes, np.zeros((N, (I - 1) * K))], axis=1)
+    s = s.flatten()
+    return (A, s)
+
