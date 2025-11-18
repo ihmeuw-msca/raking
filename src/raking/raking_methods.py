@@ -1,6 +1,7 @@
 """Module with methods to solve the raking problem"""
 
 import numpy as np
+import scipy.sparse as sps
 from scipy.sparse.linalg import cg
 
 from scipy.optimize import minimize
@@ -323,6 +324,54 @@ def raking_entropic(
         epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
         iter_eps = iter_eps + 1
     beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+    return (beta, lambda_k, iter_eps)
+
+
+def raking_entropic_parallel(
+    y: np.ndarray,
+    A: sps.csr_matrix,
+    s: np.ndarray,
+    q: np.ndarray = None,
+    tol: float = 1.0e-11,
+    gamma: float = 1.0e-4,
+    max_iter: int = 500,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
+    """
+    # Raking weights
+    if q is None:
+        q = np.ones(len(y))
+    # Tolerance
+    if tol > 0.001 * np.min(np.abs(s[s != 0])):
+        tol = 0.001 * np.min(np.abs(s[s != 0]))
+    # Initialization
+    s_hat = A * y
+    lambda_k = np.zeros(A.shape[0])
+    Phi = A * (y * (1.0 - np.exp(-q * (A.T * lambda_k))))
+    epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
+    iter_eps = 0
+    while (epsilon > tol) & (iter_eps < max_iter):
+        D = y * q * np.exp(-q * (A.T * lambda_k))
+        J = (A.multiply(D)) * A.T
+        delta_lambda = cg(J, Phi - s_hat + s)[0]
+        m = 0
+        iter_armijo = 0
+        lambda_kn = lambda_k - 2.0 ** (-m) * delta_lambda
+        Phi_n = A * (y * (1.0 - np.exp(-q * (A.T * lambda_kn))))
+        epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+        armijo_rule = epsilon_n < (1.0 - gamma * 2.0 ** (-m)) * epsilon
+        while (armijo_rule == False) & (iter_armijo < 500):
+            m = m + 1
+            lambda_kn = lambda_k - 2.0 ** (-m) * delta_lambda
+            Phi_n = A * (y * (1.0 - np.exp(-q * (A.T * lambda_kn))))
+            epsilon_n = np.sqrt(np.sum(np.square(Phi_n + s - s_hat)))
+            armijo_rule = epsilon_n < (1.0 - gamma * 2.0 ** (-m)) * epsilon
+            iter_armijo = iter_armijo + 1
+        lambda_k = lambda_k - 2.0 ** (-m) * delta_lambda
+        Phi = A * (y * (1.0 - np.exp(-q * (A.T * lambda_k))))
+        epsilon = np.sqrt(np.sum(np.square(Phi + s - s_hat)))
+        iter_eps = iter_eps + 1
+    beta = y * np.exp(-q * (A.T * lambda_k))
     return (beta, lambda_k, iter_eps)
 
 
