@@ -1,7 +1,10 @@
 import pytest
 import numpy as np
 import pandas as pd
-from raking.compute_constraints import constraints_USHD_lower, constraints_USHD_lower_parallel
+from raking.compute_constraints import (
+    constraints_USHD_lower,
+    constraints_USHD_lower_parallel,
+)
 from raking.raking_methods import raking_entropic, raking_entropic_parallel
 from raking.run_raking import run_raking
 
@@ -16,10 +19,16 @@ def test_USHD_lower(example_USHD_lower_draws):
     draws = df_obs.draws.unique().tolist()
     df_raked = []
     for draw in draws:
-        df_obs_loc = df_obs.loc[df_obs.draws==draw]
-        df_margins_cause_loc = df_margins_cause.loc[df_margins_cause.draws==draw]
-        df_margins_county_loc = df_margins_county.loc[df_margins_county.draws==draw]
-        df_margins_all_causes_loc = df_margins_all_causes.loc[df_margins_all_causes.draws==draw]
+        df_obs_loc = df_obs.loc[df_obs.draws == draw]
+        df_margins_cause_loc = df_margins_cause.loc[
+            df_margins_cause.draws == draw
+        ]
+        df_margins_county_loc = df_margins_county.loc[
+            df_margins_county.draws == draw
+        ]
+        df_margins_all_causes_loc = df_margins_all_causes.loc[
+            df_margins_all_causes.draws == draw
+        ]
         (df_obs_loc, Dphi_y, Dphi_s, sigma) = run_raking(
             dim="USHD_lower",
             df_obs=df_obs_loc,
@@ -31,7 +40,7 @@ def test_USHD_lower(example_USHD_lower_draws):
             var_names=None,
             margin_names=["_inj", 1, 0],
             cov_mat=False,
-            method="entropic"
+            method="entropic",
         )
         df_raked.append(df_obs_loc)
     df_raked = pd.concat(df_raked)
@@ -51,11 +60,11 @@ def test_USHD_lower(example_USHD_lower_draws):
     ), "The sums over the cause must match the all causes deaths."
     sum_over_cause_race = (
         df_raked.loc[df_raked.race == 1]
-             .groupby(["county", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_margins_county, on=["county", "draws"])
-        )
+        .groupby(["county", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_county, on=["county", "draws"])
+    )
     assert np.allclose(
         sum_over_cause_race["raked_value"],
         sum_over_cause_race["value_agg_over_cause_race"],
@@ -65,10 +74,12 @@ def test_USHD_lower(example_USHD_lower_draws):
     )
     sum_over_race = (
         df_raked.loc[df_raked.race != 1]
-             .groupby(["cause", "county", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_raked.loc[df_raked.race == 1], on=["cause", "county", "draws"])
+        .groupby(["cause", "county", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            df_raked.loc[df_raked.race == 1], on=["cause", "county", "draws"]
+        )
     )
     assert np.allclose(
         sum_over_race["raked_value_x"],
@@ -77,11 +88,11 @@ def test_USHD_lower(example_USHD_lower_draws):
     ), "The sums over the race must match the all races deaths."
     sum_over_race_county = (
         df_raked.loc[df_raked.race != 1]
-             .groupby(["cause", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_margins_cause, on=["cause", "draws"])
-        )
+        .groupby(["cause", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_cause, on=["cause", "draws"])
+    )
     assert np.allclose(
         sum_over_race_county["raked_value"],
         sum_over_race_county["value_agg_over_race_county"],
@@ -90,18 +101,21 @@ def test_USHD_lower(example_USHD_lower_draws):
 
     # Use parallelization
     df_raked_parallel = df_obs.copy(deep=True)
-    df_raked_parallel = df_raked_parallel. \
-        drop(columns=["upper"]). \
-        sort_values(by=["draws", "county", "race", "cause"])
+    df_raked_parallel = df_raked_parallel.drop(columns=["upper"]).sort_values(
+        by=["draws", "county", "race", "cause"]
+    )
     df_margins_cause_parallel = df_margins_cause.copy(deep=True)
-    df_margins_cause_parallel = df_margins_cause_parallel. \
-        sort_values(by=["draws", "cause"])
+    df_margins_cause_parallel = df_margins_cause_parallel.sort_values(
+        by=["draws", "cause"]
+    )
     df_margins_county_parallel = df_margins_county.copy(deep=True)
-    df_margins_county_parallel = df_margins_county_parallel. \
-        sort_values(by=["draws", "county"])
+    df_margins_county_parallel = df_margins_county_parallel.sort_values(
+        by=["draws", "county"]
+    )
     df_margins_all_causes_parallel = df_margins_all_causes.copy(deep=True)
-    df_margins_all_causes = df_margins_all_causes. \
-        sort_values(by=["draws", "county", "race"])
+    df_margins_all_causes = df_margins_all_causes.sort_values(
+        by=["draws", "county", "race"]
+    )
 
     I = len(df_raked_parallel.cause.unique())
     J = len(df_raked_parallel.race.unique()) - 1
@@ -109,10 +123,17 @@ def test_USHD_lower(example_USHD_lower_draws):
     N = len(df_raked_parallel.draws.unique())
 
     s_cause = df_margins_cause_parallel.value_agg_over_race_county.to_numpy()
-    s_county = np.reshape(df_margins_county_parallel.value_agg_over_cause_race.to_numpy(), \
-        (N, K), 'C')[:, 0:(K - 1)].flatten('C')
-    s_all_causes = df_margins_all_causes_parallel.value_agg_over_cause.to_numpy()
-    (A, s) = constraints_USHD_lower_parallel(s_cause, s_county, s_all_causes, I, J, K, N)
+    s_county = np.reshape(
+        df_margins_county_parallel.value_agg_over_cause_race.to_numpy(),
+        (N, K),
+        "C",
+    )[:, 0 : (K - 1)].flatten("C")
+    s_all_causes = (
+        df_margins_all_causes_parallel.value_agg_over_cause.to_numpy()
+    )
+    (A, s) = constraints_USHD_lower_parallel(
+        s_cause, s_county, s_all_causes, I, J, K, N
+    )
     y = df_raked_parallel["value"].to_numpy()
     q = np.ones(len(y))
     (beta, lambda_k, iter_eps) = raking_entropic_parallel(y, A, s, q)
@@ -133,11 +154,11 @@ def test_USHD_lower(example_USHD_lower_draws):
     ), "The sums over the cause must match the all causes deaths."
     sum_over_cause_race = (
         df_raked_parallel.loc[df_raked_parallel.race == 1]
-             .groupby(["county", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_margins_county_parallel, on=["county", "draws"])
-        )
+        .groupby(["county", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_county_parallel, on=["county", "draws"])
+    )
     assert np.allclose(
         sum_over_cause_race["raked_value"],
         sum_over_cause_race["value_agg_over_cause_race"],
@@ -147,10 +168,13 @@ def test_USHD_lower(example_USHD_lower_draws):
     )
     sum_over_race = (
         df_raked_parallel.loc[df_raked_parallel.race != 1]
-             .groupby(["cause", "county", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_raked_parallel.loc[df_raked_parallel.race == 1], on=["cause", "county", "draws"])
+        .groupby(["cause", "county", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(
+            df_raked_parallel.loc[df_raked_parallel.race == 1],
+            on=["cause", "county", "draws"],
+        )
     )
     assert np.allclose(
         sum_over_race["raked_value_x"],
@@ -159,11 +183,11 @@ def test_USHD_lower(example_USHD_lower_draws):
     ), "The sums over the race must match the all races deaths."
     sum_over_race_county = (
         df_raked_parallel.loc[df_raked_parallel.race != 1]
-             .groupby(["cause", "draws"], observed=True)
-             .agg({"raked_value": "sum"})
-             .reset_index()
-             .merge(df_margins_cause_parallel, on=["cause", "draws"])
-        )
+        .groupby(["cause", "draws"], observed=True)
+        .agg({"raked_value": "sum"})
+        .reset_index()
+        .merge(df_margins_cause_parallel, on=["cause", "draws"])
+    )
     assert np.allclose(
         sum_over_race_county["raked_value"],
         sum_over_race_county["value_agg_over_race_county"],
@@ -171,11 +195,14 @@ def test_USHD_lower(example_USHD_lower_draws):
     ), "The sums over race and county must match the GBD values."
 
     # Compare results
-    df_both = pd.merge(df_raked, df_raked_parallel, \
-        on=["cause", "race", "county", "draws"], how="inner")
+    df_both = pd.merge(
+        df_raked,
+        df_raked_parallel,
+        on=["cause", "race", "county", "draws"],
+        how="inner",
+    )
     assert np.allclose(
         df_both["raked_value_x"],
         df_both["raked_value_y"],
         atol=1.0e-10,
     ), "The two rakings must give the same results."
-    

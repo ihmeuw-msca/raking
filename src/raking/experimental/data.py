@@ -260,8 +260,8 @@ class DataBuilder(BaseModel):
     def _check_constr(self, df: pd.DataFrame) -> pd.DataFrame:
         """Check if the constraints are consistent."""
         df = df.copy()
-        df["index"] = df.index
-        df["source"] = [(i,) for i in df["index"]]
+        df["df_index"] = df.index
+        df["source"] = [(i,) for i in df["df_index"]]
         df["included"] = True
         df_by_level = {
             i: df.query(f"level == {i}").reset_index(drop=True)
@@ -284,7 +284,7 @@ class DataBuilder(BaseModel):
             df_by_level[j] = df_j
 
         df = pd.concat(df_by_level.values(), axis=0, ignore_index=True)
-        df = df.query("index != -1").reset_index(drop=True)
+        df = df.query("df_index != -1").reset_index(drop=True)
         return df
 
     def _check_sufficiency(self, mat: sps.csc_matrix) -> npt.NDArray:
@@ -320,7 +320,7 @@ def _resolve_same_level_duplicity(
         if not np.allclose(df_check[value], df_check[f"{value}_alt"]):
             raise ValueError("Constraints are not consistent")
 
-        index = df_i["index"].isin(df_dup["source"].map(max))
+        index = df_i["df_index"].isin(df_dup["source"].map(max))
         df_i.loc[index, "included"] = False
     return df_i, df_i_to_j
 
@@ -353,7 +353,7 @@ def _resolve_upper_level_duplicity(
     index = df_cmp.eval(f"{value}_alt.notna()")
     df_cmp.loc[index, "included"] = False
     df_cmp.loc[index, "source"] = df_cmp.loc[index, "source_alt"]
-    df_cmp["index"] = df_cmp["index"].fillna(-1).astype(int)
+    df_cmp["df_index"] = df_cmp["df_index"].fillna(-1).astype(int)
     return df_cmp[df_j.columns].copy()
 
 
@@ -399,21 +399,49 @@ def _build_design_mat(df: pd.DataFrame, space: Space) -> sps.csc_matrix:
     """Returns a matrix indicating how to sum the observations to get the aggregates."""
     df = df.reset_index(drop=True)
     mat_shape = (len(df), space.size)
+    df_index = (
+        df.copy(deep=True).reset_index().rename(columns={"index": "row_index"})
+    )
 
-    row_indices = np.empty(shape=(0,), dtype=int)
-    col_indices = np.empty(shape=(0,), dtype=int)
-
-    for i, row in df.iterrows():
-        col_index = np.asarray(
-            space.index(tuple(row[name] for name in space.names))
+    for dim in space.dimensions:
+        dim_index = pd.DataFrame(
+            {
+                f"{dim.name}_index": np.arange(len(dim.grid)),
+                f"{dim.name}_value": dim.grid,
+            }
         )
-        row_index = np.asarray([i] * col_index.size)
+        dim_index_margin = dim_index.copy(deep=True)
+        dim_index_margin[f"{dim.name}_value"] = dim.null
+        dim_index = pd.concat(
+            [dim_index, dim_index_margin], axis=0, ignore_index=True
+        )
+        df_index = df_index.merge(
+            dim_index,
+            left_on=dim.name,
+            right_on=f"{dim.name}_value",
+            how="left",
+        )
 
-        row_indices = np.hstack([row_indices, row_index])
-        col_indices = np.hstack([col_indices, col_index])
+    shifts = np.cumprod([1] + [dim.size for dim in space.dimensions[1:][::-1]])[
+        ::-1
+    ]
+    df_index["col_index"] = (
+        df_index[[f"{dim.name}_index" for dim in space.dimensions]]
+        .to_numpy()
+        .dot(shifts)
+    )
 
-    val = np.ones_like(row_indices, dtype=int)
-    return sps.csc_matrix((val, (row_indices, col_indices)), shape=mat_shape)
+    mat = sps.csc_matrix(
+        (
+            np.ones(len(df_index)),
+            (
+                df_index["row_index"].to_numpy(),
+                df_index["col_index"].to_numpy(),
+            ),
+        ),
+        shape=mat_shape,
+    )
+    return mat
 
 
 def _extract_independent_rows(
