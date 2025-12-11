@@ -8,12 +8,10 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
+from pandas.api.types import CategoricalDtype
 from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
-
-# pd.set_option("future.no_silent_downcasting", True)
-
 
 class Data(TypedDict):
     """Observations and constraints for the optimization problem.
@@ -193,11 +191,20 @@ class DataBuilder(BaseModel):
 
     def _sort_rows(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sort the rows of the data frame by constraint status, margin status and categorical variable."""
-        columns = [f"{name}_order" for name in self.space.names]
-        for column, dim in zip(columns, self.space.dimensions):
-            df[column] = df[dim.name].map(dim.order)
+        columns = [name for name in self.space.names]
+        column_types = []
+        for dim in self.space.dimensions:
+            column_types.append(df[dim.name].dtypes)
+            dim_names = df[dim.name].unique().tolist()
+            if dim.null in dim_names:
+                dim_names.remove(dim.null)
+            dim_ordering = dim_names + [dim.null]
+            df[dim.name] = df[dim.name].astype(
+                CategoricalDtype(categories=dim_ordering, ordered=True)
+            )
         df = df.sort_values(["is_constr", "level"] + columns, ignore_index=True)
-        df = df.drop(columns=columns)
+        for (dim, column_type) in zip(self.space.dimensions, column_types):
+            df[dim.name] = df[dim.name].astype(column_type)
         return df
 
     def _expand_observ(self, df: pd.DataFrame) -> pd.DataFrame:
