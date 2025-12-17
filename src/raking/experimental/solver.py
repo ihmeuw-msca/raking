@@ -43,6 +43,7 @@ class DualSolver:
         DualSolver
             DualSolver instance.
         """
+        self.distance = distance
         self.fun = distance_map[distance](
             y=data["vec_y"],
             w=data["vec_w"],
@@ -116,6 +117,7 @@ class DualSolver:
         x : numpy.typing.NDArray
             Solution of the primal problem.
         """
+        # size_p is the number of non-missing observations that are not margins and not constraints
         size_p = self.data["vec_p"].sum()
 
         vec_g = self.fun(self.mat_o @ z, order=1)
@@ -129,6 +131,7 @@ class DualSolver:
         x[self.data["vec_p"]] = x1
         x[~self.data["vec_p"]] = x2
         return x
+
 
     def solve(
         self,
@@ -157,6 +160,16 @@ class DualSolver:
             The soln column contains the value of the raked observations.
         """
         if x0 is None:
+#            fun = distance_map[distance](
+#                y=data["vec_y"],
+#                w=data["vec_w"],
+#                l=data["vec_l"],
+#                u=data["vec_u"],
+#            ).fun
+#            grad = self.mat_o.T @ fun(self.mat_o @ self.data["vec_init"], order=1)
+#            x0 = sps.linalg.cg(self.mat_o.T, - grad)[0]
+#
+#
             x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
@@ -208,8 +221,13 @@ class PrimalSolver:
     fun : raking.experimental.distance.Distance
         Distance between observations and raked values.
     mat_o : scipy.sparse.csr_matrix
+        Matrix to transform the unknown raked values corresponding to missing and non-missing
+        observations that are margins or non-margins, and compare them to the available observations.
     mat_c : scipy.sparse.csr_matrix
+        Matrix to sum the unknown raked values corresponding to missing and non-missing
+        observations that are margins or non-margins to get the constraints.
     vec_c : np.array
+        Contains the constraints.
     result : scipy.optimize.OptimizeResult
         Contains info on the solution and the convergence of the optimization problem.
     """
@@ -238,8 +256,12 @@ class PrimalSolver:
         ).fun
 
         self.data = data
+        # size_v is the number of observations (missing and non-missing) that are not margins and not constraints
+        # size_r is the number of non-missing observations that are not margins and not constraints
         size_v, size_r = data["vec_p"].size, data["vec_p"].sum()
 
+        # Projection matrix:
+        # mat_s [missing + non-missing, non-constraints, non-margins obs] = [non-missing, non-constraints, non-margins obs]
         mat_s = sps.csr_matrix(
             (
                 np.ones(size_r, dtype=int),
@@ -251,7 +273,10 @@ class PrimalSolver:
             shape=(size_r, size_v),
         )
 
+        # mat_o is used to compute the distance between unknown raked values and non-missing, non-constraints observations
         self.mat_o = sps.csr_matrix(sps.vstack([mat_s, data["mat_m"]]))
+        # mat_c is used to take the missing and non-missing, non-margins, non constraints unknowned raked values
+        # and transform them into the constraints that are stored in vec_c
         self.mat_c = data["mat_c"]
         self.vec_c = data["vec_b"]
         self.result = None
@@ -326,6 +351,8 @@ class PrimalSolver:
             The soln column contains the value of the raked observations.
         """
         if x0 is None:
+            # Choose x0 = y or 0 if missing
+            # x0 = self.data["vec_init"]
             x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None

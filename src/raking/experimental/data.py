@@ -31,13 +31,17 @@ class Data(TypedDict):
     vec_u : numpy.typing.NDArray
         Upper bounds for the observations that are not constraints (including aggregates).
     mat_m : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the margins that are not constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the margins that are not constraints.
     mat_c : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the constraints.
     mat_mc1 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are not missing to get margins and constraints.
+        Matrix indicating how to sum the non-missing observations that are not constraints nor margins
+        to get margins and constraints.
     mat_mc2 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are missing to get margins and constraints.
+        Matrix indicating how to sum the missing observations that are not constraints nor margins
+        to get margins and constraints.
     mat_q : numpy.typing.NDArray
     span : pandas.DataFrame
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
@@ -114,6 +118,7 @@ class DataBuilder(BaseModel):
 
         index = df_observ["is_margin"]
         data["vec_p"] = (df_observ[~index][self.weights] > 0).to_numpy()
+        # data["vec_init"] = df_observ[~index][self.value].to_numpy() * data["vec_p"]
         data["mat_m"] = _build_design_mat(df_observ[index], self.space)
 
         index = df_observ.eval(f"{self.weights} > 0")
