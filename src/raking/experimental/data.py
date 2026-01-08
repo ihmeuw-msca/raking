@@ -30,6 +30,8 @@ class Data(TypedDict):
         Lower bounds for the observations that are not constraints (including aggregates).
     vec_u : numpy.typing.NDArray
         Upper bounds for the observations that are not constraints (including aggregates).
+    vec_init: numpy.typing.NDArray
+        Initial guess for the unknown raked values.
     mat_m : scipy.sparse.csc_matrix
         Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
         to get the margins that are not constraints.
@@ -38,11 +40,15 @@ class Data(TypedDict):
         to get the constraints.
     mat_mc1 : scipy.sparse.csr_matrix
         Matrix indicating how to sum the non-missing observations that are not constraints nor margins
-        to get margins and constraints.
+        to get margins and constraints. Stack of mat_c and mat_c, keeping only the rows corresponding
+        to the non-missing observations.
     mat_mc2 : scipy.sparse.csr_matrix
         Matrix indicating how to sum the missing observations that are not constraints nor margins
-        to get margins and constraints.
+        to get margins and constraints. Stack of mat_c and mat_c, keeping only the rows corresponding
+        to the missing observations.
     mat_q : numpy.typing.NDArray
+        Matrix indicating how to get the missing observations once we know the raked margins and the constraints.
+        Should be equal to [mat_mc2^T mat_mc2]-1
     span : pandas.DataFrame
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
@@ -53,9 +59,10 @@ class Data(TypedDict):
     vec_b: npt.NDArray
     vec_l: npt.NDArray | None
     vec_u: npt.NDArray | None
+    vec_init: npt.NDArray
+
     mat_m: sps.csc_matrix
     mat_c: sps.csc_matrix
-
     mat_mc1: sps.csc_matrix
     mat_mc2: sps.csr_matrix
     mat_q: npt.NDArray
@@ -118,7 +125,7 @@ class DataBuilder(BaseModel):
 
         index = df_observ["is_margin"]
         data["vec_p"] = (df_observ[~index][self.weights] > 0).to_numpy()
-        # data["vec_init"] = df_observ[~index][self.value].to_numpy() * data["vec_p"]
+        data["vec_init"] = df_observ[~index][self.value].to_numpy() * data["vec_p"]
         data["mat_m"] = _build_design_mat(df_observ[index], self.space)
 
         index = df_observ.eval(f"{self.weights} > 0")

@@ -32,15 +32,23 @@ class DataParallel(TypedDict):
         Lower bounds for the observations that are not constraints (including aggregates).
     vec_u : numpy.typing.NDArray
         Upper bounds for the observations that are not constraints (including aggregates).
+    vec_initi: numpy.typing.NDArray
+        Initial guess for the unknown raked values.
     mat_m : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the margins that are not constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the margins that are not constraints.
     mat_c : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the constraints.
     mat_mc1 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are not missing to get margins and constraints.
+        Matrix indicating how to sum the non-missing observations that are not constraints nor margins
+        to get margins and constraints.
     mat_mc2 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are missing to get margins and constraints.
+        Matrix indicating how to sum the missing observations that are not constraints nor margins
+        to get margins and constraints.
     mat_q : numpy.typing.NDArray
+    span : pandas.DataFrame
+        Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
 
     vec_p: npt.NDArray
@@ -49,12 +57,15 @@ class DataParallel(TypedDict):
     vec_b: npt.NDArray
     vec_l: npt.NDArray | None
     vec_u: npt.NDArray | None
+    vec_init: npt.NDArray
+
     mat_m: sps.csc_matrix
     mat_c: sps.csc_matrix
-
     mat_mc1: sps.csc_matrix
     mat_mc2: sps.csr_matrix
     mat_q: npt.NDArray
+
+    span: pd.DataFrame
 
 class DataBuilderParallel(BaseModel):
     """Specify observations and constraints for the optimization problem.
@@ -121,6 +132,9 @@ class DataBuilderParallel(BaseModel):
 
         index = df_observ["is_margin"]
         vec_p_loc = (df_observ[~index][self.weights] > 0).to_numpy()
+        columns = [name for name in data_builder.space.names]
+        vec_init_loc = df_observ[~index][columns]
+        vec_init_loc["vec_init"] = vec_p_loc
         mat_m_loc = _build_design_mat(df_observ[index], data_builder.space)
 
         index = df_observ.eval(f"{self.weights} > 0")
@@ -152,6 +166,7 @@ class DataBuilderParallel(BaseModel):
         data["vec_p"] = np.tile(vec_p_loc, N)
 
         # For the other vectors, keep the order of the rows
+        vec_init = pd.concat([vec_init_loc]*N)
         vec_yw = pd.concat([vec_yw_loc]*N)
         vec_b = pd.concat([vec_b_loc]*N)
         span = pd.concat([span_loc]*N)
@@ -160,9 +175,13 @@ class DataBuilderParallel(BaseModel):
             dim_values.append(df[dim].unique().tolist())
         parallel = pd.DataFrame(list(itertools.product(*dim_values)), columns=self.dim_parallel)
         for dim in self.dim_parallel:
+            vec_init[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_init_loc))
             vec_yw[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_yw_loc))
             vec_b[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_b_loc))
             span[dim] = np.repeat(parallel[dim].to_numpy(), len(span_loc))
+        vec_init = vec_init.merge(df, on=columns + self.dim_parallel, how="inner").fillna(0.0)
+        vec_init[self.value] = vec_init[self.value].fillna(0.0)
+        data["vec_init"] = vec_init[self.value] * vec_init["vec_init"]
         data["vec_y"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[self.value].to_numpy()
         data["vec_w"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[self.weights].to_numpy()
         data["vec_b"] = vec_b.merge(df, on=columns + self.dim_parallel, how="inner")[self.value].to_numpy()

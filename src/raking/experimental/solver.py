@@ -120,13 +120,20 @@ class DualSolver:
         # size_p is the number of non-missing observations that are not margins and not constraints
         size_p = self.data["vec_p"].sum()
 
+        # The inverse of the gradient of the distance function is equal to the gradient of the conjugate
         vec_g = self.fun(self.mat_o @ z, order=1)
         x1 = vec_g[:size_p]
 
+        # vec_s contains the raked margins and the constraints
         vec_s = np.hstack([vec_g[size_p:], self.data["vec_b"]])
+        # We remove from the raked margins and constraints the part computed with the raked non-missing observations.
+        # vec_s now contains the part computed with the unknown raked missing observations
         vec_s = vec_s - self.data["mat_mc1"].dot(x1)
+        # We now have vec_s = mat_mc2 x2 => x2 = [mat_mc2^T mat_mc2]-1 (mat_mc2^T vec_s)
         x2 = self.data["mat_q"] @ (self.data["mat_mc2"].T @ vec_s)
 
+        # We assign the raked non-missing observations and the raked missing observations
+        # in the output vector in the same order as the input data
         x = np.zeros_like(self.data["vec_p"], dtype=float)
         x[self.data["vec_p"]] = x1
         x[~self.data["vec_p"]] = x2
@@ -160,17 +167,29 @@ class DualSolver:
             The soln column contains the value of the raked observations.
         """
         if x0 is None:
-#            fun = distance_map[distance](
-#                y=data["vec_y"],
-#                w=data["vec_w"],
-#                l=data["vec_l"],
-#                u=data["vec_u"],
-#            ).fun
-#            grad = self.mat_o.T @ fun(self.mat_o @ self.data["vec_init"], order=1)
-#            x0 = sps.linalg.cg(self.mat_o.T, - grad)[0]
-#
-#
-            x0 = np.zeros(self.mat_o.shape[1])
+            # We need the gradient of the initial function (not the conjugate) here
+            fun = distance_map[self.distance](
+                y=self.data["vec_y"],
+                w=self.data["vec_w"],
+                l=self.data["vec_l"],
+                u=self.data["vec_u"],
+            ).fun
+            # We also need the matrix used in the objective of the primal problem
+            size_v, size_r = self.data["vec_p"].size, self.data["vec_p"].sum()
+            mat_s = sps.csr_matrix(
+                (
+                    np.ones(size_r, dtype=int),
+                    (
+                        np.arange(size_r, dtype=int),
+                        np.arange(size_v, dtype=int)[self.data["vec_p"]],
+                    ),
+                ),
+                shape=(size_r, size_v),
+            )
+            mat_o = sps.csr_matrix(sps.vstack([mat_s, self.data["mat_m"]]))
+            grad = fun(mat_o @ self.data["vec_init"], order=1)
+            x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
+            # x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
         if self.vec_c.size > 0:
@@ -260,8 +279,8 @@ class PrimalSolver:
         # size_r is the number of non-missing observations that are not margins and not constraints
         size_v, size_r = data["vec_p"].size, data["vec_p"].sum()
 
-        # Projection matrix:
-        # mat_s [missing + non-missing, non-constraints, non-margins obs] = [non-missing, non-constraints, non-margins obs]
+        # mat_s [missing + non-missing, non-constraints, non-margins obs] =
+        # [non-missing, non-constraints, non-margins obs]
         mat_s = sps.csr_matrix(
             (
                 np.ones(size_r, dtype=int),
@@ -273,7 +292,8 @@ class PrimalSolver:
             shape=(size_r, size_v),
         )
 
-        # mat_o is used to compute the distance between unknown raked values and non-missing, non-constraints observations
+        # mat_o is used to compute the distance between unknown raked values
+        # and non-missing, non-constraints observations
         self.mat_o = sps.csr_matrix(sps.vstack([mat_s, data["mat_m"]]))
         # mat_c is used to take the missing and non-missing, non-margins, non constraints unknowned raked values
         # and transform them into the constraints that are stored in vec_c
@@ -352,8 +372,8 @@ class PrimalSolver:
         """
         if x0 is None:
             # Choose x0 = y or 0 if missing
-            # x0 = self.data["vec_init"]
-            x0 = np.zeros(self.mat_o.shape[1])
+            x0 = self.data["vec_init"]
+            # x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
         if self.vec_c.size > 0:
