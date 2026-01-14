@@ -70,6 +70,8 @@ def test_parallel(example_3D_draws):
     )
            
     # Use parallelization
+    # The matrix in the objective of the dual has shape (60000, 36000) and full rank.
+    # The solver converges correctly.
     data_builder = DataBuilderParallel(
         dim_specs={"var1": -1, "var2": -1, "var3": -1},
         dim_parallel=["draws"],

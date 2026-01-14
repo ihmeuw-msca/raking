@@ -6,6 +6,11 @@ from raking.experimental import DualSolver
 
 
 def test_exp_raking_1D(example_1D):
+    """
+    Test 1D example.
+    The matrix in the objective of the dual has shape (3, 1) and full rank.
+    The solver converges correctly.
+    """
     df_obs = example_1D.df_obs
     df_margin = example_1D.df_margin
     df_obs["weights"] = 1.0
@@ -25,6 +30,11 @@ def test_exp_raking_1D(example_1D):
 
 
 def test_exp_raking_2D(example_2D):
+    """
+    Test 2D example.
+    The matrix in the objective of the dual has shape (15, 7) and full rank.
+    The solver converges correctly.
+    """
     df_obs = example_2D.df_obs
     df_margins_1 = example_2D.df_margins_1
     df_margins_2 = example_2D.df_margins_2
@@ -63,6 +73,11 @@ def test_exp_raking_2D(example_2D):
 
 
 def test_exp_raking_3D(example_3D):
+    """
+    Test 3D example.
+    The matrix in the objective of the dual has shape (60, 36) and full rank.
+    The solver converges correctly.
+    """
     df_obs = example_3D.df_obs
     df_margins_1 = example_3D.df_margins_1
     df_margins_2 = example_3D.df_margins_2
@@ -116,6 +131,11 @@ def test_exp_raking_3D(example_3D):
 
 
 def test_exp_raking_USHD(example_USHD):
+    """
+    Test USHD example.
+    The matrix in the objective of the dual has shape (72, 30) and full rank.
+    The solver converges correctly.
+    """
     df_obs = example_USHD.df_obs
     df_margin = example_USHD.df_margins
     df_obs["weights"] = 1.0
@@ -155,6 +175,12 @@ def test_exp_raking_USHD(example_USHD):
 
 
 def test_exp_raking_USHD_lower(example_USHD_lower):
+    """
+    Test USHD_lower example.
+    The matrix in the objective of the dual has shape (54, 27) and rank 26
+    when it should have shape (54, 26) and full rank.
+    That does not prevent the solver from converging correctly.
+    """
     df_obs = example_USHD_lower.df_obs
     df_margin_cause = example_USHD_lower.df_margins_cause
     df_margin_county = example_USHD_lower.df_margins_county

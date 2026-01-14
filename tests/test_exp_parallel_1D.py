@@ -36,6 +36,8 @@ def test_parallel(example_1D_draws):
     assert np.allclose(sum_over_var1["soln"].to_numpy(), sum_over_var1["value"].to_numpy()), ("For the loop, the raked values do not sum to the margin.")
            
     # Use parallelization
+    # The matrix in the objective of the dual has shape (3000, 1000) and full rank.
+    # The solver converges correctly.
     data_builder = DataBuilderParallel(
         dim_specs={"var1": -1}, dim_parallel=["draws"], value="value", weights="weights"
     )
