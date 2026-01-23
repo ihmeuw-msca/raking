@@ -4,7 +4,8 @@ import numpy as np
 import scipy.sparse as sps
 
 
-def constraints_1D(s: float, I: int) -> tuple[sps.csr_matrix, np.ndarray]:
+#def constraints_1D(s: float, I: int) -> tuple[sps.csr_matrix, np.ndarray]:
+def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 1D.
 
     This will define the raking optimization problem:
@@ -36,7 +37,9 @@ def constraints_1D(s: float, I: int) -> tuple[sps.csr_matrix, np.ndarray]:
         "The number of possible values taken by the categorical variable must be higher than 1."
     )
 
-    A = sps.csr_matrix(np.ones((1, I)))
+#    A = sps.csr_matrix(np.ones((1, I)))
+#    s = np.array([s])
+    A = np.ones((1, I))
     s = np.array([s])
     return (A, s)
 
@@ -48,7 +51,8 @@ def constraints_2D(
     J: int,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-) -> tuple[sps.csr_matrix, np.ndarray]:
+#) -> tuple[sps.csr_matrix, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 2D.
 
     This will define the raking optimization problem:
@@ -116,13 +120,20 @@ def constraints_2D(
         "The sum of the row margins must be equal to the sum of the column margins."
     )
 
-    identity_I = sps.csr_matrix(np.eye(I, dtype=int))
-    identity_J = sps.csr_matrix(np.eye(J, dtype=int))
-    one_I = sps.csr_matrix(np.ones((I, 1), dtype=int))
-    one_J = sps.csr_matrix(np.ones((J, 1), dtype=int))
-    A1 = sps.kron(identity_J, one_I.transpose())
-    A2 = sps.kron(one_J.transpose(), identity_I[0 : (I - 1), :])
-    A = sps.vstack([A1, A2])
+#    identity_I = sps.csr_matrix(np.eye(I, dtype=int))
+#    identity_J = sps.csr_matrix(np.eye(J, dtype=int))
+#    one_I = sps.csr_matrix(np.ones((I, 1), dtype=int))
+#    one_J = sps.csr_matrix(np.ones((J, 1), dtype=int))
+#    A1 = sps.kron(identity_J, one_I.transpose())
+#    A2 = sps.kron(one_J.transpose(), identity_I[0 : (I - 1), :])
+#    A = sps.vstack([A1, A2])
+#    s = np.concatenate([s1, s2[0 : (I - 1)]])
+    A = np.zeros((J + I - 1, I * J))
+    for j in range(0, J):
+        for i in range(0, I - 1):
+            A[J + i, j * I + i] = 1
+            A[j, j * I + i] = 1
+        A[j, j * I + I - 1] = 1
     s = np.concatenate([s1, s2[0 : (I - 1)]])
     return (A, s)
 
@@ -250,22 +261,33 @@ def constraints_3D(
         "The sums of the targets for dimension 1 and 3 must be equal."
     )
 
-    identity_I = sps.csr_matrix(np.eye(I, dtype=int))
-    identity_J = sps.csr_matrix(np.eye(J, dtype=int))
-    identity_K = sps.csr_matrix(np.eye(K, dtype=int))
-    identity_JK = sps.csr_matrix(np.eye(J * K, dtype=int))
-    one_I = sps.csr_matrix(np.ones((I, 1), dtype=int))
-    one_J = sps.csr_matrix(np.ones((J, 1), dtype=int))
-    one_K = sps.csr_matrix(np.ones((K, 1), dtype=int))
-    A = []
-    A.append(sps.kron(
-        identity_K, sps.kron(identity_J[0 : (J - 1), :], one_I.transpose())
-    ))
-    A.append(sps.kron(identity_JK[J * K - 1, :], one_I.transpose()))
-    for i in range(0, I):
-        A.append(sps.kron(sps.kron(identity_K[0:(K - 1),:], one_J.transpose()), identity_I[i,:]))
-    A.append(sps.kron(one_K.transpose(), sps.kron(identity_J, identity_I[0:(I - 1),:])))
-    A = sps.vstack(A)
+#    identity_I = sps.csr_matrix(np.eye(I, dtype=int))
+#    identity_J = sps.csr_matrix(np.eye(J, dtype=int))
+#    identity_K = sps.csr_matrix(np.eye(K, dtype=int))
+#    identity_JK = sps.csr_matrix(np.eye(J * K, dtype=int))
+#    one_I = sps.csr_matrix(np.ones((I, 1), dtype=int))
+#    one_J = sps.csr_matrix(np.ones((J, 1), dtype=int))
+#    one_K = sps.csr_matrix(np.ones((K, 1), dtype=int))
+#    A = []
+#    A.append(
+#        sps.kron(
+#            identity_K, sps.kron(identity_J[0 : (J - 1), :], one_I.transpose())
+#        )
+#    )
+#    A.append(sps.kron(identity_JK[J * K - 1, :], one_I.transpose()))
+#    for i in range(0, I):
+#        A.append(
+#            sps.kron(
+#                sps.kron(identity_K[0 : (K - 1), :], one_J.transpose()),
+#                identity_I[i, :],
+#            )
+#        )
+#    A.append(
+#        sps.kron(
+#            one_K.transpose(), sps.kron(identity_J, identity_I[0 : (I - 1), :])
+#        )
+#    )
+#    A = sps.vstack(A)
 
     A = np.zeros((I * J + I * K + J * K - I - J - K + 1, I * J * K))
     s = np.zeros(I * J + I * K + J * K - I - J - K + 1)
@@ -523,12 +545,12 @@ def constraints_USHD_lower(
         "The shape of the margins vector for the all causes deaths must be equal to the number of races multiplied by the number of counties."
     )
 
-#    assert np.allclose(np.sum(s_cause), np.sum(s_county), rtol, atol), (
-#        "The sum of the number of deaths per cause must be equal to the sum of the number of deaths per county."
-#    )
-#    assert np.allclose(np.sum(s_all_causes, axis=0), s_county, rtol, atol), (
-#        "For each county, the all-races number of deaths must be equal to the sum of the number of deaths per race."
-#    )
+    #    assert np.allclose(np.sum(s_cause), np.sum(s_county), rtol, atol), (
+    #        "The sum of the number of deaths per cause must be equal to the sum of the number of deaths per county."
+    #    )
+    #    assert np.allclose(np.sum(s_all_causes, axis=0), s_county, rtol, atol), (
+    #        "For each county, the all-races number of deaths must be equal to the sum of the number of deaths per race."
+    #    )
 
     A = np.zeros((I + K + I * K + J * K - K - 1, I * (J + 1) * K))
     s = np.zeros(I + K + I * K + J * K - K - 1)

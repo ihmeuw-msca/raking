@@ -7,7 +7,7 @@ name = "raking"
 version = "0.2.0"
 description = "Python package template"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "=3.11"
 license = { text = "BSD-2-Clause" }
 authors = [
     { name = "IHME Math Sciences", email = "ihme.math.sciences@gmail.com" },
@@ -18,7 +18,7 @@ classifiers = [
     "Natural Language :: English",
 ]
 dependencies = [
-    "numpy",
+    "numpy=1.26",
     "pandas",
     "pydantic>=2.10.6",
     "scipy",
