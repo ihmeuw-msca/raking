@@ -6,11 +6,11 @@ import pandas as pd
 import scipy.sparse as sps
 from scipy.optimize import LinearConstraint, minimize
 
-from raking.experimental.data import Data
+from raking.experimental.data_parallel import DataParallel
 from raking.experimental.distance import distance_map
 
 
-class DualSolver:
+class DualSolverParallel:
     """Solver for the dual problem.
 
     Parameters
@@ -27,7 +27,7 @@ class DualSolver:
         Contains info on the solution and the convergence of the optimization problem.
     """
 
-    def __init__(self, distance: str, data: Data) -> None:
+    def __init__(self, distance: str, data: DataParallel) -> None:
         """Create DualSolver instance.
 
         Parameters
@@ -35,7 +35,7 @@ class DualSolver:
         distance : str
             Distance between observations and raked values.
             Currently, only chi2, entropic and logistic are implemented.
-        data: raking.experimental.data.Data
+        data: raking.experimental.data_parallel.DataParallel
             Contains observations data and constraints for the optimization problem.
 
         Returns
@@ -52,13 +52,10 @@ class DualSolver:
         ).conjugate_fun
 
         self.data = data
-        size_m, size_c = data["mat_m"].shape[0], data["mat_c"].shape[0]
-        self.mat_o = sps.csr_matrix(
-            sps.vstack([-data["mat_mc1"].T, sps.eye(size_m, n=size_m + size_c)])
-        )
-        self.vec_o = np.hstack([np.zeros(size_m), data["vec_b"]])
-        self.mat_c = data["mat_mc2"].T
-        self.vec_c = np.zeros(self.mat_c.shape[0])
+        self.mat_o = data["mat_o_dual"]
+        self.vec_o = data["vec_o_dual"]
+        self.mat_c = data["mat_c_dual"]
+        self.vec_c = data["vec_c_dual"]
         self.result = None
 
     def objective(self, x: npt.NDArray) -> float:
@@ -117,23 +114,24 @@ class DualSolver:
         x : numpy.typing.NDArray
             Solution of the primal problem.
         """
-        # size_p is the number of non-missing observations that are not margins and not constraints
-        size_p = self.data["vec_p"].sum()
-
-        # The inverse of the gradient of the distance function is equal to the gradient of the conjugate
+        N = self.data["N"]
+        size_p = int(self.data["vec_p"].sum() / N)
         vec_g = self.fun(self.mat_o @ z, order=1)
-        x1 = vec_g[:size_p]
+        size_g = int(vec_g.size / N)
 
-        # vec_s contains the raked margins and the constraints
-        vec_s = np.hstack([vec_g[size_p:], self.data["vec_b"]])
-        # We remove from the raked margins and constraints the part computed with the raked non-missing observations.
-        # vec_s now contains the part computed with the unknown raked missing observations
+        x1 = np.ravel(np.reshape(vec_g, (size_g, N), "F")[:size_p, :], "F")
+        size_b = int(self.data["vec_b"].size / N)
+        vec_s = np.ravel(
+            np.vstack(
+                [
+                    np.reshape(vec_g, (size_g, N), "F")[size_p:, :],
+                    np.reshape(self.data["vec_b"], (size_b, N), "F"),
+                ]
+            ),
+            "F",
+        )
         vec_s = vec_s - self.data["mat_mc1"].dot(x1)
-        # We now have vec_s = mat_mc2 x2 => x2 = [mat_mc2^T mat_mc2]-1 (mat_mc2^T vec_s)
         x2 = self.data["mat_q"] @ (self.data["mat_mc2"].T @ vec_s)
-
-        # We assign the raked non-missing observations and the raked missing observations
-        # in the output vector in the same order as the input data
         x = np.zeros_like(self.data["vec_p"], dtype=float)
         x[self.data["vec_p"]] = x1
         x[~self.data["vec_p"]] = x2
@@ -174,19 +172,9 @@ class DualSolver:
                 u=self.data["vec_u"],
             ).fun
             # We also need the matrix used in the objective of the primal problem
-            size_v, size_r = self.data["vec_p"].size, self.data["vec_p"].sum()
-            mat_s = sps.csr_matrix(
-                (
-                    np.ones(size_r, dtype=int),
-                    (
-                        np.arange(size_r, dtype=int),
-                        np.arange(size_v, dtype=int)[self.data["vec_p"]],
-                    ),
-                ),
-                shape=(size_r, size_v),
+            grad = fun(
+                self.data["mat_o_primal"] @ self.data["vec_init"], order=1
             )
-            mat_o = sps.csr_matrix(sps.vstack([mat_s, self.data["mat_m"]]))
-            grad = fun(mat_o @ self.data["vec_init"], order=1)
             x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
             # x0 = np.zeros(self.mat_o.shape[1])
 
@@ -229,12 +217,12 @@ class DualSolver:
         return soln
 
 
-class PrimalSolver:
+class PrimalSolverParallel:
     """Solver for the primal problem.
 
     Parameters
     ----------
-    data : raking.experimental.data.Data
+    data : raking.experimental.data_parallel.DataParallel
         Contains observations data and constraints for the optimization problem.
     fun : raking.experimental.distance.Distance
         Distance between observations and raked values.
@@ -250,7 +238,7 @@ class PrimalSolver:
         Contains info on the solution and the convergence of the optimization problem.
     """
 
-    def __init__(self, distance: str, data: Data) -> None:
+    def __init__(self, distance: str, data: DataParallel) -> None:
         """Create PrimalSolver instance.
 
         Parameters
@@ -274,30 +262,9 @@ class PrimalSolver:
         ).fun
 
         self.data = data
-        # size_v is the number of observations (missing and non-missing) that are not margins and not constraints
-        # size_r is the number of non-missing observations that are not margins and not constraints
-        size_v, size_r = data["vec_p"].size, data["vec_p"].sum()
-
-        # mat_s [missing + non-missing, non-constraints, non-margins obs] =
-        # [non-missing, non-constraints, non-margins obs]
-        mat_s = sps.csr_matrix(
-            (
-                np.ones(size_r, dtype=int),
-                (
-                    np.arange(size_r, dtype=int),
-                    np.arange(size_v, dtype=int)[data["vec_p"]],
-                ),
-            ),
-            shape=(size_r, size_v),
-        )
-
-        # mat_o is used to compute the distance between unknown raked values
-        # and non-missing, non-constraints observations
-        self.mat_o = sps.csr_matrix(sps.vstack([mat_s, data["mat_m"]]))
-        # mat_c is used to take the missing and non-missing, non-margins, non constraints unknowned raked values
-        # and transform them into the constraints that are stored in vec_c
-        self.mat_c = data["mat_c"]
-        self.vec_c = data["vec_b"]
+        self.mat_o = data["mat_o_primal"]
+        self.mat_c = data["mat_c_primal"]
+        self.vec_c = data["vec_c_primal"]
         self.result = None
 
     def objective(self, x: npt.NDArray) -> float:

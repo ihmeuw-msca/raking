@@ -1,18 +1,15 @@
 """Data classes."""
 
 import itertools
-import operator
 from typing import TypedDict
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
-from pandas.api.types import CategoricalDtype
 from pydantic import BaseModel
 
-from raking.experimental.data import Data, DataBuilder, _build_design_mat
-from raking.experimental.dimension import Dimension, Space
+from raking.experimental.data import DataBuilder, _build_design_mat
 
 
 class DataParallel(TypedDict):
@@ -40,6 +37,9 @@ class DataParallel(TypedDict):
     mat_c : scipy.sparse.csc_matrix
         Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
         to get the constraints.
+    mat_s : scipy.sparse.csc_matrix
+        Matrix indicating how to get from the missing and non-missing, non-constraints, non-margins observations
+        to the non-missing, non-constraints, non-margins observations
     mat_mc1 : scipy.sparse.csr_matrix
         Matrix indicating how to sum the non-missing observations that are not constraints nor margins
         to get margins and constraints.
@@ -61,11 +61,13 @@ class DataParallel(TypedDict):
 
     mat_m: sps.csc_matrix
     mat_c: sps.csc_matrix
+    mat_s: sps.csc_matrix
     mat_mc1: sps.csc_matrix
     mat_mc2: sps.csr_matrix
     mat_q: npt.NDArray
 
     span: pd.DataFrame
+
 
 class DataBuilderParallel(BaseModel):
     """Specify observations and constraints for the optimization problem.
@@ -113,20 +115,28 @@ class DataBuilderParallel(BaseModel):
         df_loc = df.copy(deep=True)
         for dim in self.dim_parallel:
             dim0 = df[dim].unique().tolist()[0]
-            df_loc = df_loc.loc[df_loc[dim]==dim0]
+            df_loc = df_loc.loc[df_loc[dim] == dim0]
             df_loc = df_loc.drop(columns=[dim])
-        data_builder = DataBuilder(dim_specs=self.dim_specs, value=self.value, weights=self.weights, bounds=self.bounds)
+        data_builder = DataBuilder(
+            dim_specs=self.dim_specs,
+            value=self.value,
+            weights=self.weights,
+            bounds=self.bounds,
+        )
         data_builder._build_space(df_loc)
         df_loc = (
             df_loc.pipe(data_builder._subset_columns)
-                  .pipe(data_builder._check_duplication)
-                  .pipe(data_builder._check_weights)
-                  .pipe(data_builder._check_value)
-                  .pipe(data_builder._assign_level)
-                  .pipe(data_builder._assign_indicators)
-                  .pipe(data_builder._sort_rows)
+            .pipe(data_builder._check_duplication)
+            .pipe(data_builder._check_weights)
+            .pipe(data_builder._check_value)
+            .pipe(data_builder._assign_level)
+            .pipe(data_builder._assign_indicators)
+            .pipe(data_builder._sort_rows)
         )
-        df_observ, df_constr = df_loc.query("~is_constr"), df_loc.query("is_constr")
+        df_observ, df_constr = (
+            df_loc.query("~is_constr"),
+            df_loc.query("is_constr"),
+        )
         df_observ = data_builder._expand_observ(df_observ)
         df_constr = data_builder._check_constr(df_constr)
 
@@ -135,29 +145,66 @@ class DataBuilderParallel(BaseModel):
         columns = [name for name in data_builder.space.names]
         vec_init_loc = df_observ[~index][columns]
         vec_init_loc["vec_init"] = vec_p_loc
-        mat_m_loc = _build_design_mat(df_observ[index], data_builder.space)
+        mat_m = _build_design_mat(df_observ[index], data_builder.space)
 
         index = df_observ.eval(f"{self.weights} > 0")
         columns = [name for name in data_builder.space.names]
         vec_yw_loc = df_observ[index][columns]
 
         index = df_constr["included"]
-        mat_c_loc = _build_design_mat(df_constr[index], data_builder.space)
+        mat_c = _build_design_mat(df_constr[index], data_builder.space)
         vec_b_loc = df_constr[index][columns]
 
-        mat_mc_loc = sps.csc_matrix(sps.vstack([mat_m_loc, mat_c_loc]))
-        mat_mc1_loc = sps.csc_matrix(mat_mc_loc[:, vec_p_loc])
-        mat_mc2_loc = sps.csc_matrix(mat_mc_loc[:, ~vec_p_loc])
+        mat_mc = sps.csc_matrix(sps.vstack([mat_m, mat_c]))
+        mat_mc1_loc = sps.csc_matrix(mat_mc[:, vec_p_loc])
+        mat_mc2_loc = sps.csc_matrix(mat_mc[:, ~vec_p_loc])
         mat_q_loc = data_builder._check_sufficiency(mat_mc2_loc)
 
+        # Build the matrices and vectors for the primal problem
+        size_v, size_r = vec_p_loc.size, vec_p_loc.sum()
+        mat_s = sps.csr_matrix(
+            (
+                np.ones(size_r, dtype=int),
+                (
+                    np.arange(size_r, dtype=int),
+                    np.arange(size_v, dtype=int)[vec_p_loc],
+                ),
+            ),
+            shape=(size_r, size_v),
+        )
+        mat_o_primal_loc = sps.csr_matrix(sps.vstack([mat_s, mat_m]))
+        mat_c_primal_loc = mat_c.copy()
+        vec_c_primal_loc = vec_b_loc.copy()
+
+        # Build the matrices and vectors for the dual problem
+        size_m, size_c = mat_m.shape[0], mat_c.shape[0]
+        mat_o_dual_loc = sps.csr_matrix(
+            sps.vstack([-mat_mc1_loc.T, sps.eye(size_m, n=size_m + size_c)])
+        )
+        dict_vec_o_dual = {}
+        for column in columns:
+            dict_vec_o_dual[column] = np.repeat(np.nan, size_m)
+        vec_o_dual_loc = pd.DataFrame(dict_vec_o_dual)
+        vec_o_dual_loc = pd.concat([vec_o_dual_loc, vec_b_loc])
+        mat_c_dual_loc = mat_mc2_loc.T
+        vec_c_dual_loc = np.zeros(mat_c_dual_loc.shape[0])
+
+        # Save the span of the first data set
         span_loc = data_builder.space.span().copy()
 
         # For the matrices, take Kronecker product with identity matrix
         N = 1
         for dim in self.dim_parallel:
             N = N * len(df[dim].unique())
-        data["mat_m"] = sps.kron(sps.eye(N, N), mat_m_loc)
-        data["mat_c"] = sps.kron(sps.eye(N, N), mat_c_loc)
+        data["N"] = N
+
+        # Primal problem
+        data["mat_o_primal"] = sps.kron(sps.eye(N, N), mat_o_primal_loc)
+        data["mat_c_primal"] = sps.kron(sps.eye(N, N), mat_c_primal_loc)
+
+        # Dual problem
+        data["mat_o_dual"] = sps.kron(sps.eye(N, N), mat_o_dual_loc)
+        data["mat_c_dual"] = sps.kron(sps.eye(N, N), mat_c_dual_loc)
         data["mat_mc1"] = sps.kron(sps.eye(N, N), mat_mc1_loc)
         data["mat_mc2"] = sps.kron(sps.eye(N, N), mat_mc2_loc)
         data["mat_q"] = sps.kron(sps.eye(N, N), mat_q_loc)
@@ -166,31 +213,73 @@ class DataBuilderParallel(BaseModel):
         data["vec_p"] = np.tile(vec_p_loc, N)
 
         # For the other vectors, keep the order of the rows
-        vec_init = pd.concat([vec_init_loc]*N)
-        vec_yw = pd.concat([vec_yw_loc]*N)
-        vec_b = pd.concat([vec_b_loc]*N)
-        span = pd.concat([span_loc]*N)
         dim_values = []
         for dim in self.dim_parallel:
             dim_values.append(df[dim].unique().tolist())
-        parallel = pd.DataFrame(list(itertools.product(*dim_values)), columns=self.dim_parallel)
+        parallel = pd.DataFrame(
+            list(itertools.product(*dim_values)), columns=self.dim_parallel
+        )
+
+        # Both problems
+        vec_init = pd.concat([vec_init_loc] * N)
+        vec_yw = pd.concat([vec_yw_loc] * N)
+        span = pd.concat([span_loc] * N)
         for dim in self.dim_parallel:
-            vec_init[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_init_loc))
+            vec_init[dim] = np.repeat(
+                parallel[dim].to_numpy(), len(vec_init_loc)
+            )
             vec_yw[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_yw_loc))
-            vec_b[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_b_loc))
             span[dim] = np.repeat(parallel[dim].to_numpy(), len(span_loc))
-        vec_init = vec_init.merge(df, on=columns + self.dim_parallel, how="inner").fillna(0.0)
+        vec_init = vec_init.merge(
+            df, on=columns + self.dim_parallel, how="inner"
+        ).fillna(0.0)
         vec_init[self.value] = vec_init[self.value].fillna(0.0)
         data["vec_init"] = vec_init[self.value] * vec_init["vec_init"]
-        data["vec_y"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[self.value].to_numpy()
-        data["vec_w"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[self.weights].to_numpy()
-        data["vec_b"] = vec_b.merge(df, on=columns + self.dim_parallel, how="inner")[self.value].to_numpy()
+        data["vec_y"] = vec_yw.merge(
+            df, on=columns + self.dim_parallel, how="inner"
+        )[self.value].to_numpy()
+        data["vec_w"] = vec_yw.merge(
+            df, on=columns + self.dim_parallel, how="inner"
+        )[self.weights].to_numpy()
         data["vec_l"], data["vec_u"] = None, None
         if self.bounds is not None:
             lb, ub = self.bounds
-            data["vec_l"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[lb].to_numpy()
-            data["vec_u"] = vec_yw.merge(df, on=columns + self.dim_parallel, how="inner")[ub].to_numpy()
+            data["vec_l"] = vec_yw.merge(
+                df, on=columns + self.dim_parallel, how="inner"
+            )[lb].to_numpy()
+            data["vec_u"] = vec_yw.merge(
+                df, on=columns + self.dim_parallel, how="inner"
+            )[ub].to_numpy()
         data["span"] = span
-        
-        return data
 
+        # Primal problem
+        vec_c_primal = pd.concat([vec_c_primal_loc] * N)
+        for dim in self.dim_parallel:
+            vec_c_primal[dim] = np.repeat(
+                parallel[dim].to_numpy(), len(vec_c_primal_loc)
+            )
+        data["vec_c_primal"] = vec_c_primal.merge(
+            df, on=columns + self.dim_parallel, how="inner"
+        )[self.value].to_numpy()
+
+        # Dual problem
+        vec_o_dual = pd.concat([vec_o_dual_loc] * N)
+        vec_b = pd.concat([vec_b_loc] * N)
+        for dim in self.dim_parallel:
+            vec_o_dual[dim] = np.repeat(
+                parallel[dim].to_numpy(), len(vec_o_dual_loc)
+            )
+            vec_b[dim] = np.repeat(parallel[dim].to_numpy(), len(vec_b_loc))
+        data["vec_o_dual"] = (
+            vec_o_dual.merge(df, on=columns + self.dim_parallel, how="left")[
+                self.value
+            ]
+            .fillna(0.0)
+            .to_numpy()
+        )
+        data["vec_b"] = vec_b.merge(
+            df, on=columns + self.dim_parallel, how="inner"
+        )[self.value].to_numpy()
+        data["vec_c_dual"] = np.tile(vec_c_dual_loc, N)
+
+        return data

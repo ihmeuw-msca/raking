@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
 
+
 class Data(TypedDict):
     """Observations and constraints for the optimization problem.
 
@@ -125,7 +126,9 @@ class DataBuilder(BaseModel):
 
         index = df_observ["is_margin"]
         data["vec_p"] = (df_observ[~index][self.weights] > 0).to_numpy()
-        data["vec_init"] = df_observ[~index][self.value].to_numpy() * data["vec_p"]
+        data["vec_init"] = (
+            df_observ[~index][self.value].to_numpy() * data["vec_p"]
+        )
         data["mat_m"] = _build_design_mat(df_observ[index], self.space)
 
         index = df_observ.eval(f"{self.weights} > 0")
@@ -215,7 +218,7 @@ class DataBuilder(BaseModel):
                 CategoricalDtype(categories=dim_ordering, ordered=True)
             )
         df = df.sort_values(["is_constr", "level"] + columns, ignore_index=True)
-        for (dim, column_type) in zip(self.space.dimensions, column_types):
+        for dim, column_type in zip(self.space.dimensions, column_types):
             df[dim.name] = df[dim.name].astype(column_type)
         return df
 

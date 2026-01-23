@@ -3,6 +3,10 @@ from raking.experimental.data_parallel import DataBuilderParallel
 from raking.experimental.dimension import Dimension, Space
 from raking.experimental.distance import Distance, distance_map
 from raking.experimental.solver import DualSolver, PrimalSolver
+from raking.experimental.solver_parallel import (
+    DualSolverParallel,
+    PrimalSolverParallel,
+)
 
 __all__ = [
     "DataBuilder",
@@ -12,5 +16,7 @@ __all__ = [
     "Distance",
     "distance_map",
     "DualSolver",
+    "DualSolverParallel",
     "PrimalSolver",
+    "PrimalSolverParallel",
 ]

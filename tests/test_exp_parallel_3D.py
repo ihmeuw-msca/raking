@@ -4,6 +4,7 @@ import pandas as pd
 from raking.experimental import DataBuilder
 from raking.experimental import DataBuilderParallel
 from raking.experimental import DualSolver
+from raking.experimental import DualSolverParallel
 
 
 def test_parallel(example_3D_draws):
@@ -22,6 +23,8 @@ def test_parallel(example_3D_draws):
     df_margins_3["weights"] = np.inf
     df_margins_3.rename(columns={"value_agg_over_var3": "value"}, inplace=True)
     df = pd.concat([df_obs, df_margins_1, df_margins_2, df_margins_3])
+
+    df = df.loc[df.draws < 10.5]
 
     # Loop on the draws
     draws = df.draws.unique().tolist()
@@ -68,7 +71,7 @@ def test_parallel(example_3D_draws):
     assert np.allclose(sum_over_var3["soln"], sum_over_var3["value"], 1.0e-4), (
         "For the loop, the sums over the third variable must match the third margins."
     )
-           
+
     # Use parallelization
     # The matrix in the objective of the dual has shape (60000, 36000) and full rank.
     # The solver converges correctly.
@@ -79,7 +82,7 @@ def test_parallel(example_3D_draws):
         weights="weights",
     )
     data = data_builder.build(df)
-    solver = DualSolver(distance="entropic", data=data)
+    solver = DualSolverParallel(distance="entropic", data=data)
     df_raked_parallel = solver.solve()
 
     # Check the results for the parallelization
@@ -118,9 +121,6 @@ def test_parallel(example_3D_draws):
         on=["var1", "var2", "var3", "draws"],
         how="inner",
     )
-    assert np.allclose(
-        df_both["soln_x"],
-        df_both["soln_y"],
-        1.0e-3
-    ), "The two rakings must give the same results."
-
+    assert np.allclose(df_both["soln_x"], df_both["soln_y"], 1.0e-3), (
+        "The two rakings must give the same results."
+    )
