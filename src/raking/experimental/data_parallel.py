@@ -17,29 +17,36 @@ class DataParallel(TypedDict):
 
     Parameters
     ----------
+    N: int
+        Parallelization dimension. Number of times that the problem needs to be repeated.
     vec_p : numpy.typing.NDArray
         Indicates whether observations that are not constraints nor margins are missing.
+    vec_init: numpy.typing.NDArray
+        Initial guess for the unknown raked values.
     vec_y : numpy.typing.NDArray
         Vector containing the values of the observations that are not constraints and not missing.
     vec_w : numpy.typing.NDArray
         Vector containing the weights corresponding to the observations in vec_y. Must be > 0 and < np.inf.
-    vec_b : numpy.typing.NDArray
-        Vector containing the values of the constraints.
     vec_l : numpy.typing.NDArray
         Lower bounds for the observations that are not constraints (including aggregates).
     vec_u : numpy.typing.NDArray
         Upper bounds for the observations that are not constraints (including aggregates).
-    vec_initi: numpy.typing.NDArray
-        Initial guess for the unknown raked values.
-    mat_m : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
-        to get the margins that are not constraints.
-    mat_c : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
-        to get the constraints.
-    mat_s : scipy.sparse.csc_matrix
-        Matrix indicating how to get from the missing and non-missing, non-constraints, non-margins observations
-        to the non-missing, non-constraints, non-margins observations
+    vec_c_primal: numpy.typing.NDArray
+        Contains the constraints for the primal problem formulation.
+    vec_o_dual: numpy.typing.NDarray
+        Used in the dot product with the unknown in the objective function for the dual problem formulation.
+    vec_c_dual: numpy.typing.NDArray
+        Contains the constraints for the dual problem formulation.
+    vec_b : numpy.typing.NDArray
+        Vector containing the values of the constraints.
+    mat_o_primal: scipy.sparse.csc_matrix
+        Used in the matrix product with the unknown in the objective function for the primal problem formulation.
+    mat_c_primal: scipy.sparse.csc_matrix
+        Matrix indicating how to sum the unknowns to get the constriants for the primal problem formulation.
+    mat_o_dual: scipy.sparse.csc_matrix
+        Used in the matrix product with the unknown in the objective function for the dual problem formulation.
+    mat_c_dual: scipy.sparse.csc_matrix
+        Matrix indicating how to sum the unknowns to get the constriants for the dual problem formulation.
     mat_mc1 : scipy.sparse.csr_matrix
         Matrix indicating how to sum the non-missing observations that are not constraints nor margins
         to get margins and constraints.
@@ -51,23 +58,27 @@ class DataParallel(TypedDict):
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
 
+    N: int
     vec_p: npt.NDArray
+    vec_init: npt.NDArray
     vec_y: npt.NDArray
     vec_w: npt.NDArray
-    vec_b: npt.NDArray
     vec_l: npt.NDArray | None
     vec_u: npt.NDArray | None
-    vec_init: npt.NDArray
+    vec_c_primal: npt.NDArray
+    vec_o_dual: npt.NDArray
+    vec_c_dual: npt.NDArray
+    vec_b: npt.NDArray
 
-    mat_m: sps.csc_matrix
-    mat_c: sps.csc_matrix
-    mat_s: sps.csc_matrix
-    mat_mc1: sps.csc_matrix
+    mat_o_primal: sps.csc_matrix
+    mat_c_primal: sps.csc_matrix
+    mat_o_dual: sps.csc_matrix
+    mat_c_dual: sps.csc_matrix
+    may_mc1: sps.csc_matrix
     mat_mc2: sps.csr_matrix
-    mat_q: npt.NDArray
+    mat_q: sps.csr_matrix
 
     span: pd.DataFrame
-
 
 class DataBuilderParallel(BaseModel):
     """Specify observations and constraints for the optimization problem.
@@ -192,7 +203,8 @@ class DataBuilderParallel(BaseModel):
         # Save the span of the first data set
         span_loc = data_builder.space.span().copy()
 
-        # For the matrices, take Kronecker product with identity matrix
+        # Extend the data builder to the entire problem
+        # For the matrices, take the Kronecker product with identity matrix
         N = 1
         for dim in self.dim_parallel:
             N = N * len(df[dim].unique())

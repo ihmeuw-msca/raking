@@ -5,9 +5,31 @@ import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
 from scipy.optimize import LinearConstraint, minimize
+from scipy.sparse.linalg import LinearOperator
 
 from raking.experimental.data_parallel import DataParallel
 from raking.experimental.distance import distance_map
+from raking.experimental.optim import NTResult, NTSolver
+from raking.experimental.special import div0, log0
+
+
+class Hessian_operator(LinearOperator):
+    """
+    Transform the Hessian matrix into linear operator.
+    """
+
+    def __init__(self, hessian: npt.NDArray) -> None:
+        self.hessian = hessian
+        super().__init__(
+            dtype=self.hessian.dtype,
+            shape=self.hessian.shape,
+        )
+
+    def _matvec(self, x: npt.NDArray) -> npt.NDArray:
+        return self.hessian @ x
+
+    def solve(self, x: npt.NDArray, **kwargs) -> npt.NDArray:
+        return sps.linalg.spsolve(self.hessian, x)
 
 
 class DualSolverParallel:
@@ -23,7 +45,7 @@ class DualSolverParallel:
     mat_c : scipy.sparse.csr_matrix
     vec_o : np.array
     vec_c : np.array
-    result : scipy.optimize.OptimizeResult
+    result : scipy.optimize.OptimizeResult or NTResult
         Contains info on the solution and the convergence of the optimization problem.
     """
 
@@ -99,7 +121,12 @@ class DualSolverParallel:
         Hessian of the objective function (scipy.sparse.csc_matrix).
         """
         d2 = self.fun(self.mat_o @ x, order=2)
-        return (self.mat_o.T.multiply(d2)) @ self.mat_o
+        hessian_matrix = (self.mat_o.T.multiply(d2)) @ self.mat_o
+        if self.vec_c.size == 0:
+            return Hessian_operator(hessian_matrix)
+        else:
+            return hessian_matrix
+    
 
     def dual_to_primal(self, z: npt.NDArray) -> npt.NDArray:
         """Transforms dual solution into primal solution.
@@ -137,21 +164,37 @@ class DualSolverParallel:
         x[~self.data["vec_p"]] = x2
         return x
 
+    def get_x0(self, x0: npt.NDArray | None) -> npt.NDArray:
+        if x0 is None:
+            # We only implement the initialization for entropic distance
+            # as we have to deal with 0s in the observations and cannot use directly the distance map
+            if self.distance != "entropic":
+                x0 = np.zeros(self.mat_o.shape[1])
+            else:
+                # We need the matrix used in the objective of the primal problem
+                # to transform initial guess for raked values into initial guess for the dual.
+                mat_o = self.data["mat_o_primal"]
+                # We compute the gradient of the entropic distance
+                # while avoiding taking logarithms of 0s
+                grad = log0(div0(mat_o @ self.data["vec_init"], self.data["vec_y"]))
+                # Taking the gradient of the Lagrangian, we have:
+                # nabla f(zeta0,y) + (mat_m I \\ mat_c 0)^T lambda0
+                x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
+
+        return x0
+
     def solve(
         self,
         x0: npt.NDArray | None = None,
-        method: str | None = None,
         tol: float = 1.0e-11,
         options: dict | None = None,
     ) -> pd.DataFrame:
-        """Solve the dual problem using scipy.optimize.minimize.
+        """Solve the dual problem using scipy.optimize.minimize or the MSCA solver.
 
         Parameters
         ----------
         x0 : numpy.typing.NDArray
             Initial guess for the dual.
-        method: str
-            Optimization method. See scipy.optimize.minimize documentation for possible options.
         tol: float
             Tolerance for termination. See scipy.optimize.minimize documentation for details.
         options : dict
@@ -163,55 +206,34 @@ class DualSolverParallel:
             Columns contain the categorical variables in the initial dataset (without the margins).
             The soln column contains the value of the raked observations.
         """
-        if x0 is None:
-            # We need the gradient of the initial function (not the conjugate) here
-            fun = distance_map[self.distance](
-                y=self.data["vec_y"],
-                w=self.data["vec_w"],
-                l=self.data["vec_l"],
-                u=self.data["vec_u"],
-            ).fun
-            # We also need the matrix used in the objective of the primal problem
-            grad = fun(
-                self.data["mat_o_primal"] @ self.data["vec_init"], order=1
-            )
-            x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
-            # x0 = np.zeros(self.mat_o.shape[1])
+        # Initialization
+        x0 = self.get_x0(x0)
 
-        constraints = None
-        if self.vec_c.size > 0:
-            constraints = [LinearConstraint(self.mat_c, self.vec_c, self.vec_c)]
 
-        if method is None:
-            method = "L-BFGS-B" if self.vec_c.size == 0 else "trust-constr"
-
-        if options == None:
-            if method == "L-BFGS-B":
-                options = {"ftol": 1.0e-11, "gtol": 1.0e-11}
-            if method == "trust-constr":
-                options = {"gtol": 1.0e-11, "xtol": 1.0e-11}
-
-        if method == "L-BFGS-B":
-            self.result = minimize(
-                self.objective,
-                x0,
-                method=method,
-                jac=self.gradient,
-                tol=tol,
-                options=options,
-            )
+        if self.vec_c.size == 0:
+            if options is None:
+                options = {}
+            interface = {
+                "fun": self.objective,
+                "grad": self.gradient,
+                "hess": self.hessian,
+            }
+            optimizer = NTSolver(**interface)
+            self.result = optimizer.minimize(x0=x0, **options)
         else:
+            constraints = [LinearConstraint(self.mat_c, self.vec_c, self.vec_c)]
+            if options == None:
+                options = {"gtol": 1.0e-11, "xtol": 1.0e-11}
             self.result = minimize(
                 self.objective,
                 x0,
-                method=method,
+                method="trust-constr",
                 jac=self.gradient,
                 hess=self.hessian,
                 constraints=constraints,
                 tol=tol,
                 options=options,
             )
-
         soln = self.data["span"].copy()
         soln["soln"] = self.dual_to_primal(self.result.x)
         return soln

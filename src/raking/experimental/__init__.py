@@ -16,7 +16,7 @@ __all__ = [
     "Distance",
     "distance_map",
     "DualSolver",
-    "DualSolverParallel",
     "PrimalSolver",
+    "DualSolverParallel",
     "PrimalSolverParallel",
 ]

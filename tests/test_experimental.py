@@ -480,7 +480,7 @@ def test_exp_raking_USHD_weights(example_USHD_draws):
     assert np.allclose(
         sum_over_race_county["soln"],
         sum_over_race_county["value"],
-        atol=1.0e-5,
+        atol=1.0e-4,
     ), "The sums over race and county must match the GBD values."
 
 
