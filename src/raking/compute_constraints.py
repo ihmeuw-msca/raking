@@ -33,14 +33,27 @@ def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
     assert isinstance(I, int), (
         "The number of possible values taken by the categorical variable must be an integer."
     )
-    assert I > 1, (
-        "The number of possible values taken by the categorical variable must be higher than 1."
-    )
+#    assert I > 1, (
+#        "The number of possible values taken by the categorical variable must be higher than 1."
+#    )
 
 #    A = sps.csr_matrix(np.ones((1, I)))
 #    s = np.array([s])
     A = np.ones((1, I))
     s = np.array([s])
+    return (A, s)
+
+
+def constraints_1D_parallel(
+    s: np.ndarray,
+    I: int,
+    N: int
+) -> tuple[sps.csr_matrix, np.ndarray]:
+    (A_loc, s_loc) = constraints_1D(s[0], I)
+    # Transform to sparse
+    A_loc = sps.csr_matrix(A_loc)
+    I_N = sps.csr_matrix(np.eye(N, dtype=int))
+    A = sps.kron(I_N, A_loc)
     return (A, s)
 
 
