@@ -18,8 +18,8 @@ classifiers = [
     "Natural Language :: English",
 ]
 dependencies = [
-    "numpy==1.26",
-    "pandas",
+    "numpy",
+    "pandas<3",
     "pydantic>=2.10.6",
     "scipy",
 ]
