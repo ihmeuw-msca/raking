@@ -54,6 +54,8 @@ class DataParallel(TypedDict):
         Matrix indicating how to sum the missing observations that are not constraints nor margins
         to get margins and constraints.
     mat_q : numpy.typing.NDArray
+        Matrix indicating how to get the missing observations once we know the raked margins and the constraints.
+        Should be equal to [mat_mc2^T mat_mc2]-1
     span : pandas.DataFrame
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """

@@ -13,7 +13,7 @@ from raking.experimental.optim import NTResult, NTSolver
 from raking.experimental.special import div0, log0
 
 
-class Hessian_operator(LinearOperator):
+class HessianOperator(LinearOperator):
     """
     Transform the Hessian matrix into linear operator.
     """
@@ -123,7 +123,7 @@ class DualSolverParallel:
         d2 = self.fun(self.mat_o @ x, order=2)
         hessian_matrix = (self.mat_o.T.multiply(d2)) @ self.mat_o
         if self.vec_c.size == 0:
-            return Hessian_operator(hessian_matrix)
+            return HessianOperator(hessian_matrix)
         else:
             return hessian_matrix
     
@@ -359,7 +359,6 @@ class PrimalSolverParallel:
             The soln column contains the value of the raked observations.
         """
         if x0 is None:
-            # Choose x0 = y or 0 if missing
             x0 = self.data["vec_init"]
             # x0 = np.zeros(self.mat_o.shape[1])
 

@@ -370,7 +370,6 @@ class PrimalSolver:
             The soln column contains the value of the raked observations.
         """
         if x0 is None:
-            # Choose x0 = y or 0 if missing
             x0 = self.data["vec_init"]
             # x0 = np.zeros(self.mat_o.shape[1])
 
