@@ -16,8 +16,6 @@ def test_parallel(example_1D_draws):
     df_margin.rename(columns={"value_agg_over_var1": "value"}, inplace=True)
     df = pd.concat([df_obs, df_margin])
 
-    df = df.loc[df.draws < 10.5]
-
     # Loop on the draws
     draws = df.draws.unique().tolist()
     df_raked = []

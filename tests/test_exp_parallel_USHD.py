@@ -26,8 +26,6 @@ def test_parallel(example_USHD_draws):
     df = pd.concat([df_obs, df_margin])
     df = df.astype({"cause": "int64"})
 
-    df = df.loc[df.draws < 10.5]
-
     # Loop on the draws
     draws = df.draws.unique().tolist()
     df_raked = []
@@ -55,7 +53,7 @@ def test_parallel(example_USHD_draws):
     assert np.allclose(
         sum_over_race_county["soln"],
         sum_over_race_county["value"],
-        atol=1.0e-3,
+        atol=1.0e-4,
     ), "For the loop, the sums over race and county must match the GBD values."
 
     # Use parallelization
@@ -78,8 +76,7 @@ def test_parallel(example_USHD_draws):
     )
     assert np.allclose(
         sum_over_race_county["soln"],
-        sum_over_race_county["value"],
-        atol=1.0e-3,
+        sum_over_race_county["value"]
     ), (
         "For the parallelization, the sums over race and county must match the GBD values."
     )

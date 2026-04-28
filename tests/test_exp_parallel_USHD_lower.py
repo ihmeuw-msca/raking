@@ -43,8 +43,6 @@ def test_parallel(example_USHD_lower_draws):
     )
     df = df.astype({"cause": "int64"})
 
-    df = df.loc[df.draws < 10.5]
-
     df = df.loc[(df["cause"] != -1) | (df["race"] != 2) | (df["county"] != 301)]
 
     # Loop on the draws
@@ -136,15 +134,13 @@ def test_parallel(example_USHD_lower_draws):
     ), "For the parallelization, the sums over cause must match the margins."
     assert np.allclose(
         sum_over_cause_race["soln"],
-        sum_over_cause_race["value"],
-        atol=1.0e-5,
+        sum_over_cause_race["value"]
     ), (
         "For the parallelization, the sums over cause and race must match the margins."
     )
     assert np.allclose(
         sum_over_race_county["soln"],
         sum_over_race_county["value"],
-        atol=1.0e-5,
     ), (
         "For the parallelization, the sums over race and county must match the GBD values."
     )
@@ -156,6 +152,6 @@ def test_parallel(example_USHD_lower_draws):
         on=["cause", "race", "county", "draws"],
         how="inner",
     )
-    assert np.allclose(df_both["soln_x"], df_both["soln_y"], 2.0e-2), (
+    assert np.allclose(df_both["soln_x"], df_both["soln_y"], 1.0e-2), (
         "The two rakings must give the same results."
     )
