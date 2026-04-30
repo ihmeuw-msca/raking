@@ -336,8 +336,7 @@ def raking_entropic_parallel(
     gamma: float = 1.0e-4,
     max_iter: int = 500,
 ) -> tuple[np.ndarray, np.ndarray, int]:
-    """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta.
-    """
+    """Raking using the entropic distance f(beta, y) = beta log(beta/y) + y - beta."""
     # Raking weights
     if q is None:
         q = np.ones(len(y))

@@ -8,11 +8,10 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sps
+from pandas.api.types import CategoricalDtype
 from pydantic import BaseModel
 
 from raking.experimental.dimension import Dimension, Space
-
-# pd.set_option("future.no_silent_downcasting", True)
 
 
 class Data(TypedDict):
@@ -32,15 +31,25 @@ class Data(TypedDict):
         Lower bounds for the observations that are not constraints (including aggregates).
     vec_u : numpy.typing.NDArray
         Upper bounds for the observations that are not constraints (including aggregates).
+    vec_init: numpy.typing.NDArray
+        Initial guess for the unknown raked values.
     mat_m : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the margins that are not constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the margins that are not constraints.
     mat_c : scipy.sparse.csc_matrix
-        Matrix indicating how to sum the observations to get the constraints.
+        Matrix indicating how to sum the observations that are not constraints nor margins (missing and non-missing)
+        to get the constraints.
     mat_mc1 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are not missing to get margins and constraints.
+        Matrix indicating how to sum the non-missing observations that are not constraints nor margins
+        to get margins and constraints. Stack of mat_c and mat_c, keeping only the rows corresponding
+        to the non-missing observations.
     mat_mc2 : scipy.sparse.csr_matrix
-        Matrix indicating how to sum the observations that are missing to get margins and constraints.
+        Matrix indicating how to sum the missing observations that are not constraints nor margins
+        to get margins and constraints. Stack of mat_c and mat_c, keeping only the rows corresponding
+        to the missing observations.
     mat_q : numpy.typing.NDArray
+        Matrix indicating how to get the missing observations once we know the raked margins and the constraints.
+        Should be equal to [mat_mc2^T mat_mc2]-1
     span : pandas.DataFrame
         Contains the values taken by the categorical variables in the raking problem (excluding aggregates).
     """
@@ -51,9 +60,10 @@ class Data(TypedDict):
     vec_b: npt.NDArray
     vec_l: npt.NDArray | None
     vec_u: npt.NDArray | None
+    vec_init: npt.NDArray
+
     mat_m: sps.csc_matrix
     mat_c: sps.csc_matrix
-
     mat_mc1: sps.csc_matrix
     mat_mc2: sps.csr_matrix
     mat_q: npt.NDArray
@@ -116,6 +126,9 @@ class DataBuilder(BaseModel):
 
         index = df_observ["is_margin"]
         data["vec_p"] = (df_observ[~index][self.weights] > 0).to_numpy()
+        data["vec_init"] = (
+            df_observ[~index][self.value].to_numpy() * data["vec_p"]
+        )
         data["mat_m"] = _build_design_mat(df_observ[index], self.space)
 
         index = df_observ.eval(f"{self.weights} > 0")
@@ -193,11 +206,20 @@ class DataBuilder(BaseModel):
 
     def _sort_rows(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sort the rows of the data frame by constraint status, margin status and categorical variable."""
-        columns = [f"{name}_order" for name in self.space.names]
-        for column, dim in zip(columns, self.space.dimensions):
-            df[column] = df[dim.name].map(dim.order)
+        columns = [name for name in self.space.names]
+        column_types = []
+        for dim in self.space.dimensions:
+            column_types.append(df[dim.name].dtypes)
+            dim_names = df[dim.name].unique().tolist()
+            if dim.null in dim_names:
+                dim_names.remove(dim.null)
+            dim_ordering = dim_names + [dim.null]
+            df[dim.name] = df[dim.name].astype(
+                CategoricalDtype(categories=dim_ordering, ordered=True)
+            )
         df = df.sort_values(["is_constr", "level"] + columns, ignore_index=True)
-        df = df.drop(columns=columns)
+        for dim, column_type in zip(self.space.dimensions, column_types):
+            df[dim.name] = df[dim.name].astype(column_type)
         return df
 
     def _expand_observ(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -260,8 +282,8 @@ class DataBuilder(BaseModel):
     def _check_constr(self, df: pd.DataFrame) -> pd.DataFrame:
         """Check if the constraints are consistent."""
         df = df.copy()
-        df["index"] = df.index
-        df["source"] = [(i,) for i in df["index"]]
+        df["df_index"] = df.index
+        df["source"] = [(i,) for i in df["df_index"]]
         df["included"] = True
         df_by_level = {
             i: df.query(f"level == {i}").reset_index(drop=True)
@@ -284,7 +306,7 @@ class DataBuilder(BaseModel):
             df_by_level[j] = df_j
 
         df = pd.concat(df_by_level.values(), axis=0, ignore_index=True)
-        df = df.query("index != -1").reset_index(drop=True)
+        df = df.query("df_index != -1").reset_index(drop=True)
         return df
 
     def _check_sufficiency(self, mat: sps.csc_matrix) -> npt.NDArray:
@@ -320,7 +342,7 @@ def _resolve_same_level_duplicity(
         if not np.allclose(df_check[value], df_check[f"{value}_alt"]):
             raise ValueError("Constraints are not consistent")
 
-        index = df_i["index"].isin(df_dup["source"].map(max))
+        index = df_i["df_index"].isin(df_dup["source"].map(max))
         df_i.loc[index, "included"] = False
     return df_i, df_i_to_j
 
@@ -353,7 +375,7 @@ def _resolve_upper_level_duplicity(
     index = df_cmp.eval(f"{value}_alt.notna()")
     df_cmp.loc[index, "included"] = False
     df_cmp.loc[index, "source"] = df_cmp.loc[index, "source_alt"]
-    df_cmp["index"] = df_cmp["index"].fillna(-1).astype(int)
+    df_cmp["df_index"] = df_cmp["df_index"].fillna(-1).astype(int)
     return df_cmp[df_j.columns].copy()
 
 
@@ -399,21 +421,49 @@ def _build_design_mat(df: pd.DataFrame, space: Space) -> sps.csc_matrix:
     """Returns a matrix indicating how to sum the observations to get the aggregates."""
     df = df.reset_index(drop=True)
     mat_shape = (len(df), space.size)
+    df_index = (
+        df.copy(deep=True).reset_index().rename(columns={"index": "row_index"})
+    )
 
-    row_indices = np.empty(shape=(0,), dtype=int)
-    col_indices = np.empty(shape=(0,), dtype=int)
-
-    for i, row in df.iterrows():
-        col_index = np.asarray(
-            space.index(tuple(row[name] for name in space.names))
+    for dim in space.dimensions:
+        dim_index = pd.DataFrame(
+            {
+                f"{dim.name}_index": np.arange(len(dim.grid)),
+                f"{dim.name}_value": dim.grid,
+            }
         )
-        row_index = np.asarray([i] * col_index.size)
+        dim_index_margin = dim_index.copy(deep=True)
+        dim_index_margin[f"{dim.name}_value"] = dim.null
+        dim_index = pd.concat(
+            [dim_index, dim_index_margin], axis=0, ignore_index=True
+        )
+        df_index = df_index.merge(
+            dim_index,
+            left_on=dim.name,
+            right_on=f"{dim.name}_value",
+            how="left",
+        )
 
-        row_indices = np.hstack([row_indices, row_index])
-        col_indices = np.hstack([col_indices, col_index])
+    shifts = np.cumprod([1] + [dim.size for dim in space.dimensions[1:][::-1]])[
+        ::-1
+    ]
+    df_index["col_index"] = (
+        df_index[[f"{dim.name}_index" for dim in space.dimensions]]
+        .to_numpy()
+        .dot(shifts)
+    )
 
-    val = np.ones_like(row_indices, dtype=int)
-    return sps.csc_matrix((val, (row_indices, col_indices)), shape=mat_shape)
+    mat = sps.csc_matrix(
+        (
+            np.ones(len(df_index)),
+            (
+                df_index["row_index"].to_numpy(),
+                df_index["col_index"].to_numpy(),
+            ),
+        ),
+        shape=mat_shape,
+    )
+    return mat
 
 
 def _extract_independent_rows(
