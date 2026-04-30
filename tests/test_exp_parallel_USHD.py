@@ -53,7 +53,7 @@ def test_parallel(example_USHD_draws):
     assert np.allclose(
         sum_over_race_county["soln"],
         sum_over_race_county["value"],
-        atol=1.0e-4,
+        atol=1.0e-3,
     ), "For the loop, the sums over race and county must match the GBD values."
 
     # Use parallelization

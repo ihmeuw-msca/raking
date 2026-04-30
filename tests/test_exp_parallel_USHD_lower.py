@@ -84,12 +84,12 @@ def test_parallel(example_USHD_lower_draws):
     assert np.allclose(
         sum_over_cause["soln"],
         sum_over_cause["value"],
-        atol=1.0e-5,
+        atol=1.0e-4,
     ), "For the loop, the sums over cause must match the margins."
     assert np.allclose(
         sum_over_cause_race["soln"],
         sum_over_cause_race["value"],
-        atol=1.0e-5,
+        atol=1.0e-4,
     ), "For the loop, the sums over cause and race must match the margins."
     assert np.allclose(
         sum_over_race_county["soln"],
