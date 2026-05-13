@@ -19,6 +19,107 @@ from raking.raking_methods import (
     raking_logit,
 )
 
+def barrier_loss(
+    c: np.ndarray,
+    penalty: float = 1.0,
+    mu: float = 1.0,
+    gamma_barrier: float = 0.1,
+    tol_barrier: float = 1.0e-11
+):
+    """
+
+    Parameters
+    ----------
+    c : np.ndarray
+        Bounds for the inequality constraints
+    penalty : float
+        Parameter in the definition of the loss function
+    mu : float
+        Parameter for the barrier method. Start high and decrease to get to 0
+    gamma_barrier : float
+        Between 0 and 1. Used to uo update mu: mu+ = gamma_barrier * mu
+    tol_barrier : float
+        Tolerance for the barrier method
+    """
+    assert mu > 0, "The parameter mu for the barrier method must be positive."
+    assert (gamma_barrier > 0) & (gamma_barrier < 1), "The parameter to update mu must be between 0 and 1."
+    assert tol_barrier > 0, "The tolerance for the barrier method must be positive."
+
+    # Initialization
+    lambda_k = - np.repeat(penalty / 2.0, len(c))
+
+    # Check number of inequality constraints
+    m = len(c)
+    while (m * mu >= tol_barrier):
+        # Centering step
+        (lambda_k, nu_k) = centering_loss(lambda_k)
+        # Update mu
+        mu = gamma_barrier * mu
+    return (lambda_k, nu_k, mu)
+    
+def centering_loss(
+    y: np.ndarray,
+    A: np.ndarray,
+    s: np.ndarray,
+    C: np.ndarray,
+    c: np.ndarray,
+    q: np.ndarray,
+    lambda_k: np.ndarray,
+    method: str = 'chi2',
+    loss: str = 'logit',
+    penalty: float = 1.0,
+    l: np.ndarray = None,
+    h: np.ndarray = None,
+    tol_center: float = 1.0e-11,
+    max_iter: int = 500,
+):
+    """
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Vector of observations
+    A : np.ndarray
+        Constraints matrix (output of a function from the compute_constraints module)
+    s : np.ndarray
+        Margin vector (output of a function from the compute_constraints module)
+    q : np.ndarray
+        Vector of weights (default to all 1)
+    lambda_k : np.ndarray
+        Dual value obtained at the end of the last centering step
+    method : string
+        Name of the distance function used for the raking.
+        Possible values are chi2, entropic, logit
+    loss : string
+        Name of the loss function used for the inequality constraints.
+        Possible values are hinge, logit
+    penalty : float
+        Parameter in the definition of the loss function
+    l : np.ndarray
+        Lower bounds for the observations
+    h : np.ndarray
+        Upper bounds for the observations
+    tol_center : float
+        Tolerance for the centering step
+    max_iter : int
+        Maximum number of iterations 
+    """
+    assert tol_center > 0, "The tolerance for the centering step must be positive."
+
+    # Initialization: use solution of raking with equality for the initial dual
+    if method == 'chi2':
+        (beta, nu_k) = raking_chi2(y, A, s, q)
+    elif method=='entropic':
+        (beta, nu_k, iter_eps) = raking_entropic(y, A, s, q)
+    elif method == 'logit':
+        (beta, nu_k, iter_eps) = raking_logit(y, A, s, l, h, q)
+
+    num_iter = 0
+    Phi = compute_gradient(y, A, s, C, c, q, method, loss, l, h)
+    epsilon = np.sqrt(np.dot(Phi, Phi))
+    while (epsilon >= tol_center) & (num_iter < max_iter):
+        J = compute_jacobian(y, A, s, C, c, q, method, loss, l, h)
+    
 def raking_loss(
     y: np.ndarray,
     A: np.ndarray,
