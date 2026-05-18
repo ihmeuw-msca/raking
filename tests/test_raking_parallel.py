@@ -60,7 +60,7 @@ def test_1D(example_1D_draws):
     (A, s) = constraints_1D_parallel(s, I, N)
     y = df_raked_parallel["value"].to_numpy()
     q = np.ones(len(y))
-    (beta, lambda_k, iter_eps) = raking_entropic_parallel(y, A, s, q)
+    (beta, lambda_k, epsilon, iter_eps) = raking_entropic_parallel(y, A, s, q)
     df_raked_parallel["raked_value"] = beta
 
     # Check the results for the parallelization
@@ -218,7 +218,7 @@ def test_USHD_lower(example_USHD_lower_draws):
     )
     y = df_raked_parallel["value"].to_numpy()
     q = np.ones(len(y))
-    (beta, lambda_k, iter_eps) = raking_entropic_parallel(y, A, s, q)
+    (beta, lambda_k, epsilon, iter_eps) = raking_entropic_parallel(y, A, s, q)
     df_raked_parallel["raked_value"] = beta
 
     # Check the results for the parallelization

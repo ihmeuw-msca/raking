@@ -29,7 +29,8 @@ class HessianOperator(LinearOperator):
         return self.hessian @ x
 
     def solve(self, x: npt.NDArray, **kwargs) -> npt.NDArray:
-        return sps.linalg.spsolve(self.hessian, x)
+#        return sps.linalg.spsolve(self.hessian, x)
+        return sps.linalg.cg(self.hessian, x)[0]
 
 
 class DualSolverParallel:
