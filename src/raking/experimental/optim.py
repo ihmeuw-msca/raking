@@ -114,7 +114,7 @@ class NTSolver:
         a_scale: float = 0.9,
         a_lb: float = 1e-3,
         verbose: bool = False,
-        mat_solve_method: str = "",
+        mat_solve_method: str = "direct",
         mat_solve_options: dict | None = None,
     ) -> NDArray:
         """Minimize optimization objective over constraints.
@@ -142,7 +142,7 @@ class NTSolver:
         verbose
             Indicator of if print out convergence history, by default False
         mat_solve_method
-            Method to solve the linear system, by default "".
+            Method to solve the linear system, by default "direct".
         mat_solve_options
             Options for the linear system solver, by default None.
 
@@ -155,7 +155,7 @@ class NTSolver:
 
         # initialize the parameters
         x = x0.copy()
-        mat_solve_options = mat_solve_options or {}
+        solve_opts = mat_solve_options or {}
 
         g = self.grad(x)
         gnorm = np.max(np.abs(g))
@@ -167,13 +167,17 @@ class NTSolver:
         if verbose:
             fun = self.fun(x)
             print(f"{type(self).__name__}:")
-            print(f"{niter=:3d}, {fun=:.2e}, {gnorm=:.2e}, {xdiff=:.2e}, {step=:.2e}")
+            print(
+                f"{niter=:3d}, {fun=:.2e}, {gnorm=:.2e}, {xdiff=:.2e}, {step=:.2e}"
+            )
 
         while (not success) and (niter < max_iter):
             niter += 1
 
             # compute all directions
-            dx = -self.hess(x).solve(g, method=mat_solve_method, **mat_solve_options)
+            dx = -self.hess(x).solve(
+                g, solver_type=mat_solve_method, **solve_opts
+            )
 
             # get step size
             step, x = self._update_params(x, dx, a_init, a_const, a_scale, a_lb)

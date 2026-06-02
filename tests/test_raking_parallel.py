@@ -20,9 +20,7 @@ def test_1D(example_1D_draws):
     df_raked = []
     for draw in draws:
         df_obs_loc = df_obs.loc[df_obs.draws == draw]
-        df_margins_loc = df_margins.loc[
-            df_margins.draws == draw
-        ]
+        df_margins_loc = df_margins.loc[df_margins.draws == draw]
         (df_obs_loc, Dphi_y, Dphi_s, sigma) = run_raking(
             dim=1,
             df_obs=df_obs_loc,
@@ -35,8 +33,7 @@ def test_1D(example_1D_draws):
 
     # Check the results for the loop on the draws
     sum_over_var1 = (
-        df_raked
-        .groupby(["draws"])
+        df_raked.groupby(["draws"])
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_margins, on=["draws"])
@@ -65,8 +62,7 @@ def test_1D(example_1D_draws):
 
     # Check the results for the parallelization
     sum_over_var1 = (
-        df_raked_parallel
-        .groupby(["draws"])
+        df_raked_parallel.groupby(["draws"])
         .agg({"raked_value": "sum"})
         .reset_index()
         .merge(df_margins, on=["draws"])

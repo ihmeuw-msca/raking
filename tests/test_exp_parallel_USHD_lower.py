@@ -133,8 +133,7 @@ def test_parallel(example_USHD_lower_draws):
         atol=1.0e-5,
     ), "For the parallelization, the sums over cause must match the margins."
     assert np.allclose(
-        sum_over_cause_race["soln"],
-        sum_over_cause_race["value"]
+        sum_over_cause_race["soln"], sum_over_cause_race["value"]
     ), (
         "For the parallelization, the sums over cause and race must match the margins."
     )

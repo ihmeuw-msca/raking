@@ -28,9 +28,28 @@ class HessianOperator(LinearOperator):
     def _matvec(self, x: npt.NDArray) -> npt.NDArray:
         return self.hessian @ x
 
-    def solve(self, x: npt.NDArray, **kwargs) -> npt.NDArray:
-#        return sps.linalg.spsolve(self.hessian, x)
-        return sps.linalg.cg(self.hessian, x)[0]
+    def _solve_direct(self, x: npt.NDArray, **kwargs) -> npt.NDArray:
+        return sps.linalg.spsolve(self.hessian, x, **kwargs)
+
+    def _solve_cg(self, x: npt.NDArray, **kwargs) -> npt.NDArray:
+        soln, info = sps.linalg.cg(self.hessian, x, **kwargs)
+        if info > 0:
+            raise RuntimeError(
+                f"CG solver didn't converge, with {info} iterations"
+            )
+        elif info < 0:
+            raise RuntimeError(f"CG solver didn't converge: {info}")
+        return soln
+
+    def solve(
+        self, x: npt.NDArray, solver_type: str = "direct", **kwargs
+    ) -> npt.NDArray:
+        if solver_type not in ["cg", "direct"]:
+            raise ValueError(f"Unrecognized solver type: '{solver_type}'")
+        if solver_type == "direct":
+            return self._solve_direct(x, **kwargs)
+        elif solver_type == "cg":
+            return self._solve_cg(x, **kwargs)
 
 
 class DualSolverParallel:
@@ -109,7 +128,7 @@ class DualSolverParallel:
         """
         return self.mat_o.T @ self.fun(self.mat_o @ x, order=1) + self.vec_o
 
-    def hessian(self, x: npt.NDArray) -> sps.csc_matrix:
+    def hessian(self, x: npt.NDArray) -> HessianOperator | sps.spmatrix:
         """Hessian of the objective function for the dual optimization problem.
 
         Parameters
@@ -127,7 +146,6 @@ class DualSolverParallel:
             return HessianOperator(hessian_matrix)
         else:
             return hessian_matrix
-    
 
     def dual_to_primal(self, z: npt.NDArray) -> npt.NDArray:
         """Transforms dual solution into primal solution.
@@ -177,7 +195,9 @@ class DualSolverParallel:
                 mat_o = self.data["mat_o_primal"]
                 # We compute the gradient of the entropic distance
                 # while avoiding taking logarithms of 0s
-                grad = log0(div0(mat_o @ self.data["vec_init"], self.data["vec_y"]))
+                grad = log0(
+                    div0(mat_o @ self.data["vec_init"], self.data["vec_y"])
+                )
                 # Taking the gradient of the Lagrangian, we have:
                 # nabla f(zeta0,y) + (mat_m I \\ mat_c 0)^T lambda0
                 x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
@@ -189,6 +209,7 @@ class DualSolverParallel:
         x0: npt.NDArray | None = None,
         tol: float = 1.0e-11,
         options: dict | None = None,
+        solver_options: dict | None = None,
     ) -> pd.DataFrame:
         """Solve the dual problem using scipy.optimize.minimize or the MSCA solver.
 
@@ -200,6 +221,8 @@ class DualSolverParallel:
             Tolerance for termination. See scipy.optimize.minimize documentation for details.
         options : dict
             Additional parameters for the algorithm. See scipy.optimize.minimize documentation for details.
+        solver_options: dict
+            Chooses the solver for the linear system (mat_solve_method) and pass arguments to it (mat_solve_options).
 
         Returns
         -------
@@ -210,10 +233,17 @@ class DualSolverParallel:
         # Initialization
         x0 = self.get_x0(x0)
 
-
         if self.vec_c.size == 0:
             if options is None:
                 options = {}
+
+            solver_options = solver_options or {}
+            method = solver_options.get("mat_solve_method", "direct")
+            solve_opts = solver_options.get("mat_solve_options", {})
+            options = dict(options)
+            options["mat_solve_method"] = method
+            options["mat_solve_options"] = solve_opts
+
             interface = {
                 "fun": self.objective,
                 "grad": self.gradient,
@@ -361,7 +391,6 @@ class PrimalSolverParallel:
         """
         if x0 is None:
             x0 = self.data["vec_init"]
-            # x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
         if self.vec_c.size > 0:
