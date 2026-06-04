@@ -237,13 +237,6 @@ class DualSolverParallel:
             if options is None:
                 options = {}
 
-            solver_options = solver_options or {}
-            method = solver_options.get("mat_solve_method", "direct")
-            solve_opts = solver_options.get("mat_solve_options", {})
-            options = dict(options)
-            options["mat_solve_method"] = method
-            options["mat_solve_options"] = solve_opts
-
             interface = {
                 "fun": self.objective,
                 "grad": self.gradient,
