@@ -209,7 +209,6 @@ class DualSolverParallel:
         x0: npt.NDArray | None = None,
         tol: float = 1.0e-11,
         options: dict | None = None,
-        solver_options: dict | None = None,
     ) -> pd.DataFrame:
         """Solve the dual problem using scipy.optimize.minimize or the MSCA solver.
 
@@ -221,8 +220,6 @@ class DualSolverParallel:
             Tolerance for termination. See scipy.optimize.minimize documentation for details.
         options : dict
             Additional parameters for the algorithm. See scipy.optimize.minimize documentation for details.
-        solver_options: dict
-            Chooses the solver for the linear system (mat_solve_method) and pass arguments to it (mat_solve_options).
 
         Returns
         -------
