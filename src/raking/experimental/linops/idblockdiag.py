@@ -10,7 +10,8 @@ class IdBlockDiag(LinearOperator):
         self.op = aslinearoperator(op)
         self.n_blocks = n_blocks
         super().__init__(
-            dtype=op.dtype, shape=(n_blocks * op.shape[0], n_blocks * op.shape[1])
+            dtype=op.dtype,
+            shape=(n_blocks * op.shape[0], n_blocks * op.shape[1]),
         )
 
     def _matvec(self, x: npt.NDArray) -> npt.NDArray:

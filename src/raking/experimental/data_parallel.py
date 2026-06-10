@@ -82,6 +82,7 @@ class DataParallel(TypedDict):
 
     span: pd.DataFrame
 
+
 class DataBuilderParallel(BaseModel):
     """Specify observations and constraints for the optimization problem.
 

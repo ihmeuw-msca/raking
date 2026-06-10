@@ -188,7 +188,6 @@ class DualSolver:
             mat_o = sps.csr_matrix(sps.vstack([mat_s, self.data["mat_m"]]))
             grad = fun(mat_o @ self.data["vec_init"], order=1)
             x0 = sps.linalg.lsqr(self.mat_o, grad)[0]
-            # x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
         if self.vec_c.size > 0:
@@ -371,7 +370,6 @@ class PrimalSolver:
         """
         if x0 is None:
             x0 = self.data["vec_init"]
-            # x0 = np.zeros(self.mat_o.shape[1])
 
         constraints = None
         if self.vec_c.size > 0:

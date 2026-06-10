@@ -63,7 +63,9 @@ def div0(numerator: npt.NDArray, denominator: npt.NDArray) -> npt.NDArray:
             "Denominator has non-finite values where numerator is non-zero"
         )
     if not (denominator[index] != 0).all():
-        raise ValueError("Denominator has zero values where numerator is non-zero")
+        raise ValueError(
+            "Denominator has zero values where numerator is non-zero"
+        )
     out[index] = numerator[index] / denominator[index]
     return out
 

@@ -75,8 +75,7 @@ def test_parallel(example_USHD_draws):
         .merge(df_margin, on=["cause", "draws"])
     )
     assert np.allclose(
-        sum_over_race_county["soln"],
-        sum_over_race_county["value"]
+        sum_over_race_county["soln"], sum_over_race_county["value"]
     ), (
         "For the parallelization, the sums over race and county must match the GBD values."
     )
