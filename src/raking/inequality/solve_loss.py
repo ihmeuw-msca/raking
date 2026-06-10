@@ -176,11 +176,9 @@ def solve(
     m = C.shape[0]
     A = sps.csc_matrix(A)
     C = sps.csc_matrix(C)
-    gradient = get_gradient(beta0, y, q, method, l, h)
     B = sps.vstack([C, A])
-    x0 = cg(B.transpose(), - gradient)[0]
-    lambda0 = x0[0:m]
-    nu0 = x0[m:(m + k)]
+    # Initialize lambda with value in the interval (-penalty, 0)
+    lambda0 = -0.5 * penalty * np.ones(m)
     # Run the barrier method and transform back into the primal
     (x, mu) = barrier_method(y, A, s, C, c, q, lambda0, nu0, method, loss, penalty, l, h, epsilon, mu, gamma, N, gamma_iter, num_iter)
     z = - B.transpose() @ x

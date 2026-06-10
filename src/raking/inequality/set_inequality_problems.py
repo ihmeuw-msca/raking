@@ -112,11 +112,12 @@ def set_infant_mortality(
 def set_time_trend(
     y: list,
     pop: list,
+    std: list,
     s: list,
     q: list,
     l: list = None,
     h: list = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Set up the optimization problem for the time trend problem.
 
     We need to define the problem:
@@ -134,6 +135,7 @@ def set_time_trend(
     s
     C
     c
+    w
     DyC
     q
     l
@@ -146,7 +148,7 @@ def set_time_trend(
     for i in range(0, n):
         A[(i * A0.shape[0]):((i + 1) * A0.shape[0]), (i * A0.shape[1]):((i + 1) * A0.shape[1])] = A0
     s = np.concatenate(s)
-    (C, c, DyC) = inequality_time_trend(y, pop)
+    (C, c, w, DyC) = inequality_time_trend(y, pop, std)
     y = np.concatenate(y)
     q = np.concatenate(q)
     if l is not None:
@@ -155,5 +157,5 @@ def set_time_trend(
         h = np.concatenate(h)
     else:
         h = None
-    return (y, A, s, C, c, DyC, q, l, h)
+    return (y, A, s, C, c, w, DyC, q, l, h)
 

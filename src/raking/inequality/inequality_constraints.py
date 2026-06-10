@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from scipy.special import erf
 
 def inequality_bounds(
     l: np.ndarray,
@@ -111,8 +112,9 @@ def inequality_infant_mortality(
 
 def inequality_time_trend(
     y: list,
-    pop: list
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    pop: list,
+    std: list,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Compute the constraints matrix C and the inequality vector c for the time trend problem.
 
     We need to define the inequality constraints C beta < c
@@ -126,6 +128,8 @@ def inequality_time_trend(
        Observations (length p) for the n years of the dataset
     pop: list of np.ndarray
        Populations (length p) for the n years of the dataset
+    std: list of np.ndarray
+       Standard deviations (length p) of the observations for the n years in the dataset
 
     Returns
     -------
@@ -133,6 +137,8 @@ def inequality_time_trend(
         (n-1)p * np inequality constraints matrix
     c : np.ndarray
         length np inequality constraints vector
+    w : np.ndarray
+        length (n-1)p weights vector
     DyC : np.ndarray
         (n-1)p * np * np derivatives of inequality constraints with respect to y
     """
@@ -153,12 +159,17 @@ def inequality_time_trend(
             str(i + 1) + \
             ' must have the same length as the observations for year 1.'
     C = np.zeros((p * (n - 1), p * n))
+    w = np.zeros(p * (n - 1))
     DyC = np.zeros((p * (n - 1), p * n, p * n))
     for i in range(0, n - 1):
         C[(i * p):((i + 1) * p), (i * p):((i + 1) * p)] = \
             np.diag((y[i + 1] / pop[i + 1] - y[i] / pop[i]) / pop[i])
         C[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p)] = \
             np.diag((y[i] / pop[i] - y[i + 1] / pop[i + 1]) / pop[i + 1])
+        w[(i * p):((i + 1) * p)] = erf( \
+            np.sign(y[i] / pop[i] - y[i + 1] / pop[i + 1]) * \
+            (y[i] / pop[i] - y[i + 1] / pop[i + 1]) / \
+            np.sqrt(2.0 * (np.square(std[i] / pop[i]) + np.square(std[i + 1] / pop[i + 1]))))
         # Bloc - y_i / n_i^2
         bloc_1 = np.zeros((p, p, p))
         np.fill_diagonal(bloc_1, - 1.0 / np.square(pop[i]))
@@ -176,5 +187,5 @@ def inequality_time_trend(
         np.fill_diagonal(bloc_4, - 1.0 / np.square(pop[i + 1]))
         DyC[(i * p):((i + 1) * p), ((i + 1) * p):((i + 2) * p), ((i + 1) * p):((i + 2) * p)] = bloc_4
     c = np.zeros(p * (n - 1))
-    return (C, c, DyC)
+    return (C, c, w, DyC)
 
