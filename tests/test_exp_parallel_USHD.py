@@ -11,20 +11,25 @@ def test_parallel(example_USHD_draws):
     df_obs = example_USHD_draws.df_obs
     df_margin = example_USHD_draws.df_margins
     df_obs["weights"] = 1.0
-    df_obs.replace({"cause": "_all", "race": 1}, -1, inplace=True)
     df_obs.drop(columns=["upper"], inplace=True)
-    df_obs.replace({"cause": {"_comm": 1, "_inj": 2, "_ncd": 3}}, inplace=True)
+    df_obs["cause"] = (
+        df_obs["cause"]
+        .map({"_all": -1, "_comm": 1, "_inj": 2, "_ncd": 3})
+        .astype("int64")
+    )
+    df_obs["race"] = df_obs["race"].replace(1, -1)
     df_margin["race"] = -1
     df_margin["county"] = -1
     df_margin["weights"] = np.inf
     df_margin.rename(
         columns={"value_agg_over_race_county": "value"}, inplace=True
     )
-    df_margin.replace(
-        {"cause": {"_all": -1, "_comm": 1, "_inj": 2, "_ncd": 3}}, inplace=True
+    df_margin["cause"] = (
+        df_margin["cause"]
+        .map({"_all": -1, "_comm": 1, "_inj": 2, "_ncd": 3})
+        .astype("int64")
     )
     df = pd.concat([df_obs, df_margin])
-    df = df.astype({"cause": "int64"})
 
     # Loop on the draws
     draws = df.draws.unique().tolist()

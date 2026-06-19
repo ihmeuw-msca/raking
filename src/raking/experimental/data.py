@@ -318,13 +318,14 @@ def _resolve_same_level_duplicity(
     df_i: pd.DataFrame, j: int, space: Space, value: str
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     i = int(df_i["level"].iloc[0])
-    df_i_to_j = pd.concat(
-        [
-            _agg_constr(df_i, *spaces, value)
-            for spaces in space.split((j - i, i))
-        ],
-        axis=0,
-    )
+    pieces = [
+        _agg_constr(df_i, *spaces, value) for spaces in space.split((j - i, i))
+    ]
+    nonempty = [piece for piece in pieces if not piece.empty]
+    # Exclude empty pieces before concatenating: empty/all-NA entries are
+    # dropped when inferring result dtypes today, but pandas will stop doing
+    # so in a future version. Fall back to an empty template if all are empty.
+    df_i_to_j = pd.concat(nonempty, axis=0) if nonempty else pieces[0]
     index = df_i_to_j.duplicated(subset=space.names)
     if index.any():
         df_dup, df_i_to_j = df_i_to_j[index], df_i_to_j[~index]
@@ -355,7 +356,9 @@ def _resolve_upper_level_duplicity(
         how="outer",
         suffixes=("", "_alt"),
     )
-    df_cmp["included"] = df_cmp["included"].fillna(False).astype(bool)
+    df_cmp["included"] = (
+        df_cmp["included"].astype("boolean").fillna(False).astype(bool)
+    )
     df_cmp["level"] = df_cmp["level"].fillna(j).astype(int)
     # check if values are aligned
     df_sub = df_cmp.query(f"{value}.notna() & {value}_alt.notna()")

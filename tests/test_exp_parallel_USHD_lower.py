@@ -13,19 +13,23 @@ def test_parallel(example_USHD_lower_draws):
     df_margin_county = example_USHD_lower_draws.df_margins_county
     df_margin_all_causes = example_USHD_lower_draws.df_margins_all_causes
     df_obs["weights"] = 1.0
-    df_obs.replace({"race": 1}, -1, inplace=True)
     df_obs.drop(columns=["upper"], inplace=True)
-    df_obs.replace(
-        {"cause": {"_intent": 1, "_unintent": 2, "inj_trans": 3}}, inplace=True
+    df_obs["cause"] = (
+        df_obs["cause"]
+        .map({"_intent": 1, "_unintent": 2, "inj_trans": 3})
+        .astype("int64")
     )
+    df_obs["race"] = df_obs["race"].replace(1, -1)
     df_margin_cause["race"] = -1
     df_margin_cause["county"] = -1
     df_margin_cause["weights"] = np.inf
     df_margin_cause.rename(
         columns={"value_agg_over_race_county": "value"}, inplace=True
     )
-    df_margin_cause.replace(
-        {"cause": {"_intent": 1, "_unintent": 2, "inj_trans": 3}}, inplace=True
+    df_margin_cause["cause"] = (
+        df_margin_cause["cause"]
+        .map({"_intent": 1, "_unintent": 2, "inj_trans": 3})
+        .astype("int64")
     )
     df_margin_county["cause"] = -1
     df_margin_county["race"] = -1
@@ -41,7 +45,6 @@ def test_parallel(example_USHD_lower_draws):
     df = pd.concat(
         [df_obs, df_margin_cause, df_margin_county, df_margin_all_causes]
     )
-    df = df.astype({"cause": "int64"})
 
     df = df.loc[(df["cause"] != -1) | (df["race"] != 2) | (df["county"] != 301)]
 
