@@ -206,11 +206,11 @@ class DataBuilder(BaseModel):
 
     def _sort_rows(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sort the rows of the data frame by constraint status, margin status and categorical variable."""
-        sort_columns = [f"{dim_name}_ordering" for dim_name in self.space.names]
+        sort_columns = [f"_{dim_name}_order" for dim_name in self.space.names]
         for col, dim in zip(sort_columns, self.space.dimensions):
-            dim_ordering = list(dim.grid) + [dim.null]
+            dim_order = list(dim.grid) + [dim.null]
             df[col] = df[dim.name].astype(
-                CategoricalDtype(categories=dim_ordering, ordered=True)
+                CategoricalDtype(categories=dim_order, ordered=True)
             )
         df = df.sort_values(
             ["is_constr", "level"] + sort_columns, ignore_index=True
