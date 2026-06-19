@@ -160,7 +160,9 @@ def test_exp_raking_USHD(example_USHD):
     )
     data = data_builder.build(df)
     solver = DualSolver(distance="entropic", data=data)
-    df_raked = solver.solve()
+    # Tighten ftol so L-BFGS-B converges enough to satisfy the hard margin
+    # constraint; the default (1e-11) stops early and leaves a ~6e-4 residual.
+    df_raked = solver.solve(options={"ftol": 1.0e-15, "gtol": 1.0e-12})
     sum_over_race_county = (
         df_raked.groupby(["cause"], observed=True)
         .agg({"soln": "sum"})

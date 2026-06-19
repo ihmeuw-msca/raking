@@ -151,6 +151,6 @@ def test_parallel(example_USHD_lower_draws):
         on=["cause", "race", "county", "draws"],
         how="inner",
     )
-    assert np.allclose(df_both["soln_x"], df_both["soln_y"], 1.0e-2), (
+    assert np.allclose(df_both["soln_x"], df_both["soln_y"], atol=1.0e-5), (
         "The two rakings must give the same results."
     )
