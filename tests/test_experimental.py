@@ -586,3 +586,42 @@ def test_exp_raking_USHD_lower_weights(example_USHD_lower_draws):
         sum_over_race_county["value"],
         atol=1.0e-5,
     ), "The sums over race and county must match the GBD values."
+
+
+def test_sort_rows_independent_of_input_order():
+    """The row ordering produced by `_sort_rows` must follow the dimension
+    grid, not the order in which categories happen to appear in the input
+    data frame. Previously the ordering was derived from
+    `df[dim.name].unique()`, so the same data shuffled differently sorted
+    differently. With the fix the ordering is driven by `dim.grid`, which is
+    fixed at build time, so the result is independent of the input order.
+    """
+    df = pd.DataFrame(
+        {
+            "var1": [1, 2, 3],
+            "value": [10.0, 20.0, 30.0],
+            "weights": [1.0, 1.0, 1.0],
+        }
+    )
+    data_builder = DataBuilder(
+        dim_specs={"var1": -1}, value="value", weights="weights"
+    )
+    # Build the space from the ordered frame -> grid == (1, 2, 3).
+    data_builder._build_space(df)
+
+    def prep(frame):
+        return (
+            frame.pipe(data_builder._subset_columns)
+            .pipe(data_builder._assign_level)
+            .pipe(data_builder._assign_indicators)
+        )
+
+    sorted_ordered = data_builder._sort_rows(prep(df.copy()))
+    # Same data, rows reversed: var1 first appears as [3, 2, 1].
+    shuffled = df.iloc[[2, 1, 0]].reset_index(drop=True)
+    sorted_shuffled = data_builder._sort_rows(prep(shuffled))
+
+    pd.testing.assert_frame_equal(sorted_ordered, sorted_shuffled)
+    assert sorted_shuffled["var1"].tolist() == [1, 2, 3], (
+        "Rows must be ordered by the dimension grid, not by input order."
+    )
