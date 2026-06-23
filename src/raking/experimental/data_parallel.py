@@ -9,7 +9,11 @@ import pandas as pd
 import scipy.sparse as sps
 from pydantic import BaseModel
 
-from raking.experimental.data import DataBuilder, _build_design_mat
+from raking.experimental.data import (
+    DataBuilder,
+    _build_design_mat,
+    _extract_independent_rows,
+)
 
 
 class DataParallel(TypedDict):
@@ -151,8 +155,10 @@ class DataBuilderParallel(BaseModel):
             df_loc.query("~is_constr"),
             df_loc.query("is_constr"),
         )
+        df_observ = data_builder._drop_zero_marginal_observ(df_observ)
         df_observ = data_builder._expand_observ(df_observ)
-        df_constr = data_builder._check_constr(df_constr)
+        df_constr = data_builder._drop_zero_constr(df_observ, df_constr)
+        df_constr = data_builder._check_constr_duplicity(df_constr)
 
         index = df_observ["is_margin"]
         vec_p_loc = (df_observ[~index][self.weights] > 0).to_numpy()
@@ -161,13 +167,28 @@ class DataBuilderParallel(BaseModel):
         vec_init_loc["vec_init"] = vec_p_loc
         mat_m = _build_design_mat(df_observ[index], data_builder.space)
 
+        # Column index of each disaggregated cell (same col_index convention
+        # as mat_c), so we can select the columns of the non-zero cells.
+        _, cell_index = _build_design_mat(
+            df_observ[~index], data_builder.space, return_index=True
+        )
+        active_cols = cell_index.query(f"{self.value} != 0")[
+            "col_index"
+        ].to_numpy()
+
         index = df_observ.eval(f"{self.weights} > 0")
         columns = [name for name in data_builder.space.names]
         vec_yw_loc = df_observ[index][columns]
 
         index = df_constr["included"]
         mat_c = _build_design_mat(df_constr[index], data_builder.space)
+
+        # Drop constraints that become linearly dependent once restricted to
+        # the non-zero cells (these are what make the Newton Hessian singular).
+        keep = _extract_independent_rows(mat_c[:, active_cols])[3]
+        mat_c = mat_c.tocsr()[keep].tocsc()
         vec_b_loc = df_constr[index][columns]
+        vec_b_loc = vec_b_loc[keep]
 
         mat_mc = sps.csc_matrix(sps.vstack([mat_m, mat_c]))
         mat_mc1_loc = sps.csc_matrix(mat_mc[:, vec_p_loc])

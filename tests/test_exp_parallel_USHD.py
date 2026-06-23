@@ -90,3 +90,43 @@ def test_parallel(example_USHD_draws):
     assert np.allclose(df_both["soln_x"], df_both["soln_y"], 1.0e-2), (
         "The two rakings must give the same results."
     )
+
+
+def test_parallel_zeros(example_USHD_zeros):
+    df_obs = example_USHD_zeros.df_obs
+    df_margin = example_USHD_zeros.df_margins
+    df_obs["wt"] = 1.0
+    df_margin["race"] = -1
+    df_margin["county"] = -1
+    df_margin["wt"] = np.inf
+    df_margin.rename(
+        columns={"value_agg_over_race_county": "value"}, inplace=True
+    )
+    df = pd.concat([df_obs, df_margin])
+    df = df.astype(
+        {"cause": "int64", "race": "int64", "county": "int64", "sim": "int64"}
+    )
+
+    # Use parallelization
+    data_builder = DataBuilderParallel(
+        dim_specs={"cause": -1, "race": -1, "county": -1},
+        dim_parallel=["sim"],
+        value="value",
+        weights="wt",
+    )
+    data = data_builder.build(df)
+    solver = DualSolverParallel(distance="entropic", data=data)
+    df_raked_parallel = solver.solve()
+
+    # Check the results for the parallelization
+    sum_over_race_county = (
+        df_raked_parallel.groupby(["cause", "sim"], observed=True)
+        .agg({"soln": "sum"})
+        .reset_index()
+        .merge(df_margin, on=["cause", "sim"])
+    )
+    assert np.allclose(
+        sum_over_race_county["soln"], sum_over_race_county["value"]
+    ), (
+        "For the parallelization, the sums over race and county must match the GBD values."
+    )

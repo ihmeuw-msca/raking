@@ -2,6 +2,7 @@
 
 import itertools
 import operator
+import warnings
 from typing import TypedDict
 
 import numpy as np
@@ -121,8 +122,10 @@ class DataBuilder(BaseModel):
             .pipe(self._sort_rows)
         )
         df_observ, df_constr = df.query("~is_constr"), df.query("is_constr")
+        df_observ = self._drop_zero_marginal_observ(df_observ)
         df_observ = self._expand_observ(df_observ)
-        df_constr = self._check_constr(df_constr)
+        df_constr = self._drop_zero_constr(df_observ, df_constr)
+        df_constr = self._check_constr_duplicity(df_constr)
 
         index = df_observ["is_margin"]
         data["vec_p"] = (df_observ[~index][self.weights] > 0).to_numpy()
@@ -131,13 +134,27 @@ class DataBuilder(BaseModel):
         )
         data["mat_m"] = _build_design_mat(df_observ[index], self.space)
 
+        # Column index of each disaggregated cell (same col_index convention
+        # as mat_c), so we can select the columns of the non-zero cells.
+        _, cell_index = _build_design_mat(
+            df_observ[~index], self.space, return_index=True
+        )
+        active_cols = cell_index.query(f"{self.value} != 0")[
+            "col_index"
+        ].to_numpy()
+
         index = df_observ.eval(f"{self.weights} > 0")
         data["vec_y"] = df_observ[index][self.value].to_numpy()
         data["vec_w"] = df_observ[index][self.weights].to_numpy()
 
         index = df_constr["included"]
-        data["mat_c"] = _build_design_mat(df_constr[index], self.space)
-        data["vec_b"] = df_constr[index][self.value].to_numpy()
+        mat_c = _build_design_mat(df_constr[index], self.space)
+
+        # Drop constraints that become linearly dependent once restricted to
+        # the non-zero cells (these are what make the Newton Hessian singular).
+        keep = ~_extract_independent_rows(mat_c[:, active_cols])[3]
+        data["mat_c"] = mat_c.tocsr()[keep].tocsc()
+        data["vec_b"] = df_constr[index][self.value].to_numpy()[keep]
 
         data["vec_l"], data["vec_u"] = None, None
         if self.bounds is not None:
@@ -210,10 +227,7 @@ class DataBuilder(BaseModel):
         column_types = []
         for dim in self.space.dimensions:
             column_types.append(df[dim.name].dtypes)
-            dim_names = df[dim.name].unique().tolist()
-            if dim.null in dim_names:
-                dim_names.remove(dim.null)
-            dim_ordering = dim_names + [dim.null]
+            dim_ordering = list(dim.grid) + [dim.null]
             df[dim.name] = df[dim.name].astype(
                 CategoricalDtype(categories=dim_ordering, ordered=True)
             )
@@ -279,7 +293,70 @@ class DataBuilder(BaseModel):
 
         return vec_l, vec_u
 
-    def _check_constr(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _drop_zero_marginal_observ(
+        self, df_observ: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Drop zero-valued free margins from the observations.
+
+        A free (soft) margin with value 0 has zero entropic pull -- the curvature
+        of its distance term is proportional to its observed value -- and its
+        support cells are already zero. Its dual coordinate therefore receives no
+        curvature from either source, leaving the Newton Hessian singular. Such a
+        margin is redundant, so dropping it removes the unconstrained (singular)
+        dual direction without changing the solution.
+
+        Only ``is_margin`` rows are dropped; zero-valued disaggregated cells are
+        kept (the entropic distance keeps them at zero on their own).
+        """
+        index = (df_observ[self.value] == 0) & df_observ["is_margin"]
+        df_observ = df_observ[~index].copy()
+        return df_observ
+
+    def _drop_zero_constr(
+        self, df_observ: pd.DataFrame, df_constr: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Remove zero-valued constraints and zero-out the cells they cover.
+
+        A zero target on an aggregate forces every (non-negative) cell beneath
+        it to zero, so the constraint is redundant for the solver and we drop
+        it. We also set the covered observation cells to zero: the entropic
+        distance cannot move a non-zero cell to zero on its own, so without this
+        a zero margin with non-zero observations underneath would be
+        infeasible. (When the cells are already zero this is a no-op.)
+
+        ``df_observ`` is modified in place (the covered cells are zeroed); only
+        the filtered ``df_constr`` is returned.
+        """
+        index = df_constr[self.value] == 0
+        df_zero_constr = df_constr[index].copy()
+        df_constr = df_constr[~index].copy()
+
+        is_cell = ~df_observ["is_margin"]
+        nulls = {dim.name: dim.null for dim in self.space.dimensions}
+
+        is_zero_cell = pd.Series(False, index=df_observ.index)
+        for _, constr in df_zero_constr.iterrows():
+            # A cell is covered by the aggregate when it matches the constraint
+            # on every non-aggregated (non-null) dimension.
+            covered = is_cell.copy()
+            for name in self.space.names:
+                if constr[name] != nulls[name]:
+                    covered &= df_observ[name] == constr[name]
+            is_zero_cell |= covered
+
+        is_overridden = is_zero_cell & (df_observ[self.value] != 0.0)
+        if is_overridden.any():
+            warnings.warn(
+                f"Set {is_overridden.sum()} non-zero observation(s) to zero because they "
+                "fall under a zero-valued constraint.",
+                stacklevel=2,
+            )
+
+        df_observ.loc[is_overridden, self.value] = 0.0
+
+        return df_constr
+
+    def _check_constr_duplicity(self, df: pd.DataFrame) -> pd.DataFrame:
         """Check if the constraints are consistent."""
         df = df.copy()
         df["df_index"] = df.index
@@ -417,7 +494,9 @@ def _agg_constr(
     return df_work
 
 
-def _build_design_mat(df: pd.DataFrame, space: Space) -> sps.csc_matrix:
+def _build_design_mat(
+    df: pd.DataFrame, space: Space, return_index: bool = False
+) -> sps.csc_matrix | tuple[sps.csc_matrix, pd.DataFrame]:
     """Returns a matrix indicating how to sum the observations to get the aggregates."""
     df = df.reset_index(drop=True)
     mat_shape = (len(df), space.size)
@@ -463,6 +542,8 @@ def _build_design_mat(df: pd.DataFrame, space: Space) -> sps.csc_matrix:
         ),
         shape=mat_shape,
     )
+    if return_index:
+        return mat, df_index
     return mat
 
 

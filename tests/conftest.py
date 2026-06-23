@@ -94,6 +94,16 @@ class ExampleUSHD_draws:
         )
 
 
+class ExampleUSHD_zeros:
+    def __init__(self):
+        self.df_obs = pd.read_csv(
+            EXAMPLES / "example_USHD_zeros" / "observations.csv"
+        )
+        self.df_margins = pd.read_csv(
+            EXAMPLES / "example_USHD_zeros" / "margins.csv"
+        )
+
+
 class ExampleUSHD_lower:
     def __init__(self):
         self.df_obs = pd.read_csv(
@@ -164,6 +174,11 @@ def example_USHD():
 @pytest.fixture
 def example_USHD_draws():
     return ExampleUSHD_draws()
+
+
+@pytest.fixture
+def example_USHD_zeros():
+    return ExampleUSHD_zeros()
 
 
 @pytest.fixture
