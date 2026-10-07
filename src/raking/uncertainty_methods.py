@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from scipy.linalg import lu_factor, lu_solve
+from scipy.sparse import bmat, csr_matrix, diags, identity
+from scipy.sparse.linalg import splu
 
 
 def compute_covariance(
@@ -107,7 +108,7 @@ def compute_gradient(
     beta_0: np.ndarray,
     lambda_0: np.ndarray,
     y: np.ndarray,
-    A: np.ndarray,
+    A: csr_matrix,
     method: str,
     alpha: float = 1,
     l: np.ndarray = None,
@@ -128,7 +129,7 @@ def compute_gradient(
         Corresponding dual
     y : np.ndarray
         Vector of observations
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         Constraints matrix (output of a function from the compute_constraints module)
     method : string
         Raking method (one of chi2, entropic, general, logit)
@@ -170,16 +171,13 @@ def compute_gradient(
         len(y) == len(beta_0)
     ), "The vectors of observations and raked values should have the same length."
     assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
+        A, csr_matrix
+    ), "The constraint matrix should be a Scipy sparse CSR matrix."
     assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
-    assert (
-        np.shape(A)[0] == len(lambda_0)
+        A.shape[0] == len(lambda_0)
     ), "The number of linear constraints should be equal to the length of the dual vector."
     assert (
-        np.shape(A)[1] == len(y)
+        A.shape[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
     assert method in [
         "chi2",
@@ -244,24 +242,24 @@ def compute_gradient(
         DF1_beta_diag = np.zeros(len(beta_0))
         DF1_beta_diag[y != 0] = 1.0 / (q[y != 0] * y[y != 0])
         DF1_beta_diag[y == 0] = 0.0
-        DF1_beta = np.diag(DF1_beta_diag)
+        DF1_beta = diags(DF1_beta_diag)
         DF1_y_diag = np.zeros(len(y))
         DF1_y_diag[y != 0] = -beta_0[y != 0] / (
             q[y != 0] * np.square(y[y != 0])
         )
         DF1_y_diag[y == 0] = 0.0
-        DF1_y = np.diag(DF1_y_diag)
+        DF1_y = diags(DF1_y_diag)
     elif method == "entropic":
         DF1_beta_diag = np.zeros(len(beta_0))
         DF1_beta_diag[beta_0 != 0] = 1.0 / (
             q[beta_0 != 0] * beta_0[beta_0 != 0]
         )
         DF1_beta_diag[beta_0 == 0] = 0.0
-        DF1_beta = np.diag(DF1_beta_diag)
+        DF1_beta = diags(DF1_beta_diag)
         DF1_y_diag = np.zeros(len(y))
         DF1_y_diag[y != 0] = -1.0 / (q[y != 0] * y[y != 0])
         DF1_y_diag[y == 0] = 0.0
-        DF1_y = np.diag(DF1_y_diag)
+        DF1_y = diags(DF1_y_diag)
     elif method == "general":
         DF1_beta_diag = np.zeros(len(beta_0))
         DF1_beta_diag[(y != 0) & (beta_0 != 0)] = np.power(
@@ -271,7 +269,7 @@ def compute_gradient(
             * np.power(y[(y != 0) & (beta_0 != 0)], alpha)
         )
         DF1_beta_diag[(y == 0) | (beta_0 == 0)] = 0.0
-        DF1_beta = np.diag(DF1_beta_diag)
+        DF1_beta = diags(DF1_beta_diag)
         DF1_y_diag = np.zeros(len(y))
         DF1_y_diag[(y != 0) & (beta_0 != 0)] = -np.power(
             beta_0[(y != 0) & (beta_0 != 0)], alpha
@@ -280,7 +278,7 @@ def compute_gradient(
             * np.power(y[(y != 0) & (beta_0 != 0)], alpha + 1.0)
         )
         DF1_y_diag[(y == 0) | (beta_0 == 0)] = 0.0
-        DF1_y = np.diag(DF1_y_diag)
+        DF1_y = diags(DF1_y_diag)
     elif method == "logit":
         DF1_beta_diag = np.zeros(len(beta_0))
         DF1_beta_diag[(beta_0 != l) & (beta_0 != h)] = 1.0 / (
@@ -291,47 +289,26 @@ def compute_gradient(
             - beta_0[(beta_0 != l) & (beta_0 != h)]
         )
         DF1_beta_diag[(beta_0 == l) | (beta_0 == h)] = 0.0
-        DF1_beta = np.diag(DF1_beta_diag)
+        DF1_beta = diags(DF1_beta_diag)
         DF1_y_diag = np.zeros(len(y))
         DF1_y_diag[(y != l) & (y != h)] = -1.0 / (
             y[(y != l) & (y != h)] - l[(y != l) & (y != h)]
         ) - 1.0 / (h[(y != l) & (y != h)] - y[(y != l) & (y != h)])
         DF1_y_diag[(y == l) | (y == h)] = 0.0
-        DF1_y = np.diag(DF1_y_diag)
+        DF1_y = diags(DF1_y_diag)
 
     # Gradient with respect to beta and lambda
-    DF1_lambda = np.transpose(np.copy(A))
-    DF2_beta = np.copy(A)
-    DF2_lambda = np.zeros((np.shape(A)[0], np.shape(A)[0]))
-    DF_beta_lambda = np.concatenate(
-        (
-            np.concatenate((DF1_beta, DF1_lambda), axis=1),
-            np.concatenate((DF2_beta, DF2_lambda), axis=1),
-        ),
-        axis=0,
-    )
+    DF_beta_lambda = bmat([[DF1_beta, A.T], [A, None]], format="csc")
 
     # Gradient with respect to y and s
-    DF1_s = np.zeros((np.shape(A)[1], np.shape(A)[0]))
-    DF2_y = np.zeros((np.shape(A)[0], np.shape(A)[1]))
-    DF2_s = -np.identity(np.shape(A)[0])
-    DF_y_s = np.concatenate(
-        (
-            np.concatenate((DF1_y, DF1_s), axis=1),
-            np.concatenate((DF2_y, DF2_s), axis=1),
-        ),
-        axis=0,
-    )
+    DF_y_s = bmat([[DF1_y, None], [None, -identity(A.shape[0])]])
 
     # Solve system DF_beta_lambda Dphi_y_s = - DF_y_s
-    Dphi_y_s = np.zeros_like(DF_y_s)
-    lu, piv = lu_factor(DF_beta_lambda)
-    for i in range(0, np.shape(DF_y_s)[1]):
-        Dphi_y_s[:, i] = -lu_solve((lu, piv), DF_y_s[:, i])
+    Dphi_y_s = splu(DF_beta_lambda).solve(-DF_y_s.toarray())
 
     # Return gradient of beta and lambda with respect to y and s
-    Dphi_y = Dphi_y_s[0 : np.shape(A)[1], 0 : np.shape(A)[1]]
+    Dphi_y = Dphi_y_s[0 : A.shape[1], 0 : A.shape[1]]
     Dphi_s = Dphi_y_s[
-        0 : np.shape(A)[1], np.shape(A)[1] : (np.shape(A)[0] + np.shape(A)[1])
+        0 : A.shape[1], A.shape[1] : (A.shape[0] + A.shape[1])
     ]
     return (Dphi_y, Dphi_s)

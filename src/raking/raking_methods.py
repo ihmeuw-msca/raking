@@ -1,12 +1,13 @@
 """Module with methods to solve the raking problem"""
 
 import numpy as np
+from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import cg
 
 
 def raking_chi2(
     y: np.ndarray,
-    A: np.ndarray,
+    A: csr_matrix,
     s: np.ndarray,
     q: np.ndarray = None,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -19,7 +20,7 @@ def raking_chi2(
     ----------
     y : np.ndarray
         Vector of observations
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         Constraints matrix (output of a function from the compute_constraints module)
     s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
@@ -50,34 +51,31 @@ def raking_chi2(
             q
         ), "Observations and weights vectors should have the same length."
     assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
+        A, csr_matrix
+    ), "The constraint matrix should be a Scipy sparse CSR matrix."
     assert isinstance(
         s, np.ndarray
     ), "The margins vector should be a Numpy array."
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
     assert (
-        np.shape(A)[0] == len(s)
+        A.shape[0] == len(s)
     ), "The number of linear constraints should be equal to the number of margins."
     assert (
-        np.shape(A)[1] == len(y)
+        A.shape[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if q is None:
         q = np.ones(len(y))
-    s_hat = np.matmul(A, y)
-    Phi = np.matmul(A, np.transpose(A * y * q))
+    s_hat = A @ y
+    Phi = A @ A.multiply(y * q).T
     lambda_k = cg(Phi, s_hat - s)[0]
-    beta = y * (1 - q * np.matmul(np.transpose(A), lambda_k))
+    beta = y * (1 - q * (A.T @ lambda_k))
     return (beta, lambda_k)
 
 
 def raking_entropic(
     y: np.ndarray,
-    A: np.ndarray,
+    A: csr_matrix,
     s: np.ndarray,
     q: np.ndarray = None,
     gamma0: float = 1.0,
@@ -92,7 +90,7 @@ def raking_entropic(
     ----------
     y : np.ndarray
         Vector of observations
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         Constraints matrix (output of a function from the compute_constraints module)
     s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
@@ -129,56 +127,51 @@ def raking_entropic(
             q
         ), "Observations and weights vectors should have the same length."
     assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
+        A, csr_matrix
+    ), "The constraint matrix should be a Scipy sparse CSR matrix."
     assert isinstance(
         s, np.ndarray
     ), "The margins vector should be a Numpy array."
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
     assert (
-        np.shape(A)[0] == len(s)
+        A.shape[0] == len(s)
     ), "The number of linear constraints should be equal to the number of margins."
     assert (
-        np.shape(A)[1] == len(y)
+        A.shape[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if q is None:
         q = np.ones(len(y))
-    s_hat = np.matmul(A, y)
+    s_hat = A @ y
     lambda_k = np.zeros(A.shape[0])
     beta = np.copy(y)
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(
-            A, y * (1.0 - np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
-        )
-        D = np.diag(y * q * np.exp(-q * np.matmul(np.transpose(A), lambda_k)))
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        Phi = A @ (y * (1.0 - np.exp(-q * (A.T @ lambda_k))))
+        D = diags(y * q * np.exp(-q * (A.T @ lambda_k)))
+        J = A @ D @ A.T
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
-        beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+        beta = y * np.exp(-q * (A.T @ lambda_k))
         if iter_eps > 0:
-            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+            while (np.mean(np.abs(s - (A @ beta))) > epsilon) & (
                 iter_gam < max_iter
             ):
                 gamma = gamma / 2.0
                 iter_gam = iter_gam + 1
                 lambda_k = lambda_k - gamma * delta_lambda
-                beta = y * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-        epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+                beta = y * np.exp(-q * (A.T @ lambda_k))
+        epsilon = np.mean(np.abs(s - (A @ beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
 
 
 def raking_general(
     y: np.ndarray,
-    A: np.ndarray,
+    A: csr_matrix,
     s: np.ndarray,
     alpha: float = 1,
     q: np.ndarray = None,
@@ -194,7 +187,7 @@ def raking_general(
     ----------
     y : np.ndarray
         Vector of observations
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         Constraints matrix (output of a function from the compute_constraints module)
     s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
@@ -233,20 +226,17 @@ def raking_general(
             q
         ), "Observations and weights vectors should have the same length."
     assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
+        A, csr_matrix
+    ), "The constraint matrix should be a Scipy sparse CSR matrix."
     assert isinstance(
         s, np.ndarray
     ), "The margins vector should be a Numpy array."
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
     assert (
-        np.shape(A)[0] == len(s)
+        A.shape[0] == len(s)
     ), "The number of linear constraints should be equal to the number of margins."
     assert (
-        np.shape(A)[1] == len(y)
+        A.shape[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
     assert isinstance(
         alpha, (int, float)
@@ -265,38 +255,37 @@ def raking_general(
         )
         return (beta, lambda_k, iter_eps)
 
-    s_hat = np.matmul(A, y)
+    s_hat = A @ y
     lambda_k = np.zeros(A.shape[0])
     beta = np.copy(y)
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(
-            A,
+        Phi = A @ (
             y
             * (
                 1.0
                 - np.power(
-                    1 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                    1 - alpha * q * (A.T @ lambda_k),
                     1.0 / alpha,
                 )
-            ),
+            )
         )
-        D = np.diag(
+        D = diags(
             y
             * q
             * np.power(
-                1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                1.0 - alpha * q * (A.T @ lambda_k),
                 1.0 / alpha - 1,
             )
         )
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        J = A @ D @ A.T
         delta_lambda = cg(J, Phi - s_hat + s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
         beta = y * np.power(
-            1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k), 1.0 / alpha
+            1.0 - alpha * q * (A.T @ lambda_k), 1.0 / alpha
         )
         if (alpha > 0.5) or (alpha < -1.0):
             if iter_eps > 0:
@@ -306,20 +295,18 @@ def raking_general(
                             1
                             - alpha
                             * q
-                            * np.matmul(
-                                np.transpose(A), lambda_k - gamma * delta_lambda
-                            )
+                            * (A.T @ (lambda_k - gamma * delta_lambda))
                             <= 0.0
                         )
                     )
-                    & (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon)
+                    & (np.mean(np.abs(s - (A @ beta))) > epsilon)
                     & (iter_gam < max_iter)
                 ):
                     gamma = gamma / 2.0
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
                     beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 - alpha * q * (A.T @ lambda_k),
                         1.0 / alpha,
                     )
             else:
@@ -328,9 +315,7 @@ def raking_general(
                         1
                         - alpha
                         * q
-                        * np.matmul(
-                            np.transpose(A), lambda_k - gamma * delta_lambda
-                        )
+                        * (A.T @ (lambda_k - gamma * delta_lambda))
                         <= 0.0
                     )
                 ) & (iter_gam < max_iter):
@@ -338,29 +323,29 @@ def raking_general(
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
                     beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 - alpha * q * (A.T @ lambda_k),
                         1.0 / alpha,
                     )
         else:
             if iter_eps > 0:
-                while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+                while (np.mean(np.abs(s - (A @ beta))) > epsilon) & (
                     iter_gam < max_iter
                 ):
                     gamma = gamma / 2.0
                     iter_gam = iter_gam + 1
                     lambda_k = lambda_k - gamma * delta_lambda
                     beta = y * np.power(
-                        1.0 - alpha * q * np.matmul(np.transpose(A), lambda_k),
+                        1.0 - alpha * q * (A.T @ lambda_k),
                         1.0 / alpha,
                     )
-        epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+        epsilon = np.mean(np.abs(s - (A @ beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)
 
 
 def raking_logit(
     y: np.ndarray,
-    A: np.ndarray,
+    A: csr_matrix,
     s: np.ndarray,
     l: np.ndarray = None,
     h: np.ndarray = None,
@@ -377,7 +362,7 @@ def raking_logit(
     ----------
     y : np.ndarray
         Vector of observations
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         Constraints matrix (output of a function from the compute_constraints module)
     s : np.ndarray
         Margin vector (output of a function from the compute_constraints module)
@@ -418,20 +403,17 @@ def raking_logit(
             q
         ), "Observations and weights vectors should have the same length."
     assert isinstance(
-        A, np.ndarray
-    ), "The constraint matrix should be a Numpy array."
-    assert (
-        len(A.shape) == 2
-    ), "The constraints matrix should be a 2D Numpy array."
+        A, csr_matrix
+    ), "The constraint matrix should be a Scipy sparse CSR matrix."
     assert isinstance(
         s, np.ndarray
     ), "The margins vector should be a Numpy array."
     assert len(s.shape) == 1, "The margins vector should be a 1D Numpy array."
     assert (
-        np.shape(A)[0] == len(s)
+        A.shape[0] == len(s)
     ), "The number of linear constraints should be equal to the number of margins."
     assert (
-        np.shape(A)[1] == len(y)
+        A.shape[1] == len(y)
     ), "The number of coefficients for the linear constraints should be equal to the number of observations."
 
     if l is None:
@@ -477,41 +459,40 @@ def raking_logit(
     epsilon = 1.0
     iter_eps = 0
     while (epsilon > 1.0e-10) & (iter_eps < max_iter):
-        Phi = np.matmul(
-            A,
+        Phi = A @ (
             (
                 l * (h - y)
                 + h
                 * (y - l)
-                * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                * np.exp(-q * (A.T @ lambda_k))
             )
             / (
                 (h - y)
-                + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
-            ),
+                + (y - l) * np.exp(-q * (A.T @ lambda_k))
+            )
         )
-        D = np.diag(
+        D = diags(
             -q
             * ((y - l) * (h - y) * (h - l))
             / np.square(
                 (h - y)
-                + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                + (y - l) * np.exp(-q * (A.T @ lambda_k))
             )
         )
-        J = np.matmul(np.matmul(A, D), np.transpose(A))
+        J = A @ D @ A.T
         delta_lambda = cg(J, Phi - s)[0]
         gamma = gamma0
         iter_gam = 0
         lambda_k = lambda_k - gamma * delta_lambda
         beta = (
             l * (h - y)
-            + h * (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+            + h * (y - l) * np.exp(-q * (A.T @ lambda_k))
         ) / (
             (h - y)
-            + (y - l) * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+            + (y - l) * np.exp(-q * (A.T @ lambda_k))
         )
         if iter_eps > 0:
-            while (np.mean(np.abs(s - np.matmul(A, beta))) > epsilon) & (
+            while (np.mean(np.abs(s - (A @ beta))) > epsilon) & (
                 iter_gam < max_iter
             ):
                 gamma = gamma / 2.0
@@ -521,12 +502,12 @@ def raking_logit(
                     l * (h - y)
                     + h
                     * (y - l)
-                    * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                    * np.exp(-q * (A.T @ lambda_k))
                 ) / (
                     (h - y)
                     + (y - l)
-                    * np.exp(-q * np.matmul(np.transpose(A), lambda_k))
+                    * np.exp(-q * (A.T @ lambda_k))
                 )
-        epsilon = np.mean(np.abs(s - np.matmul(A, beta)))
+        epsilon = np.mean(np.abs(s - (A @ beta)))
         iter_eps = iter_eps + 1
     return (beta, lambda_k, iter_eps)

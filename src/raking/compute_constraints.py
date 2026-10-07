@@ -1,9 +1,10 @@
 """Module with methods to compute the constraint matrix in 1D, 2D, 3D"""
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
 
-def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
+def constraints_1D(s: float, I: int) -> tuple[csr_matrix, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 1D.
 
     This will define the raking optimization problem:
@@ -17,7 +18,7 @@ def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
         Number of possible values for categorical variable 1
     Returns
     -------
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         1 * I constraints matrix
     s : np.ndarray
         length 1 margins vector
@@ -35,7 +36,7 @@ def constraints_1D(s: float, I: int) -> tuple[np.ndarray, np.ndarray]:
         I > 1
     ), "The number of possible values taken by the categorical variable must be higher than 1."
 
-    A = np.ones((1, I))
+    A = csr_matrix(np.ones((1, I)))
     s = np.array([s])
     return (A, s)
 
@@ -47,7 +48,7 @@ def constraints_2D(
     J: int,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[csr_matrix, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 2D.
 
     This will define the raking optimization problem:
@@ -70,7 +71,7 @@ def constraints_2D(
 
     Returns
     -------
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         (I + J - 1) * (I J) constraints matrix
     s : np.ndarray
         length (I + J) margins vector
@@ -115,12 +116,14 @@ def constraints_2D(
         np.sum(s1), np.sum(s2), rtol, atol
     ), "The sum of the row margins must be equal to the sum of the column margins."
 
-    A = np.zeros((J + I - 1, I * J))
+    entries = []
     for j in range(0, J):
         for i in range(0, I - 1):
-            A[J + i, j * I + i] = 1
-            A[j, j * I + i] = 1
-        A[j, j * I + I - 1] = 1
+            entries.append((J + i, j * I + i, 1.0))
+            entries.append((j, j * I + i, 1.0))
+        entries.append((j, j * I + I - 1, 1.0))
+    rows, cols, vals = zip(*entries)
+    A = csr_matrix((vals, (rows, cols)), shape=(J + I - 1, I * J))
     s = np.concatenate([s1, s2[0 : (I - 1)]])
     return (A, s)
 
@@ -134,7 +137,7 @@ def constraints_3D(
     K: int,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[csr_matrix, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s in 3D.
 
     This will define the raking optimization problem:
@@ -165,7 +168,7 @@ def constraints_3D(
 
     Returns
     -------
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         (I J + I K + J K - I - J - K + 1) * (I J K) constraints matrix
     s : np.ndarray
         length (I J + I K + J K - I - J - K + 1) margins vector
@@ -248,29 +251,43 @@ def constraints_3D(
         np.sum(s1, axis=1), np.sum(s3, axis=0), rtol, atol
     ), "The sums of the targets for dimension 1 and 3 must be equal."
 
-    A = np.zeros((I * J + I * K + J * K - I - J - K + 1, I * J * K))
+    entries = []
     s = np.zeros(I * J + I * K + J * K - I - J - K + 1)
     for k in range(0, K):
         for j in range(0, J - 1):
             for i in range(0, I):
-                A[(J - 1) * k + j, I * J * k + I * j + i] = 1
+                entries.append(((J - 1) * k + j, I * J * k + I * j + i, 1.0))
             s[(J - 1) * k + j] = s1[j, k]
     for i in range(0, I):
-        A[(J - 1) * K, I * J * (K - 1) + I * (J - 1) + i] = 1
+        entries.append(((J - 1) * K, I * J * (K - 1) + I * (J - 1) + i, 1.0))
     s[(J - 1) * K] = s1[J - 1, K - 1]
     for i in range(0, I):
         for k in range(0, K - 1):
             for j in range(0, J):
-                A[(J - 1) * K + 1 + (K - 1) * i + k, I * J * k + I * j + i] = 1
+                entries.append(
+                    (
+                        (J - 1) * K + 1 + (K - 1) * i + k,
+                        I * J * k + I * j + i,
+                        1.0,
+                    )
+                )
             s[(J - 1) * K + 1 + (K - 1) * i + k] = s2[i, k]
     for j in range(0, J):
         for i in range(0, I - 1):
             for k in range(0, K):
-                A[
-                    (J - 1) * K + 1 + (K - 1) * I + (I - 1) * j + i,
-                    I * J * k + I * j + i,
-                ] = 1
+                entries.append(
+                    (
+                        (J - 1) * K + 1 + (K - 1) * I + (I - 1) * j + i,
+                        I * J * k + I * j + i,
+                        1.0,
+                    )
+                )
             s[(J - 1) * K + 1 + (K - 1) * I + (I - 1) * j + i] = s3[i, j]
+    rows, cols, vals = zip(*entries)
+    A = csr_matrix(
+        (vals, (rows, cols)),
+        shape=(I * J + I * K + J * K - I - J - K + 1, I * J * K),
+    )
     return (A, s)
 
 
@@ -281,7 +298,7 @@ def constraints_USHD(
     K: int,
     rtol: float = 1e-05,
     atol: float = 1e-08,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[csr_matrix, np.ndarray]:
     """Compute the constraints matrix A and the margins vector s for the USHD use case.
 
     This will define the raking optimization problem:
@@ -307,7 +324,7 @@ def constraints_USHD(
 
     Returns
     -------
-    A : np.ndarray
+    A : scipy.sparse.csr_matrix
         (I + 2 * K + J * K + (I - 1) * K) * ((I + 1) * (J + 1) * K) constraints matrix
     s : np.ndarray
         length (I + 2 * K + J * K + (I - 1) * K) margins vector
@@ -340,44 +357,64 @@ def constraints_USHD(
         s_cause[0], np.sum(s_cause[1:]), rtol, atol
     ), "The all-causes number of deaths must be equal to the sum of the numbers of deaths per cause."
 
-    A = np.zeros((I + 2 * K + J * K + (I - 1) * K, (I + 1) * (J + 1) * K))
+    entries = []
     s = np.zeros(I + 2 * K + J * K + (I - 1) * K)
     # Constraint sum_k=0,...,K-1 beta_i,0,k = s_i for i=1,...,I
     for i in range(0, I):
         for k in range(0, K):
-            A[i, k * (I + 1) * (J + 1) + i + 1] = 1
+            entries.append((i, k * (I + 1) * (J + 1) + i + 1, 1.0))
         s[i] = s_cause[i + 1]
     # Constraint sum_i=1,...,I beta_i,0,k - beta_0,0,k = 0 for k=0,...,K-1
     for k in range(0, K):
         for i in range(1, I + 1):
-            A[I + k, k * (I + 1) * (J + 1) + i] = 1
-        A[I + k, k * (I + 1) * (J + 1)] = -1
+            entries.append((I + k, k * (I + 1) * (J + 1) + i, 1.0))
+        entries.append((I + k, k * (I + 1) * (J + 1), -1.0))
     # Constraint sum_j=1,...,J beta_0,j,k - beta_0,0,k = 0 for k=0,...,K-1
     for k in range(0, K):
         for j in range(1, J + 1):
-            A[I + K + k, k * (I + 1) * (J + 1) + j * (I + 1)] = 1
-        A[I + K + k, k * (I + 1) * (J + 1)] = -1
+            entries.append(
+                (I + K + k, k * (I + 1) * (J + 1) + j * (I + 1), 1.0)
+            )
+        entries.append((I + K + k, k * (I + 1) * (J + 1), -1.0))
     # Constraint sum_i=1,...,I beta_i,j,k - beta_0,j,k = 0 for j=1,...,J and k=0,...,K-1
     for k in range(0, K):
         for j in range(1, J + 1):
             for i in range(1, I + 1):
-                A[
+                entries.append(
+                    (
+                        I + 2 * K + k * J + j - 1,
+                        k * (I + 1) * (J + 1) + j * (I + 1) + i,
+                        1.0,
+                    )
+                )
+            entries.append(
+                (
                     I + 2 * K + k * J + j - 1,
-                    k * (I + 1) * (J + 1) + j * (I + 1) + i,
-                ] = 1
-            A[
-                I + 2 * K + k * J + j - 1, k * (I + 1) * (J + 1) + j * (I + 1)
-            ] = -1
+                    k * (I + 1) * (J + 1) + j * (I + 1),
+                    -1.0,
+                )
+            )
     # Constraint sum_j=1,...,J beta_i,j,k - beta_i,0,k = 0 for i=1,...,I and k=0,...,K-1
     for k in range(0, K):
         for i in range(1, I):
             for j in range(1, J + 1):
-                A[
+                entries.append(
+                    (
+                        I + 2 * K + J * K + k * (I - 1) + i - 1,
+                        k * (I + 1) * (J + 1) + j * (I + 1) + i,
+                        1.0,
+                    )
+                )
+            entries.append(
+                (
                     I + 2 * K + J * K + k * (I - 1) + i - 1,
-                    k * (I + 1) * (J + 1) + j * (I + 1) + i,
-                ] = 1
-            A[
-                I + 2 * K + J * K + k * (I - 1) + i - 1,
-                k * (I + 1) * (J + 1) + i,
-            ] = -1
+                    k * (I + 1) * (J + 1) + i,
+                    -1.0,
+                )
+            )
+    rows, cols, vals = zip(*entries)
+    A = csr_matrix(
+        (vals, (rows, cols)),
+        shape=(I + 2 * K + J * K + (I - 1) * K, (I + 1) * (J + 1) * K),
+    )
     return (A, s)

@@ -28,7 +28,7 @@ def test_chi2_raking_1D():
     (beta_star, lambda_star) = raking_chi2(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 1D with the chi2 distance, the constraint A beta_star = s is not respected."
 
 
@@ -49,7 +49,7 @@ def test_chi2_raking_2D():
     (beta_star, lambda_star) = raking_chi2(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 2D with the chi2 distance, the constraint A beta_star = s is not respected."
 
 
@@ -72,7 +72,7 @@ def test_chi2_raking_3D():
     (beta_star, lambda_star) = raking_chi2(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 3D with the chi2 distance, the constraint A beta_star = s is not respected."
 
 
@@ -103,7 +103,7 @@ def test_chi2_raking_USHD():
     (beta_star, lambda_star) = raking_chi2(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s, atol=1.0e-5
+        A @ beta_star, s, atol=1.0e-5
     ), "For the USHD raking with the chi2 distance, the constraint A beta_star = s is not respected."
 
 
@@ -121,7 +121,7 @@ def test_entropic_raking_1D():
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 1D with the entropic distance, the constraint A beta_star = s is not respected."
 
 
@@ -142,7 +142,7 @@ def test_entropic_raking_2D():
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 2D with the entropic distance, the constraint A beta_star = s is not respected."
 
 
@@ -165,7 +165,7 @@ def test_entropic_raking_3D():
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 3D with the entropic distance, the constraint A beta_star = s is not respected."
 
 
@@ -196,7 +196,7 @@ def test_entropic_raking_USHD():
     (beta_star, lambda_star, iter_eps) = raking_entropic(y, A, s)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s, atol=1.0e-6
+        A @ beta_star, s, atol=1.0e-6
     ), "For the USHD raking with the entropic distance, the constraint A beta_star = s is not respected."
 
 
@@ -214,7 +214,7 @@ def test_general_raking_1D():
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 1D with the general distance, the constraint A beta_star = s is not respected."
 
 
@@ -235,7 +235,7 @@ def test_general_raking_2D():
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 2D with the general distance, the constraint A beta_star = s is not respected."
 
 
@@ -258,7 +258,7 @@ def test_general_raking_3D():
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 3D with the general distance, the constraint A beta_star = s is not respected."
 
 
@@ -289,7 +289,7 @@ def test_general_raking_USHD():
     (beta_star, lambda_star, iter_eps) = raking_general(y, A, s, -2.0)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s, atol=1.0e-6
+        A @ beta_star, s, atol=1.0e-6
     ), "For the USHD raking with the general distance, the constraint A beta_star = s is not respected."
 
 
@@ -309,7 +309,7 @@ def test_logit_raking_1D():
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 1D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
     assert np.all(
@@ -340,7 +340,7 @@ def test_logit_raking_2D():
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 2D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
     assert np.all(
@@ -373,7 +373,7 @@ def test_logit_raking_3D():
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s
+        A @ beta_star, s
     ), "For the raking in 3D with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
     assert np.all(
@@ -414,7 +414,7 @@ def test_logit_raking_USHD():
     (beta_star, lambda_star, iter_eps) = raking_logit(y, A, s, l, h)
     # Verify that the constraint A beta_star = s is respected
     assert np.allclose(
-        np.matmul(A, beta_star), s, atol=1.0e-6
+        A @ beta_star, s, atol=1.0e-6
     ), "For the USHD raking with the logit distance, the constraint A beta_star = s is not respected."
     # Verify that the lower bound is respected
     assert np.all(
